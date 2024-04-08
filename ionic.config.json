@@ -1,0 +1,7 @@
+{
+  "name": "quranquizz",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
