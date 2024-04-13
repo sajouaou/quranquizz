@@ -22,3 +22,103 @@
 #container a {
   text-decoration: none;
 }
+
+.replay {
+  background-color: #2b06d1; /* Couleur de fond */
+}
+.replay:hover {
+  background-color: #3209eb; /* Couleur de fond */
+}
+
+.next {
+  background-color: #be1532; /* Couleur de fond */
+}
+.next:hover {
+  background-color: #b42d70; /* Couleur de fond */
+}
+.settings {
+  background-color: #242424; /* Couleur de fond */
+}
+.settings:hover {
+  background-color: #575757; /* Couleur de fond */
+}
+
+
+.success-animation {
+  background-color: #4caf50; /* Couleur de fond */
+  color: white; /* Couleur du texte */
+  padding: 10px 20px; /* Espacement intérieur */
+  border-radius: 5px; /* Coins arrondis */
+  margin-top: 20px; /* Marge supérieure */
+  animation: successAnimation 0.5s ease-out; /* Utilisation de l'animation */
+}
+
+/* Animation pour le succès */
+@keyframes successAnimation {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+
+
+#container {
+  position: relative;
+}
+
+.settings-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(59, 57, 57, 0.9); /* Utilisation d'une couleur de fond légèrement opaque */
+  padding: 20px;
+  border: 2px solid #000000;
+  border-radius: 5px;
+  z-index: 1000; /* Place le panneau de paramètres au-dessus du reste du contenu */
+}
+
+
+
+.invisible{
+  display: none;
+  position: absolute;
+  z-index: 1000; /* Place le panneau de paramètres au-dessus du reste du contenu */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  border-radius: 5px;
+
+}
+
+/* Animation pour l'échec */
+@keyframes failureAnimation {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.failure-animation {
+  background-color: #f44336; /* Couleur de fond */
+  color: white; /* Couleur du texte */
+  padding: 10px 20px; /* Espacement intérieur */
+  border-radius: 5px; /* Coins arrondis */
+  margin-top: 20px; /* Marge supérieure */
+  animation: failureAnimation 0.5s ease-out; /* Utilisation de l'animation */
+}
+
+
+/* Animation pour l'échec */
+@keyframes nextAnimation {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.next-animation {
+  background-color: #c4a911; /* Couleur de fond */
+  color: white; /* Couleur du texte */
+  padding: 10px 20px; /* Espacement intérieur */
+  border-radius: 5px; /* Coins arrondis */
+  margin-top: 20px; /* Marge supérieure */
+  animation: failureAnimation 0.5s ease-out; /* Utilisation de l'animation */
+}
+

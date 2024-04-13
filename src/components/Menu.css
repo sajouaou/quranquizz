@@ -1,0 +1,19 @@
+.menu-button {
+    background-color: #4caf50; /* Couleur de fond */
+    color: white; /* Couleur du texte */
+    padding: 10px 20px; /* Espacement intérieur */
+    border: none; /* Supprime la bordure */
+    cursor: pointer; /* Curseur au survol */
+    border-radius: 5px; /* Coins arrondis */
+    margin: 5px; /* Marge autour du bouton */
+  }
+  
+  
+.menu-button:hover {
+    background-color: #45a049; /* Couleur de fond au survol */
+}
+
+.MenuComponent ul {
+list-style-type: none; /* Supprime les puces de la liste */
+padding: 0; /* Supprime les marges intérieures de la liste */
+}
