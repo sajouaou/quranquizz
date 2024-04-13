@@ -37,7 +37,7 @@ const Menu: React.FC = () => {
 
   const handleOption2Click = () => {
     console.log('Option 2 clicked');
-    setState('Survie');
+    setState('Survie//');
     // Mettez votre logique ou action ici
   };
 
@@ -48,7 +48,7 @@ const Menu: React.FC = () => {
 
   const menuItems = [
     { label: 'Entrainement', action: handleOption1Click },
-    { label: 'Survie', action: handleOption2Click },
+    { label: '/////', action: handleOption2Click },
     { label: '/////', action: handleOption3Click },
   ];
 
