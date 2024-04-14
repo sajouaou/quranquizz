@@ -5,6 +5,8 @@ const InputGame = ({
   chapters,
   minSurah,
   maxSurah,
+  maxVerse,
+  minVerse,
   askVerse,
   confirmedChapter,
   confirmedVerse,
@@ -16,10 +18,10 @@ const InputGame = ({
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [showFailureAnimation, setShowFailureAnimation] = useState(false);
   const [showNextAnimation, setShowNextAnimation] = useState(false);
-    const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
-    const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
-    const [previousChapter, setPreviousChapter] = useState<number | null>(null);
-    const [previousVerse, setPreviousVerse] = useState<number | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+  const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
+  const [previousChapter, setPreviousChapter] = useState<number | null>(null);
+  const [previousVerse, setPreviousVerse] = useState<number | null>(null);
 
 
     

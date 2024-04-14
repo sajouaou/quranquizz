@@ -6,6 +6,7 @@ const Settings = ({
   maxSurah,
   minVerse,
   maxVerse,
+  verseDistribustion,
   chapters,
   filterVerse,
   askVerse,
@@ -15,6 +16,7 @@ const Settings = ({
   setMaxSurah,
   setMinVerse,
   setMaxVerse,
+  setVerseDistribustion,
   setVolume,
   handleSaveSettings,
   setFilterVerse,
@@ -137,6 +139,18 @@ const Settings = ({
       <label htmlFor="switchF">Filter Verses:</label>
       <label className="switchF">
         <input type="checkbox" checked={filterVerse} onChange={() => setFilterVerse(!filterVerse)} />
+        <span className="slider round"></span>
+      </label>
+      <br />
+      </>
+    )}
+
+    
+  { verseDistribustion != null && (
+      <>
+      <label htmlFor="switchFs">Random Verses Distribution:</label>
+      <label className="switchFs">
+        <input type="checkbox" checked={verseDistribustion} onChange={() => setVerseDistribustion(!verseDistribustion)} />
         <span className="slider round"></span>
       </label>
       <br />

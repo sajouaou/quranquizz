@@ -23,6 +23,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const [confirmedVerse, setConfirmedVerse] = useState<number>(0);
   const [askVerse, setAskVerse] = useState(false);
   const [filterVerse, setFilterVerse] = useState(false);
+  const [verseDistribustion, setVerseDistribustion] = useState(false);
   const [numberOfAyat, setNumberOfAyat] = useState(1); // Nombre d'ayat par défaut
   const [minSurah, setMinSurah] = useState(1); // 
   const [maxSurah, setMaxSurah] = useState(114); //
@@ -31,7 +32,26 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const [maximumVerse, setMaximumVerse] = useState(286); //
   
   const getRandomChapterNumber = () => {
-    return Math.floor(Math.random() * (maxSurah-minSurah + 1)) + minSurah; // Generates a random number between 1 and 114
+    let res = Math.floor(Math.random() * (maxSurah - minSurah + 1)) + minSurah;
+    if(verseDistribustion){
+      let chapterArrays: number[] = [];
+      chapters.filter(function(chapter) {
+        return chapter.id <= maxSurah && chapter.id >= minSurah;
+      }).forEach(chapter => {
+        let length = chapter.verses_count;
+        if(chapter.id === maxSurah && filterVerse){
+          length = maxVerse;
+        }
+        if(chapter.id === minSurah && filterVerse){
+          length = length - minVerse;
+        }
+        const array = Array.from({ length: length }, () => chapter.id);
+        chapterArrays.push(...array);
+      });
+      res = Math.floor(Math.random() * (chapterArrays.length)) ;
+      res = chapterArrays[res];
+    }
+    return res; // Generates a random number between 1 and 114
   };
 
   const getRandomVerseNumber = (chapterId: number) => {
@@ -60,7 +80,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   
   const checkChoice = (chapterId:number| null,verseId:number| null) => {
     const found = chapterId === confirmedChapter && (verseId === confirmedVerse || !askVerse);
-    
+
     return found;
   }
   
@@ -112,6 +132,8 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
           maxSurah={maxSurah}
           askVerse={askVerse}
           newSurah={newSurah}
+          maxVerse={maxVerse}
+          minVerse={minVerse}
           fetchAudioFile={audioSection.fetchAudioFile}
           confirmedChapter={confirmedChapter}
           confirmedVerse={confirmedVerse}
@@ -136,12 +158,14 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
           chapters={chapters}
           filterVerse={filterVerse}
           askVerse={askVerse}
+          verseDistribustion={verseDistribustion}
           volume={audioSection.volume}
           setNumberOfAyat={setNumberOfAyat}
           setMinSurah={setMinSurah}
           setMaxSurah={setMaxSurah}
           setMinVerse={setMinVerse}
           setMaxVerse={setMaxVerse}
+          setVerseDistribustion={setVerseDistribustion}
           setVolume={audioSection.setVolumeAudio}
           handleSaveSettings={handleSaveSettings}
           setFilterVerse={setFilterVerse}
