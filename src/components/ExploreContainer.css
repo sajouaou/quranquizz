@@ -36,6 +36,14 @@
 .next:hover {
   background-color: #b42d70; /* Couleur de fond */
 }
+
+.start {
+  background-color: #1c1eb8; /* Couleur de fond */
+}
+.start:hover {
+  background-color: #354aa7; /* Couleur de fond */
+}
+
 .settings {
   background-color: #242424; /* Couleur de fond */
 }

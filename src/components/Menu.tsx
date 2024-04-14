@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Menu.css';
 import ExploreContainer from '../components/ExploreContainer';
 
@@ -10,6 +10,14 @@ interface MenuItem {
 interface MenuProps {
   items: MenuItem[];
 }
+
+interface Chapter {
+  id: number;
+  name_simple: string;
+  verses_count: number;
+}
+
+
 
 const MenuComponent: React.FC<MenuProps> = ({ items }) => {
   return (
@@ -26,8 +34,30 @@ const MenuComponent: React.FC<MenuProps> = ({ items }) => {
 };
 
 const Menu: React.FC = () => {
+  
+  const [chapters, setChapters] = useState<Chapter[]>([]);
     const [state, setState] = useState('');
     const [number, setNumber] = useState(0);
+
+    
+  useEffect(() => {
+    const fetchChapters = async () => {
+      try {
+        const response = await fetch('https://api.quran.com/api/v4/chapters');
+        if (response.ok) {
+          const data = await response.json();
+          setChapters(data.chapters);
+        } else {
+          console.error('Failed to fetch chapters');
+        }
+      } catch (error) {
+        console.error('Error fetching chapters:', error);
+      }
+    };
+
+    fetchChapters();
+  }, []);
+
   
   const handleOption1Click = () => {
     console.log('Option 1 clicked');
@@ -55,7 +85,7 @@ const Menu: React.FC = () => {
   return (
     <div id="container">
         {(state === 'Training' || state === 'Survie') &&
-            <ExploreContainer mode={state}/>
+            <ExploreContainer mode={state} chapters={chapters}/>
         }
         {state === '' &&
             <MenuComponent items={menuItems} />
