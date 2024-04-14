@@ -23,7 +23,7 @@ const Settings = ({
   setAskVerse
 }) => {
 
-    const handleChangeNumberOfAyat = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChangeNumberOfAyat = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setNumberOfAyat(parseInt(event.target.value));
       };
       const handleChangeMinSurah = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -45,14 +45,18 @@ const Settings = ({
     <div className="settings-container">
       { numberOfAyat && (
       <>
-      <label htmlFor="numberOfAyat">Number of Ayat:</label><input
-                  type="number"
-                  id="numberOfAyat"
-                  min="1"
-                  max="286"
-                  step="1"
-                  value={numberOfAyat}
-                  onChange={handleChangeNumberOfAyat} /><br />
+      <label htmlFor="numberOfAyat">Number of Ayat:</label>
+      
+      <select id="minSurah" value={numberOfAyat || ''} onChange={handleChangeNumberOfAyat}>
+        { [...Array(286).keys()].map((x, i) => (
+                <option key={x} value={x + 1}>
+                  {x + 1} 
+                </option>
+              ))
+        } 
+
+      </select>
+      <br />
       </>
     )}
 

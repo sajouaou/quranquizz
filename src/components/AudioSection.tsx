@@ -36,7 +36,7 @@ class AudioSection extends Component {
   };
 
   playAudio = () => {
-    const { numberOfAyat, maximumVerse } = this.props;
+    const { numberOfAyat, maximumVerse,confirmedVerse } = this.props;
     if (this.audioFile && this.audioRef.current && !this.isPlaying) {
       this.setPlay(true);
       this.audioRef.current.src = `https://verses.quran.com/${this.audioFile}`;
@@ -55,6 +55,7 @@ class AudioSection extends Component {
   replayAudio = () => {
     const { confirmedVerse } = this.props;
     this.setAyat(0);
+    this.setPlay(false);
     this.setAudioFile(this.data.audio_files[confirmedVerse].url);
     this.playAudio();
   };

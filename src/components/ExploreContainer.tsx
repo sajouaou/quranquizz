@@ -66,7 +66,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
       minimumVerse = minVerse;
     }
     let verse = Math.floor(Math.random() * maxtemp) + minimumVerse;
-    if(verse + numberOfAyat >= maximumVerse)
+    if(verse + numberOfAyat >= maxtemp)
     {
       verse = maxtemp  - numberOfAyat;
       if(verse < minimumVerse){
