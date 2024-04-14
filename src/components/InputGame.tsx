@@ -18,6 +18,8 @@ const InputGame = ({
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [showFailureAnimation, setShowFailureAnimation] = useState(false);
   const [showNextAnimation, setShowNextAnimation] = useState(false);
+  
+  //Guess
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [previousChapter, setPreviousChapter] = useState<number | null>(null);
@@ -45,6 +47,7 @@ const InputGame = ({
     setPreviousChapter(confirmedChapter);
     setPreviousVerse(confirmedVerse);
     await handleNext();
+    checkChoice(-1,-1);
     const rand = newSurah(); // Attendre le chargement du fichier audio  
     await fetchAudioFile(rand[0], rand[1]);
   };

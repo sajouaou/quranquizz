@@ -20,7 +20,10 @@ const Settings = ({
   setVolume,
   handleSaveSettings,
   setFilterVerse,
-  setAskVerse
+  setAskVerse,
+  resetscore,
+  showScore,
+  setShowScore
 }) => {
 
     const handleChangeNumberOfAyat = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -150,6 +153,8 @@ const Settings = ({
     )}
 
     
+
+    
   { verseDistribustion != null && (
       <>
       <label htmlFor="switchFs">Random Verses Distribution:</label>
@@ -157,6 +162,25 @@ const Settings = ({
         <input type="checkbox" checked={verseDistribustion} onChange={() => setVerseDistribustion(!verseDistribustion)} />
         <span className="slider round"></span>
       </label>
+      <br />
+      </>
+    )}
+
+    { showScore != null && (
+          <>
+          <label htmlFor="switchFd">Show Score :</label>
+          <label className="switchFd">
+            <input type="checkbox" checked={showScore} onChange={() => setShowScore(!showScore)} />
+            <span className="slider round"></span>
+          </label>
+          <br />
+          </>
+    )}
+
+    
+    {resetscore != null  && (showScore == null || showScore) && (
+      <>
+      <button className="menu-button settings"  onClick={resetscore}>Reset Score</button>
       <br />
       </>
     )}
@@ -178,7 +202,7 @@ const Settings = ({
       </>
     )}
 
-      <button onClick={handleSaveSettings}>Save</button>
+      <button className="menu-button settings"  onClick={handleSaveSettings}>Save</button>
     </div>
   );
 };

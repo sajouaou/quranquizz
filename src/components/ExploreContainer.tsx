@@ -30,6 +30,13 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const [minVerse, setMinVerse] = useState(0); // 
   const [maxVerse, setMaxVerse] = useState(286); //
   const [maximumVerse, setMaximumVerse] = useState(286); //
+
+
+  //Score
+  const [showScore, setShowScore] = useState(false);
+  const [score, setScore] = useState(0); // 
+  const [streak, setStreak] = useState(0); //
+
   
   const getRandomChapterNumber = () => {
     let res = Math.floor(Math.random() * (maxSurah - minSurah + 1)) + minSurah;
@@ -80,7 +87,13 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   
   const checkChoice = (chapterId:number| null,verseId:number| null) => {
     const found = chapterId === confirmedChapter && (verseId === confirmedVerse || !askVerse);
-
+    if(found){
+      setScore(score+1);
+      setStreak(streak+1)
+    }
+    else{
+      setStreak(0);
+    }
     return found;
   }
   
@@ -111,6 +124,10 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
     setShowSettings(false);
   };
 
+  const resetScore = () =>{
+    setScore(0);
+    setStreak(0);
+  }
 
   useEffect(() => {
     if (audioSection ) {
@@ -139,6 +156,12 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
           confirmedVerse={confirmedVerse}
           checkChoice={checkChoice}
         />
+        { showScore && (
+        <div>
+          <p>Score: {score}</p>
+          <p>Streak: {streak}</p>
+        </div>)
+        }
         {audioSection && (audioSection.render())}
         </>
       )}
@@ -170,6 +193,9 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
           handleSaveSettings={handleSaveSettings}
           setFilterVerse={setFilterVerse}
           setAskVerse={setAskVerse}
+          resetscore={resetScore}
+          showScore={showScore}
+          setShowScore={setShowScore}
           />
       )}
     </div>
