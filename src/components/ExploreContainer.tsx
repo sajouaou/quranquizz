@@ -30,10 +30,13 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const [minVerse, setMinVerse] = useState(0); // 
   const [maxVerse, setMaxVerse] = useState(286); //
   const [maximumVerse, setMaximumVerse] = useState(286); //
-
+  const [isLimited, setLimit] = useState(false);
+  const [round, setRound] = useState(0); // 
+  const [currentRound,setCurrentRound] = useState(0);
 
   //Score
   const [showScore, setShowScore] = useState(false);
+  const [guess,setGuess] = useState([-2,-2]);
   const [score, setScore] = useState(0); // 
   const [streak, setStreak] = useState(0); //
 
@@ -94,27 +97,43 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
     else{
       setStreak(0);
     }
+
+    if(isLimited){
+      setCurrentRound(currentRound+1);
+    }
+
     return found;
   }
   
   const newSurah = () => {
-    const randomChap = getRandomChapterNumber();
-    const randomVerse = getRandomVerseNumber(randomChap);
-    setConfirmedChapter(randomChap);
-    setConfirmedVerse(randomVerse);
-    return [randomChap,randomVerse];
+    if( !isLimited || currentRound + 1 < round){
+      const randomChap = getRandomChapterNumber();
+      const randomVerse = getRandomVerseNumber(randomChap);
+      setConfirmedChapter(randomChap);
+      setConfirmedVerse(randomVerse);
+      return [randomChap,randomVerse];
+    }
   }
 
 
 
   const [showInput, setShowInput] = useState(false);
+  const [showEnd, setShowEnd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   const audioSection = new AudioSection({ numberOfAyat, maximumVerse,confirmedVerse, showInput});
   
+  const handleEndofRound = () => {
+    if(currentRound + 1 >= round){
+      setShowEnd(true);
+      setShowInput(false);
+    }
+  }
 
   const handleStartClick = async () => {
     setShowInput(true);
+    setShowEnd(false);
+    setCurrentRound(0);
     const rand = newSurah(); // Attendre le chargement du fichier audio  
     await audioSection.fetchAudioFile(rand[0], rand[1]);
   };  
@@ -155,6 +174,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
           confirmedChapter={confirmedChapter}
           confirmedVerse={confirmedVerse}
           checkChoice={checkChoice}
+          handleEndofRound={handleEndofRound}
         />
         { showScore && (
         <div>
@@ -196,6 +216,10 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
           resetscore={resetScore}
           showScore={showScore}
           setShowScore={setShowScore}
+          isLimited={isLimited}
+          setLimit={setLimit}
+          round={round}
+          setRound={setRound}
           />
       )}
     </div>

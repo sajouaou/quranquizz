@@ -12,7 +12,8 @@ const InputGame = ({
   confirmedVerse,
   newSurah,
   fetchAudioFile,
-  checkChoice
+  checkChoice,
+  handleEndofRound
 }) => {
     
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -30,17 +31,17 @@ const InputGame = ({
     
   const handleSuccess = async () => {
     setShowSuccessAnimation(true);
-    setTimeout(() => setShowSuccessAnimation(false), 1000); // Masquer l'animation après 1 seconde
+    setTimeout(() => {setShowSuccessAnimation(false); handleEndofRound(); }, 1000); // Masquer l'animation après 1 seconde
   };
   
   const handleNext = async () => {
     setShowNextAnimation(true);
-    setTimeout(() => setShowNextAnimation(false), 1000); // Masquer l'animation après 1 seconde
+    setTimeout(() => { setShowNextAnimation(false); handleEndofRound(); }, 1000); // Masquer l'animation après 1 seconde
   };
 
   const handleFailure = () => {
     setShowFailureAnimation(true);
-    setTimeout(() => setShowFailureAnimation(false), 1000); // Masquer l'animation après 1 seconde
+    setTimeout(() => {setShowFailureAnimation(false); handleEndofRound(); }, 1000); // Masquer l'animation après 1 seconde
   };
 
   const handleNextButtonClick = async () => {

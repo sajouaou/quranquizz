@@ -23,9 +23,16 @@ const Settings = ({
   setAskVerse,
   resetscore,
   showScore,
-  setShowScore
+  setShowScore,
+  isLimited,
+  setLimit,
+  round,
+  setRound
 }) => {
 
+  const handleChangeNumberOfRound = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setRound(parseInt(event.target.value));
+  };
     const handleChangeNumberOfAyat = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setNumberOfAyat(parseInt(event.target.value));
       };
@@ -165,6 +172,38 @@ const Settings = ({
       <br />
       </>
     )}
+    
+    { isLimited != null && (
+        <>
+        <label htmlFor="switchFsd">Limit :</label>
+        <label className="switchFsd">
+          <input type="checkbox" checked={isLimited} onChange={() => setLimit(!isLimited)} />
+          <span className="slider round"></span>
+        </label>
+        <br />
+        </>
+      )}
+
+      
+    {round != null  && (isLimited == null || isLimited) && (
+      <>
+      <label htmlFor="numberOfRound">Number of Round:</label>
+      
+      <select id="round" value={round || ''} onChange={handleChangeNumberOfRound}>
+        { [...Array(50).keys()].map((x, i) => (
+                <option key={x} value={x + 1}>
+                  {x + 1} 
+                </option>
+              ))
+        } 
+
+      </select>
+      <br />
+      </>
+    )}
+
+
+  
 
     { showScore != null && (
           <>
