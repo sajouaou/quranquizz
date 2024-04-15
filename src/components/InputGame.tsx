@@ -1,3 +1,4 @@
+import { play } from 'ionicons/icons';
 import React, { useState, useEffect } from 'react';
 
 const InputGame = ({
@@ -8,71 +9,70 @@ const InputGame = ({
   maxVerse,
   minVerse,
   askVerse,
-  confirmedChapter,
-  confirmedVerse,
-  newSurah,
-  fetchAudioFile,
-  checkChoice,
-  handleEndofRound
+  allReady,
+  checkGuessPlayer,
+  player
 }) => {
     
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [showFailureAnimation, setShowFailureAnimation] = useState(false);
   const [showNextAnimation, setShowNextAnimation] = useState(false);
+
+
+  useEffect(() => {
+    if (allReady ) {
+      if(player.gameState === 'win'){
+        handleSuccess();
+      }
+      
+      if(player.gameState === 'next'){
+        handleNext();
+      }
+      if(player.gameState === 'lose' ){
+        handleFailure();
+      }
+      player.setGameState('not ready');
+    }
+  }, [allReady]);
+
   
-  //Guess
-  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
-  const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
-  const [previousChapter, setPreviousChapter] = useState<number | null>(null);
-  const [previousVerse, setPreviousVerse] = useState<number | null>(null);
-
-
+  useEffect(() => {
+    checkGuessPlayer();
+  }, [player.gameState]);
     
     
   const handleSuccess = async () => {
     setShowSuccessAnimation(true);
-    setTimeout(() => {setShowSuccessAnimation(false); handleEndofRound(); }, 1000); // Masquer l'animation après 1 seconde
+    setTimeout(() => {setShowSuccessAnimation(false); }, 1000); // Masquer l'animation après 1 seconde
   };
   
   const handleNext = async () => {
     setShowNextAnimation(true);
-    setTimeout(() => { setShowNextAnimation(false); handleEndofRound(); }, 1000); // Masquer l'animation après 1 seconde
+    setTimeout(() => { setShowNextAnimation(false); }, 1000); // Masquer l'animation après 1 seconde
   };
 
-  const handleFailure = () => {
+  const handleFailure = async () => {
     setShowFailureAnimation(true);
-    setTimeout(() => {setShowFailureAnimation(false); handleEndofRound(); }, 1000); // Masquer l'animation après 1 seconde
+    setTimeout(() => {setShowFailureAnimation(false); }, 1000); // Masquer l'animation après 1 seconde
   };
 
-  const handleNextButtonClick = async () => {
-    setPreviousChapter(confirmedChapter);
-    setPreviousVerse(confirmedVerse);
-    await handleNext();
-    checkChoice(-1,-1);
-    const rand = newSurah(); // Attendre le chargement du fichier audio  
-    await fetchAudioFile(rand[0], rand[1]);
+  const handleNextButtonClick =  () => {
+    player.makeGuess(-1,-1);
   };
   
-  const handleConfirmButtonClick = async () => {
-    if (checkChoice(selectedChapter,selectedVerse) ) {
-      await handleSuccess();
-      const rand = newSurah(); // Attendre le chargement du fichier audio  
-      await fetchAudioFile(rand[0], rand[1]);
-    }
-    else {
-      await handleFailure();
-    }
-
+  const handleConfirmButtonClick =  () => {
+    player.makeGuess(player.guessChapter,player.guessVerse);
   };
 
 
   const handleChapterSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedChapterId = parseInt(event.target.value);
-    setSelectedChapter(selectedChapterId);
+    //setChapter(player,selectedChapterId);
+    player.setGuessChapter(selectedChapterId);
   };
   const handleVerseSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedVerseId = parseInt(event.target.value);
-    setSelectedVerse(selectedVerseId);
+    player.setGuessVerse(selectedVerseId);
   };
 
 
@@ -83,10 +83,7 @@ const InputGame = ({
       )}
       <button className="menu-button confirm" onClick={handleConfirmButtonClick}>Confirm</button>
       <br />
-
-      <label htmlFor="chapterSelect">Which chapter does the recited ayah correspond to ? </label>
-      <select id="chapterSelect" value={selectedChapter || ''} onChange={handleChapterSelect}>
-        <option value="">Select a chapter</option>
+      <select id="chapterSelect" value={player.guessChapter} onChange={handleChapterSelect}>
         {chapters
           .filter((chapter) => minSurah <= chapter.id && chapter.id <= maxSurah)
           .map((chapter) => (
@@ -96,13 +93,13 @@ const InputGame = ({
           ))}
       </select>
       {askVerse && (
-        <select id="verseSelect" value={selectedVerse || ''} onChange={handleVerseSelect}>
-          {selectedChapter &&
+        <select id="verseSelect" value={player.guessVerse} onChange={handleVerseSelect}>
+          {player.guessChapter &&
             chapters
-              .filter((chapter) => chapter.id === selectedChapter)
+              .filter((chapter) => chapter.id === player.guessChapter)
               .map((chapter) =>
                 [...Array(chapter.verses_count).keys()]
-                  .filter((x, i) => (maxSurah !== selectedChapter || i <= maxVerse) && (minSurah !== selectedChapter || minVerse <= i))
+                  .filter((x, i) => (maxSurah !== player.guessChapter || i <= maxVerse) && (minSurah !== player.guessChapter || minVerse <= i))
                   .map((x, i) => (
                     <option key={x} value={x}>
                       {x + 1}
@@ -113,7 +110,7 @@ const InputGame = ({
       )}
 
       <br />
-      <button className="menu-button next" onClick={handleNextButtonClick}>Next</button>
+      <button className="menu-button next" onClick={handleNextButtonClick}>Skip</button>
 
       {showSuccessAnimation && (
         <div className="success-animation">Bien jouej</div>
@@ -124,7 +121,7 @@ const InputGame = ({
       )}
       {showNextAnimation && (
         <div className="next-animation">
-          {chapters.filter((chapter) => chapter.id === previousChapter).map((chapter) => (chapter.name_simple))} {askVerse ? previousVerse + 1 : ""}
+          {chapters.filter((chapter) => chapter.id === player.correctChapter).map((chapter) => (chapter.name_simple))} {askVerse ? player.correctVerse + 1 : ""}
         </div>
       )}
 

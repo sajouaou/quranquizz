@@ -27,11 +27,20 @@ const Settings = ({
   isLimited,
   setLimit,
   round,
-  setRound
+  setRound,
+  isSkip,
+  setSkip,
+  activeLive,
+  setActiveLive,
+  lives,
+  setLives
 }) => {
 
   const handleChangeNumberOfRound = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setRound(parseInt(event.target.value));
+  };
+  const handleChangeNumberOfLives = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setLives(parseInt(event.target.value));
   };
     const handleChangeNumberOfAyat = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setNumberOfAyat(parseInt(event.target.value));
@@ -202,6 +211,16 @@ const Settings = ({
       </>
     )}
 
+    { isSkip != null && (
+          <>
+          <label htmlFor="switchFdc">Skip if fail :</label>
+          <label className="switchFdc">
+            <input type="checkbox" checked={isSkip} onChange={() => setSkip(!isSkip)} />
+            <span className="slider round"></span>
+          </label>
+          <br />
+          </>
+    )}
 
   
 
@@ -216,6 +235,34 @@ const Settings = ({
           </>
     )}
 
+    { activeLive != null && (
+        <>
+        <label htmlFor="switchActiveLive">Active Lives :</label>
+        <label className="switchActiveLive">
+          <input type="checkbox" checked={activeLive} onChange={() => setActiveLive(!activeLive)} />
+          <span className="slider round"></span>
+        </label>
+        <br />
+        </>
+      )}
+
+      
+    {lives != null  && (activeLive == null || activeLive) && (
+      <>
+      <label htmlFor="numberOfLives">Number of Lives:</label>
+      
+      <select id="lives" value={lives || ''} onChange={handleChangeNumberOfLives}>
+        { [...Array(50).keys()].map((x, i) => (
+                <option key={x} value={x + 1}>
+                  {x + 1} 
+                </option>
+              ))
+        } 
+
+      </select>
+      <br />
+      </>
+    )}
     
     {resetscore != null  && (showScore == null || showScore) && (
       <>

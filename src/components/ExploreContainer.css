@@ -19,6 +19,23 @@
   margin: 0;
 }
 
+.player-container {
+  display: block ruby;
+  align-items: center;
+}
+
+.control-container {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.player{
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
 #container a {
   text-decoration: none;
 }
