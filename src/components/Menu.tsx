@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import './Menu.css';
 import ExploreContainer from '../components/ExploreContainer';
 import GameClient from './Client/GameClient';
+import { Link } from 'react-router-dom';
+import { IonButton } from '@ionic/react';
+import Chat from './Client/GameClient';
 
 interface MenuItem {
   label: string;
@@ -39,6 +42,11 @@ const Menu: React.FC = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
     const [state, setState] = useState('');
     const [number, setNumber] = useState(0);
+
+
+    const [name, setName] = useState("");
+    const [room, setRoom] = useState(""); // State to hold the room's name
+    const [isConnected, setIsConnected] = useState(false);
 
     
   useEffect(() => {
@@ -83,13 +91,54 @@ const Menu: React.FC = () => {
     { label: '/////', action: handleOption3Click },
   ];
 
+    const handleNameChange = (event) => {
+        setName(event.target.value);
+    };
+    
+    const handleRoomNameChange = (event) => {
+        setRoom(event.target.value); // Update roomName state when input changes
+    };
+
+    const handleJoin = () => {
+      setIsConnected(true);
+    }
+    
+    /* 
+   <Link
+    onClick={(e) => (!name || !room ? e.preventDefault() : null)}
+    to={`/chat?name=${name}&room=${room}`}
+  >
+  </Link>*/
   return (
     <div id="container">
         {(state === 'Training' || state === 'Survie') &&
             <ExploreContainer mode={state} chapters={chapters}/>
         }
         {(state === 'Online') &&
-            <GameClient chapters={chapters}/>
+            <>  
+            { !isConnected  && (
+            <>  
+            <input
+                type="text"
+                placeholder="Enter room name"
+                value={room}
+                onChange={handleRoomNameChange}
+            />
+                <input
+                    type="text"
+                    placeholder="Enter player name"
+                    value={name}
+                    onChange={handleNameChange}
+                />
+                  <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
+                
+                
+            </>
+          )}
+          
+          { isConnected  && (<Chat location={{ search: `?name=${name}&room=${room}`}} />) }
+
+            </>
         }
 
         {state === '' &&
@@ -97,7 +146,7 @@ const Menu: React.FC = () => {
         }
 
         {state !== '' &&
-            <button className="menu-button" onClick={() => setState('')}>Return</button>
+            <button className="menu-button" onClick={() => {setState('');setIsConnected(false);}}>Return</button>
         }
     </div>
   );

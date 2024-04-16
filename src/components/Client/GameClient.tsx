@@ -1,139 +1,76 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Player from '../Player';
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import queryString from "query-string";
+import io from "socket.io-client";
 
+let socket = null;
 
+const Chat = ({ location }) => {
+  const [name, setName] = useState("");
+  const [room, setRoom] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState("");
 
-interface User {
-    playerName: string;
-}
+  const ENDPOINT = "http://localhost:5000";
 
-
-axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"; // Nom de l'en-tête CSRF côté Django
-axios.defaults.xsrfCookieName = "csrftoken"; // Nom du cookie CSRF côté Django
-
-interface GameClientProps 
-{
-  chapters: Chapter[]
-}
-
-interface Chapter {
-    id: number;
-    name_simple: string;
-    verses_count: number;
-  }
-
-
-const GameClient: React.FC<GameClientProps> = ( { chapters }) => {
-    const [players, setPlayers] = useState([{playerName:"",}]);
-    const [roomName, setRoomName] = useState(""); // State to hold the room's name
-    const [isConnected, setIsConnected] = useState(false);
-  
-    const handleNameChange = (event) => {
-        const updatedPlayers = [...players]; // Créer une copie du tableau players
-        updatedPlayers[0].playerName = event.target.value; // Modifier la copie du tableau
-        setPlayers(updatedPlayers); // Mettre à jour l'état avec la nouvelle copie
-    };
+  useEffect(() => {
+    if(socket === null){
+        console.log("Test test JOIN");
+        const { name, room } = queryString.parse(location.search);
+        socket = io(ENDPOINT);
+        setRoom(room);
+        setName(name);
     
-    const handleRoomNameChange = (event) => {
-        setRoomName(event.target.value); // Update roomName state when input changes
-    };
-
-   const addPLayer = (player) => {
-    const updatedPlayers = [...players]; // Créer une copie du tableau players
-    updatedPlayers.push(player);
-    setPlayers(updatedPlayers); // Mettre à jour l'état avec la nouvelle copie
-    console.log(updatedPlayers);
-
-   }
-
-   const syncGame = (state) => {
-    state.players.filter(player => {
-        return !players.some(existingPlayer => existingPlayer.playerName === player.playerName);
-    }).forEach(player => {
-        console.log("NEW PLAYER");
-        addPLayer(player);
-    });
-
-   }
-
-   const loopSync = (roomName,player,connect) => {
-    if(connect){
-        axios.get(`http://127.0.0.1:8000/sync?roomName=${roomName}&player=${player}`)
-        .then((res) => {
-            console.log("LOOP DU RES");
-            console.log(isConnected);
-            console.log(isConnected);
-            console.log(isConnected);
-            console.log(isConnected);
-            console.log(isConnected);
-            syncGame(res.data);
-            setTimeout(() => {loopSync(roomName,player,connect)},1000);
+        socket.emit("join", { name, room }, (error) => {
+          if (error) {
+            alert(error);
+          }
+        });
+        
+        socket.on("message", (message) => {
+        setMessages((messages) => [...messages, message]);
         });
     }
-   }
+  }, [location.search]);
 
-  const handleJoinOrCreateRoom = () => {
-    // Implement logic for joining/creating room here
-    console.log("Joining or creating room:", roomName);
-    console.log("Player:", players[0].playerName);
-    if(roomName !== '' && players[0].playerName !== ''){
-        const hostJson = JSON.stringify(players[0]);
-        axios.get(`http://127.0.0.1:8000/create_room?roomName=${roomName}&player=${hostJson}`)
-        .then((res) => {
-            console.log(res.data);
-            if(res.data.connected){
-                // Connection réussis
-                setIsConnected(true);
-                console.log("INTERIEUR DU RES");
-                console.log(isConnected);
-                syncGame(res.data);
-            }
-            else {
-                // Gere la connection 
-            }
-        });
-        setTimeout(() => {loopSync(roomName,hostJson,true)},1000);
-        console.log("Exterieur DU RES");
-        console.log(isConnected);
+  useEffect(() => {
+    if(socket !== null){
+        console.log("Test test MESSAGE");
     }
+    // socket.on("roomData", ({ users }) => {
+    //   console.log(users);
+    //   setUsers(users);
+    // });
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (message) {
+      socket.emit("sendMessage", { message });
+      setMessage("");
+    } else alert("empty input");
   };
 
-    return (
-      <div>
-        {  !isConnected && (
-            <>
-            <input
-                type="text"
-                placeholder="Enter room name"
-                value={roomName}
-                onChange={handleRoomNameChange}
-            />
-                <input
-                    type="text"
-                    placeholder="Enter player name"
-                    value={players[0].playerName}
-                    onChange={handleNameChange}
-                />
-                <button onClick={handleJoinOrCreateRoom}>Join/Create Room</button>
-                </>
-        )
-        }
-      
-         {
-        players.map((player, index) => (
-          <div className='control-container' key={index}>
-            <div className='player'>
-            <p>Player : {player.playerName}</p>
-            </div>
+  return (
+    <div>
+      {messages.map((val, i) => {
+        return (
+          <div key={i}>
+            {val.text}
+            <br />
+            <b>{val.user}</b>
           </div>
-            ))
-        }
-
-
-      </div>
-
-    );
+        );
+      })}
+      <form action="" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <input type="submit" />
+      </form>
+    </div>
+  );
 };
 
-export default GameClient;  
+export default Chat;
