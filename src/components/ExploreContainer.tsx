@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Game from '../components/Game';
 import './ExploreContainer.css';
-import Settings from './Settings';
-import InputGame from './InputGame'; // Import the InputGame component
-import AudioSection from './AudioSection'; // Import the InputGame component
+import Settings from './user/Settings';
+import InputGame from './user/InputGame'; // Import the InputGame component
+import AudioSection from './user/AudioSection'; // Import the InputGame component
 import Player from './Player';
-import LocalPlayer from './LocalPlayer';
 
 interface ContainerProps 
 {
@@ -220,8 +219,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const audioSection = new AudioSection({ numberOfAyat, maximumVerse,confirmedVerse, showInput});
   
   const [allPReady, setallPReady] = useState(false);
-  const [playerHostName,setPlayerHostName] = useState("Me");
-  let players = [new Player({name:playerHostName,})];
+  let players = [new Player({name:"Me",}),new Player({name:"Other",})];
   /*
   new LocalPlayer({
     name:playerHostName,

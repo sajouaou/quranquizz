@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './Menu.css';
 import ExploreContainer from '../components/ExploreContainer';
+import GameClient from './Client/GameClient';
 
 interface MenuItem {
   label: string;
@@ -67,7 +68,7 @@ const Menu: React.FC = () => {
 
   const handleOption2Click = () => {
     console.log('Option 2 clicked');
-    setState('Survie//');
+    setState('Online');
     // Mettez votre logique ou action ici
   };
 
@@ -87,6 +88,10 @@ const Menu: React.FC = () => {
         {(state === 'Training' || state === 'Survie') &&
             <ExploreContainer mode={state} chapters={chapters}/>
         }
+        {(state === 'Online') &&
+            <GameClient chapters={chapters}/>
+        }
+
         {state === '' &&
             <MenuComponent items={menuItems} />
         }

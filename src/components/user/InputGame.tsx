@@ -117,7 +117,7 @@ const InputGame = ({
       )}
 
       {showFailureAnimation && (
-        <div className="failure-animation">Nope</div>
+        <div className="failure-animation"> Nope </div>
       )}
       {showNextAnimation && (
         <div className="next-animation">
