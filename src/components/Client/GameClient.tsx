@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import queryString from "query-string";
 import io from "socket.io-client";
+import "./GameClient.css"
 
 let socket = null;
 
@@ -9,8 +10,14 @@ const Chat = ({ location }) => {
   const [room, setRoom] = useState("");
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const chatContainerRef = useRef(null);
 
   const ENDPOINT = "http://localhost:5000";
+  
+  useEffect(() => {
+    // Scroll to the bottom of the chat container whenever messages change
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  }, [messages]);
 
   useEffect(() => {
     if(socket === null){
@@ -25,22 +32,12 @@ const Chat = ({ location }) => {
             alert(error);
           }
         });
-        
+
         socket.on("message", (message) => {
         setMessages((messages) => [...messages, message]);
         });
     }
   }, [location.search]);
-
-  useEffect(() => {
-    if(socket !== null){
-        console.log("Test test MESSAGE");
-    }
-    // socket.on("roomData", ({ users }) => {
-    //   console.log(users);
-    //   setUsers(users);
-    // });
-  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -52,15 +49,18 @@ const Chat = ({ location }) => {
 
   return (
     <div>
+       <div className="chat-container" ref={chatContainerRef}>
+        <div className="chat-messages">
       {messages.map((val, i) => {
         return (
-          <div key={i}>
-            {val.text}
-            <br />
-            <b>{val.user}</b>
-          </div>
+        <div className={"message " + (val.user === name ? 'user-message' : 'other-message')} key={i}>
+            <div className="message-user">{val.user} :  </div>
+            <div className="message-text"> {val.text}</div>
+        </div>
         );
       })}
+      </div>
+      </div>
       <form action="" onSubmit={handleSubmit}>
         <input
           type="text"
