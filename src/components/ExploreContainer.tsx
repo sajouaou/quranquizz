@@ -662,6 +662,7 @@ const correctAll = (surah,verse) => {
             <div className='control-container' key={index}>
               <InputGame
               replayAudio={audioSection.replayAudio}
+              isPlayer={index === 0}
               chapters={chapters}
               minSurah={game.minSurah}
               maxSurah={game.maxSurah}

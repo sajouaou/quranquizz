@@ -20,7 +20,8 @@
 }
 
 .player-container {
-  display: block ruby;
+  display: flex;
+  justify-content: center;
   align-items: center;
 }
 

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 const InputGame = ({
   replayAudio,
+  isPlayer,
   chapters,
   minSurah,
   maxSurah,
@@ -33,7 +34,9 @@ const InputGame = ({
       if(player.gameState === 'lose' ){
         handleFailure();
       }
-      sendGameMessage({ content: 'update Player', action: 'setGameState', type: 'PLAYER', value:{player,state:"not ready"} });
+      if(isPlayer){
+        sendGameMessage({ content: 'update Player', action: 'setGameState', type: 'PLAYER', value:{player,state:"not ready"} });
+      }
     }
   }, [allReady]);
 
@@ -80,6 +83,8 @@ const InputGame = ({
 
   return (
     <div>
+      { isPlayer && (
+        <>
       {replayAudio && (
       <button className="menu-button replay" onClick={replayAudio}>Replay </button>
       )}
@@ -113,6 +118,8 @@ const InputGame = ({
 
       <br />
       <button className="menu-button next" onClick={handleNextButtonClick}>Skip</button>
+      </>
+    )}
 
       {showSuccessAnimation && (
         <div className="success-animation">Bien jouej</div>
