@@ -35,14 +35,15 @@ const InputGame = ({
         handleFailure();
       }
       if(isPlayer){
-        sendGameMessage({ content: 'update Player', action: 'setGameState', type: 'PLAYER', value:{player,state:"not ready"} });
+        sendGameMessage({ content: `${player.playerName} is not ready`, action: 'setGameState', type: 'PLAYER', value:{player,state:"not ready"} });
       }
     }
   }, [allReady]);
 
-  
+  //TODO : Faire le check si  tt le monde est  ready  chez l'host en local  avec l'état ready  et  pas avec les reponses
+  //        + executer que si  le player est  l'host
   useEffect(() => {
-    sendGameMessage({ content: 'Game Play', action: 'checkGuessPlayer', type: 'GAME' });
+    sendGameMessage({ content: 'Checking the answers of all players', action: 'checkGuessPlayer', type: 'GAME' });
   }, [player.gameState]);
     
     
@@ -62,22 +63,22 @@ const InputGame = ({
   };
 
   const handleNextButtonClick =  () => {
-    sendGameMessage({ content: 'update Player', action: 'makeGuess', type: 'PLAYER', value:{player,surah:-1,verse:1} });
+    sendGameMessage({ content: `${player.playerName} is ready  for the next  question`, action: 'makeGuess', type: 'PLAYER', value:{player,surah:-1,verse:1} });
   };
   
   const handleConfirmButtonClick =  () => {
-    sendGameMessage({ content: 'update Player', action: 'makeGuess', type: 'PLAYER', value:{player,surah:player.guessChapter,verse:player.guessVerse} });
+    sendGameMessage({ content: `${player.playerName} has confirmed his choice`, action: 'makeGuess', type: 'PLAYER', value:{player,surah:player.guessChapter,verse:player.guessVerse} });
   };
 
 
   const handleChapterSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedChapterId = parseInt(event.target.value);
     //setChapter(player,selectedChapterId);
-    sendGameMessage({ content: 'update Player', action: 'setGuessChapter', type: 'PLAYER', value:{player,surah:selectedChapterId} });
+    sendGameMessage({ content: `${player.playerName} has selected a chapter`, action: 'setGuessChapter', type: 'PLAYER', value:{player,surah:selectedChapterId} });
   };
   const handleVerseSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedVerseId = parseInt(event.target.value);
-    sendGameMessage({ content: 'update Player', action: 'setGuessVerse', type: 'PLAYER', value:{player,verse:selectedVerseId} });
+    sendGameMessage({ content: `${player.playerName} has selected a verse`, action: 'setGuessVerse', type: 'PLAYER', value:{player,verse:selectedVerseId} });
   };
 
 

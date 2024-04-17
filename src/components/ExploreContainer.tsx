@@ -352,7 +352,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
 
         if(allReady){
           let fail = false;
-          sendGameMessage({ content: 'update Players', action: 'CORRECT', type: 'PLAYER', value:{surah:game.confirmedChapter,verse:game.confirmedVerse} });
+          sendGameMessage({ content: `The correct  answer was chapter : ${game.confirmedChapter} verse : ${game.confirmedVerse}`, action: 'CORRECT', type: 'PLAYER', value:{surah:game.confirmedChapter,verse:game.confirmedVerse} });
           //correctAll(game.confirmedChapter,game.confirmedVerse);
           let endResult :any[] = [];
           players.forEach(player => {
@@ -368,15 +368,14 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
             else{
               endResult.push({state:"next",player});
               fail = true;
-              //sendGameMessage({ content: 'update Player', action: 'NEXT', type: 'PLAYER', value:{player} });
               //next(players,setPlayers, player);
 
             }
           });
           
           console.log("Test Everything Read");
-          sendGameMessage({ content: 'update ALL Players State', action: 'ENDROUND', type: 'GAME', value:endResult});
-          sendGameMessage({ content: 'update Players State', action: 'READY', type: 'GAME', value:allReady});
+          sendGameMessage({ content: 'The round is finished', action: 'ENDROUND', type: 'GAME', value:endResult});
+          sendGameMessage({ content: 'Everyone is ready the next round will start', action: 'READY', type: 'GAME', value:allReady});
           if(game.isSkip || fail){
             playNext(game.currentRound);
           }
@@ -384,7 +383,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         }
         else{
           console.log("Test Everything Failed");
-          sendGameMessage({ content: 'update Players State', action: 'READY', type: 'GAME', value:allReady});
+          sendGameMessage({ content: 'Not every one is ready', action: 'READY', type: 'GAME', value:allReady});
 
         }
         
@@ -403,11 +402,11 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     if( (!game.isLimited || curRound + 1 < game.round) &&  (! isPlayersLost()) ){
       const randomChap = getRandomChapterNumber(game,chapters);
       const {verse,maxtemp } = getRandomVerseNumber(game,chapters,randomChap);
-      sendGameMessage({ content: 'Game Play', action: 'NEWSURAH', type: 'GAME', value:{randomChap,verse,maxtemp} });
-      sendGameMessage({ content: 'Audio Fetch', action: 'AUDIOFETCH', type: 'AUDIO', value:{surah:randomChap,verse:verse} });
+      sendGameMessage({ content: 'New surah  selected', action: 'NEWSURAH', type: 'GAME', value:{randomChap,verse,maxtemp} });
+      sendGameMessage({ content: 'Downloading the audio', action: 'AUDIOFETCH', type: 'AUDIO', value:{surah:randomChap,verse:verse} });
     }
     if(game.isLimited){
-      sendGameMessage({ content: 'Game Play', action: 'SETROUND', type: 'GAME', value:curRound+1 });
+      sendGameMessage({ content: `The round ${curRound+1} will start now`, action: 'SETROUND', type: 'GAME', value:curRound+1 });
     }
   }
 
@@ -452,7 +451,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
 
 
   const handleStartClick = async () => {
-    sendGameMessage({ content: 'Start THE GAME', action: 'START', type: 'GAME'});
+    sendGameMessage({ content: 'The game is starting', action: 'START', type: 'GAME'});
     playNext(0);
   };  
 
@@ -721,29 +720,29 @@ const correctAll = (surah,verse) => {
           askVerse={game.askVerse}
           verseDistribustion={game.verseDistribution}
           volume={audioSection.volume}
-          setNumberOfAyat={(value: number) => sendGameMessage({ content: 'update Game', action: 'setNumberOfAyat', type: 'GAMESETTING', value: value })}
-          setMinSurah={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMinSurah', type: 'GAMESETTING', value: value })}
-          setMaxSurah={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMaxSurah', type: 'GAMESETTING', value: value })}
-          setMinVerse={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMinVerse', type: 'GAMESETTING', value: value })}
-          setMaxVerse={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMaxVerse', type: 'GAMESETTING', value: value })}
-          setVerseDistribustion={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setVerseDistribution', type: 'GAMESETTING', value: value })}
+          setNumberOfAyat={(value: number) => sendGameMessage({ content: `The number of ayat is set to ${value}`, action: 'setNumberOfAyat', type: 'GAMESETTING', value: value })}
+          setMinSurah={(value: number) => sendGameMessage({ content: `The minimum surah is set to ${value}`, action: 'setMinSurah', type: 'GAMESETTING', value: value })}
+          setMaxSurah={(value: number) => sendGameMessage({ content: `The maximum surah is set to ${value}`, action: 'setMaxSurah', type: 'GAMESETTING', value: value })}
+          setMinVerse={(value: number) => sendGameMessage({ content: `The minimum verse is set to ${value+1}`, action: 'setMinVerse', type: 'GAMESETTING', value: value })}
+          setMaxVerse={(value: number) => sendGameMessage({ content: `The maximum verse is set to ${value+1}`, action: 'setMaxVerse', type: 'GAMESETTING', value: value })}
+          setVerseDistribustion={(value: boolean) => sendGameMessage({ content: 'The verse ditribution is ' + (value ? 'enabled' : 'disabled'), action: 'setVerseDistribution', type: 'GAMESETTING', value: value })}
           setVolume={audioSection.setVolumeAudio}
           handleSaveSettings={handleSaveSettings}
-          setFilterVerse={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setFilterVerse', type: 'GAMESETTING', value: value })}
-          setAskVerse={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setAskVerse', type: 'GAMESETTING', value: value })}
-          resetscore={ () => sendGameMessage({ content: 'update Game', action: 'resetScore', type: 'GAMESETTING'}) }
+          setFilterVerse={(value: boolean) => sendGameMessage({ content: 'The verse filter is ' + (value ? 'enabled' : 'disabled'), action: 'setFilterVerse', type: 'GAMESETTING', value: value })}
+          setAskVerse={(value: boolean) => sendGameMessage({ content: 'Asking verse for the answer is '+ (value ? 'enabled' : 'disabled'), action: 'setAskVerse', type: 'GAMESETTING', value: value })}
+          resetscore={ () => sendGameMessage({ content: 'Scores are reset', action: 'resetScore', type: 'GAMESETTING'}) }
           showScore={game.showScore}
-          setShowScore={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setShowScore', type: 'GAMESETTING', value: value })}
+          setShowScore={(value: boolean) => sendGameMessage({ content: (value ? 'Scores are visible' : 'Scores are not visible'), action: 'setShowScore', type: 'GAMESETTING', value: value })}
           isLimited={game.isLimited}
-          setLimit={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setIsLimited', type: 'GAMESETTING', value: value })}
+          setLimit={(value: boolean) => sendGameMessage({ content: (value ? 'The game is limited in rounds' : 'The game is endless'), action: 'setIsLimited', type: 'GAMESETTING', value: value })}
           round={game.round}
-          setRound={(value: number) => sendGameMessage({ content: 'update Game', action: 'setRound', type: 'GAMESETTING', value: value })}
+          setRound={(value: number) => sendGameMessage({ content: `The number of rounds is set to  ${value}`, action: 'setRound', type: 'GAMESETTING', value: value })}
           isSkip={game.isSkip}
-          setSkip={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setIsSkip', type: 'GAMESETTING', value: value })}
+          setSkip={(value: boolean) => sendGameMessage({ content: 'Automatic skip if everyone has a wrong answer is ' + (value ? 'enabled' : 'disabled'), action: 'setIsSkip', type: 'GAMESETTING', value: value })}
           activeLive={game.activeLive}
-          setActiveLive={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setActiveLive', type: 'GAMESETTING', value: value })}
+          setActiveLive={(value: boolean) => sendGameMessage({ content: 'The survival mode is ' + (value ? 'enabled' : 'disabled'), action: 'setActiveLive', type: 'GAMESETTING', value: value })}
           lives={game.lives}
-          setLives={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setLives', type: 'GAMESETTING', value: value })}
+          setLives={(value: boolean) => sendGameMessage({ content: `The number of lives is set to ${value}`, action: 'setLives', type: 'GAMESETTING', value: value })}
         />
       )}
 
