@@ -10,7 +10,9 @@ const InputGame = ({
   minVerse,
   askVerse,
   allReady,
-  checkGuessPlayer,
+  correctChapter,
+  correctVerse,
+  sendGameMessage,
   player
 }) => {
     
@@ -31,13 +33,13 @@ const InputGame = ({
       if(player.gameState === 'lose' ){
         handleFailure();
       }
-      player.setGameState('not ready');
+      sendGameMessage({ content: 'update Player', action: 'setGameState', type: 'PLAYER', value:{player,state:"not ready"} });
     }
   }, [allReady]);
 
   
   useEffect(() => {
-    checkGuessPlayer();
+    sendGameMessage({ content: 'Game Play', action: 'checkGuessPlayer', type: 'GAME' });
   }, [player.gameState]);
     
     
@@ -57,22 +59,22 @@ const InputGame = ({
   };
 
   const handleNextButtonClick =  () => {
-    player.makeGuess(-1,-1);
+    sendGameMessage({ content: 'update Player', action: 'makeGuess', type: 'PLAYER', value:{player,surah:-1,verse:1} });
   };
   
   const handleConfirmButtonClick =  () => {
-    player.makeGuess(player.guessChapter,player.guessVerse);
+    sendGameMessage({ content: 'update Player', action: 'makeGuess', type: 'PLAYER', value:{player,surah:player.guessChapter,verse:player.guessVerse} });
   };
 
 
   const handleChapterSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedChapterId = parseInt(event.target.value);
     //setChapter(player,selectedChapterId);
-    player.setGuessChapter(selectedChapterId);
+    sendGameMessage({ content: 'update Player', action: 'setGuessChapter', type: 'PLAYER', value:{player,surah:selectedChapterId} });
   };
   const handleVerseSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedVerseId = parseInt(event.target.value);
-    player.setGuessVerse(selectedVerseId);
+    sendGameMessage({ content: 'update Player', action: 'setGuessVerse', type: 'PLAYER', value:{player,verse:selectedVerseId} });
   };
 
 
@@ -121,7 +123,7 @@ const InputGame = ({
       )}
       {showNextAnimation && (
         <div className="next-animation">
-          {chapters.filter((chapter) => chapter.id === player.correctChapter).map((chapter) => (chapter.name_simple))} {askVerse ? player.correctVerse + 1 : ""}
+          {chapters.filter((chapter) => chapter.id === correctChapter).map((chapter) => (chapter.name_simple))} {askVerse ? correctVerse + 1 : ""}
         </div>
       )}
 

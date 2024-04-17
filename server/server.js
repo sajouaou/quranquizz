@@ -11,25 +11,27 @@ const io = require("socket.io")(server, {
     credentials: true,
   },
 });
-const { addUser, removeUser } = require("./user");
+const { addUser, removeUser, getRoomUser } = require("./user");
 
 const PORT = 5000;
 
 io.on("connection", (socket) => {
-  socket.on("join", ({ name, room }, callBack) => {
-    const { user, error } = addUser({ id: socket.id, name, room });
+  socket.on("join", ({ name, room,player }, callBack) => {
+    let currentUsers = getRoomUser(room);
+    const { user, error } = addUser({ id: socket.id, name, room,isHost:(currentUsers.length < 1) ,player});
     if (error) return callBack(error);
 
     socket.join(user.room);
     socket.emit("message", {
       user: "Admin",
-      text: `Welocome to ${user.room}`,
+      text: {content:`Welcome to ${user.room}`,type:"WELCOME",users:currentUsers},
     });
 
     socket.broadcast
       .to(user.room)
-      .emit("message", { user: "Admin", text: `${user.name} has joined!` });
+      .emit("message", { user: "Admin", text: {content:`${user.name} has joined!`,type:"PLAYER",action:"NEW" ,value:player } });
     callBack(null);
+
 
     socket.on("sendMessage", ({ message }) => {
       io.to(user.room).emit("message", {
@@ -37,6 +39,7 @@ io.on("connection", (socket) => {
         text: message,
       });
     });
+
   });
   socket.on("disconnect", () => {
     const user = removeUser(socket.id);
@@ -44,7 +47,7 @@ io.on("connection", (socket) => {
      if(user !== undefined){
        io.to(user.room).emit("message", {
          user: "Admin",
-         text: `${user.name} just left the room`,
+         text: {content:`${user.name} just left the room`,type:"CHAT"} ,
        });
        console.log("A disconnection has been made");
      }

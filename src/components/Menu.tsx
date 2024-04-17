@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import './Menu.css';
 import ExploreContainer from '../components/ExploreContainer';
-import GameClient from './Client/GameClient';
+import GameClient from './client/GameClient';
 import { Link } from 'react-router-dom';
 import { IonButton } from '@ionic/react';
-import Chat from './Client/GameClient';
+import Chat from './client/GameClient';
 
 interface MenuItem {
   label: string;
@@ -112,7 +112,7 @@ const Menu: React.FC = () => {
   return (
     <div id="container">
         {(state === 'Training' || state === 'Survie') &&
-            <ExploreContainer mode={state} chapters={chapters}/>
+            <ExploreContainer mode={state} chapters={chapters} location={{search: null}}/>
         }
         {(state === 'Online') &&
             <>  
@@ -136,7 +136,8 @@ const Menu: React.FC = () => {
             </>
           )}
           
-          { isConnected  && (<Chat location={{ search: `?name=${name}&room=${room}`}} />) }
+          { isConnected  && (
+              <ExploreContainer  mode={state} chapters={chapters}  location={{search: `?name=${name}&room=${room}`}} />) }
 
             </>
         }

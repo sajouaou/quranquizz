@@ -95,6 +95,13 @@ class Player extends Component {
         this.setReady(false);
         this.setGameState('lose');
         this.setStreak(0);
+        this.setLives(this.lives -1);
+    }
+
+    next(){
+        this.setReady(false);
+        this.setStreak(0);
+        this.setLives(this.lives -1);
     }
 
     isReady(){
@@ -132,5 +139,111 @@ class Player extends Component {
         );
     }
 }
+
+
+
+  
+export const setGuessChapter = (players,setPlayers, playerToUpdate, surah) => {
+    const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+    if (playerIndex !== -1) {
+      const updatedPlayer = { ...players[playerIndex] };
+      updatedPlayer.guessChapter = surah;
+      const updatedPlayers = [...players];
+      updatedPlayers[playerIndex] = updatedPlayer;
+      setPlayers(updatedPlayers);
+    }
+  }
+  
+  export const setGuessVerse = (players,setPlayers, playerToUpdate, verse) => {
+    const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+    if (playerIndex !== -1) {
+      const updatedPlayer = { ...players[playerIndex] };
+      updatedPlayer.guessVerse = verse;
+      const updatedPlayers = [...players];
+      updatedPlayers[playerIndex] = updatedPlayer;
+      setPlayers(updatedPlayers);
+    }
+  }
+  
+  
+  export const setGameState = (players,setPlayers, playerToUpdate, state) => {
+    const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+    if (playerIndex !== -1) {
+      const updatedPlayer = { ...players[playerIndex] };
+      updatedPlayer.gameState = state;
+      const updatedPlayers = [...players];
+      updatedPlayers[playerIndex] = updatedPlayer;
+      setPlayers(updatedPlayers);
+    }
+  }
+  
+
+  export const next = (players,setPlayers, playerToUpdate) => {
+    const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+    if (playerIndex !== -1) {
+      const updatedPlayer = { ...players[playerIndex] };
+      updatedPlayer.ready = false ;
+      updatedPlayer.gameState = 'next';
+      updatedPlayer.streak = 0;
+      updatedPlayer.lives = updatedPlayer.lives -1;
+      const updatedPlayers = [...players];
+      updatedPlayers[playerIndex] = updatedPlayer;
+      setPlayers(updatedPlayers);
+    }
+  } 
+  
+  export const success = (players,setPlayers, playerToUpdate) => {
+    const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+    if (playerIndex !== -1) {
+      const updatedPlayer = { ...players[playerIndex] };
+      updatedPlayer.ready = false ;
+      updatedPlayer.gameState = 'win';
+      updatedPlayer.score = updatedPlayer.score +1;
+      updatedPlayer.streak = updatedPlayer.streak+1;
+      const updatedPlayers = [...players];
+      updatedPlayers[playerIndex] = updatedPlayer;
+      setPlayers(updatedPlayers);
+    }
+  
+  } 
+  export  const faillure = (players,setPlayers, playerToUpdate) => {
+    const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+    console.log("TEST FIND - ",playerToUpdate);
+    console.log("TEST FOUND - ",playerIndex);
+    if (playerIndex !== -1) {
+      const updatedPlayer = { ...players[playerIndex] };
+      console.log("UPDATED FOUND - ",updatedPlayer);
+      updatedPlayer.ready = false ;
+      updatedPlayer.gameState = 'lose';
+      updatedPlayer.streak = 0;
+      updatedPlayer.lives = updatedPlayer.lives -1;
+      const updatedPlayers = [...players];
+      updatedPlayers[playerIndex] = updatedPlayer;
+      console.log("UPDATED  ff FOUND - ",updatedPlayers);
+      setPlayers(updatedPlayers);
+    }
+  
+  } 
+
+export const makeGuess = (players,setPlayers, playerToUpdate,surah,verse) => {
+  const playerIndex = players.findIndex(player => player.playerName === playerToUpdate.playerName);
+  if (playerIndex !== -1) {
+    const updatedPlayer = { ...players[playerIndex] };
+    updatedPlayer.ready = true ;
+    if(surah === -1){
+      updatedPlayer.gameState = 'next';
+    }
+    else {
+      updatedPlayer.guessChapter = surah;
+      updatedPlayer.guessVerse = verse;
+      updatedPlayer.gameState = 'ready';
+    }
+    const updatedPlayers = [...players];
+    updatedPlayers[playerIndex] = updatedPlayer;
+    setPlayers(updatedPlayers);
+  }
+
+} 
+
 
 export default Player;

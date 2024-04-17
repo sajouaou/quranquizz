@@ -4,12 +4,35 @@ import './ExploreContainer.css';
 import Settings from './user/Settings';
 import InputGame from './user/InputGame'; // Import the InputGame component
 import AudioSection from './user/AudioSection'; // Import the InputGame component
-import Player from './Player';
+
+
+import queryString from "query-string";
+import io from "socket.io-client";
+import "./client/GameClient.css"
+import { IonButton } from "@ionic/react";
+
+import { 
+  checkChoice, 
+  getRandomChapterNumber, 
+  getRandomVerseNumber, 
+  recvGameSettingMSG, 
+  setActiveLive, 
+  setAllPReady, 
+  setConfirmedChapter, 
+  setConfirmedVerse, 
+  setCurrentRound, 
+  setLives, 
+  setMaximumVerse, 
+  setPreviousChapter, 
+  setPreviousVerse, 
+  setShowScore } from './game/Game';
+import { faillure, makeGuess, next, setGameState, setGuessChapter, setGuessVerse, success } from './Player';
 
 interface ContainerProps 
 {
   mode: string;
-  chapters: Chapter[]
+  chapters: Chapter[];
+  location:any;
 }
 
 
@@ -19,114 +42,294 @@ interface Chapter {
   verses_count: number;
 }
 
-const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
-  const [confirmedChapter, setConfirmedChapter] = useState<number | null>(null);
-  const [confirmedVerse, setConfirmedVerse] = useState<number>(0);
-  const [askVerse, setAskVerse] = useState(false);
-  const [filterVerse, setFilterVerse] = useState(false);
-  const [verseDistribustion, setVerseDistribustion] = useState(false);
-  const [numberOfAyat, setNumberOfAyat] = useState(1); // Nombre d'ayat par défaut
-  const [minSurah, setMinSurah] = useState(1); // 
-  const [maxSurah, setMaxSurah] = useState(114); //
-  const [minVerse, setMinVerse] = useState(0); // 
-  const [maxVerse, setMaxVerse] = useState(286); //
-  const [maximumVerse, setMaximumVerse] = useState(286); //
-  const [isLimited, setLimit] = useState(false);
-  const [isSkip, setSkip] = useState(false);
-  const [round, setRound] = useState(1); // 
-  const [currentRound,setCurrentRound] = useState(0);
-  //Lives
-  const [activeLive, setActiveLive] = useState(false);
-  const [lives, setLives] = useState(1);
-  const setAllLive = (nbLives) => {
-    setLives(nbLives);
-    players.forEach(player => {
-      player.setLives(nbLives);
-  });
-  }
-  const setAllActiveLive = (showA) => {
-    setActiveLive(showA);
-    players.forEach(player => {
-      player.setShowLive(showA);
-      player.setLives(lives);
-  });
-  }
+interface Game {
+  confirmedChapter: number | null;
+  confirmedVerse: number;
+  previousChapter: number| null;
+  previousVerse: number;
+  askVerse: boolean;
+  filterVerse: boolean;
+  verseDistribution: boolean;
+  numberOfAyat: number;
+  minSurah: number;
+  maxSurah: number;
+  minVerse: number;
+  maxVerse: number;
+  maximumVerse: number;
+  isLimited: boolean;
+  isSkip: boolean;
+  round: number;
+  currentRound: number;
+  activeLive: boolean;
+  lives: number;
+  showScore: boolean;
+  allPReady: boolean;
+}
+
+interface Player {
+  playerName: string;
+  guessChapter: number;
+  isHost: boolean;
+  guessVerse: number;
+  streak: number;
+  ready: boolean;
+  gameState: string;
+  found: boolean;
+  showScore: boolean;
+  score: number;
+  showLives: boolean;
+  lives: number;
+}
+
+let socket = null;
+
+
+const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location}) => {
   
-  //Score
-  const [showScore, setShowScore] = useState(false);
-  const setAllShowScore = (showS) => {
-    setShowScore(showS);
-    players.forEach(player => {
-      player.setShowScore(showS);
-  });
-  }
+  const [name, setName] = useState("");
+  const [room, setRoom] = useState("");
 
-  const setNotReady = () => {
-    players.forEach(player => {
-      player.setGameState('not ready');
-    });
-  }
-
+  const [readCursor, setReadCursor] = useState(0);
+  const [messages, setMessages] = useState([]);
+  const [lastMessage, setLastMessages] = useState(null);
+  const [message, setMessage] = useState("");
+  const chatContainerRef = useRef(null);
 
   
-  const getRandomChapterNumber = () => {
-    let res = Math.floor(Math.random() * (maxSurah - minSurah + 1)) + minSurah;
-    if(verseDistribustion){
-      let chapterArrays: number[] = [];
-      chapters.filter(function(chapter) {
-        return chapter.id <= maxSurah && chapter.id >= minSurah;
-      }).forEach(chapter => {
-        let length = chapter.verses_count;
-        if(chapter.id === maxSurah && filterVerse){
-          length = maxVerse;
+  useEffect(() => {
+    // Scroll to the bottom of the chat container whenever messages change
+    if(lastMessage !== null){
+        let i = readCursor;
+        if( i < messages.length){
+          parseMessage(messages[i].text);
+          i++;
+          setReadCursor(i);
         }
-        if(chapter.id === minSurah && filterVerse){
-          length = length - minVerse;
-        }
-        const array = Array.from({ length: length }, () => chapter.id);
-        chapterArrays.push(...array);
-      });
-      res = Math.floor(Math.random() * (chapterArrays.length)) ;
-      res = chapterArrays[res];
     }
-    return res; // Generates a random number between 1 and 114
-  };
 
-  const getRandomVerseNumber = (chapterId: number) => {
-    let maxtemp =  chapters.filter(function(chapter) {
-      return chapter.id === chapterId;
-    })[0].verses_count;
-    if(filterVerse && chapterId === maxSurah && maxVerse + 1 <= maxtemp){
-      maxtemp = maxVerse + 1 ;
+  }, [lastMessage]);
+
+  
+  useEffect(() => {
+    let i = readCursor;
+    if( i < messages.length){
+      parseMessage(messages[i].text);
+      i++;
+      setReadCursor(i);
     }
-    let minimumVerse = 0;
-    if(filterVerse && chapterId === minSurah && minVerse <= maxtemp){
-      minimumVerse = minVerse;
+  }, [readCursor]);
+
+  
+  const [players,setPlayers] = useState([{
+    playerName: "ME",
+    guessChapter: 1,
+    isHost: mode !== "Online",
+    guessVerse: 0,
+    streak: 0,
+    ready: false,
+    gameState: "not ready",
+    found: false,
+    correctChapter: -1,
+    correctVerse: -1,
+    showScore: false,
+    score: 0,
+    showLives: false,
+    lives: 1
+  }]);
+
+  
+
+
+
+  const ENDPOINT = "http://localhost:5000";
+  
+  useEffect(() => {
+    // Scroll to the bottom of the chat container whenever messages change
+    if(chatContainerRef.current !== null){
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-    let verse = Math.floor(Math.random() * maxtemp) + minimumVerse;
-    if(verse + numberOfAyat >= maxtemp)
-    {
-      verse = maxtemp  - numberOfAyat;
-      if(verse < minimumVerse){
-        verse = minimumVerse;
+  }, [messages]);
+
+
+  const  parseMessage = (message) => {
+    //console.log("PARSE MESSAGE - " ,message);
+    if (message.type === "CHAT") {
+      //setMessages((messages) => [...messages, message]);
+    }
+    else if (message.type === "WELCOME") {
+      if (message.users.length < 1) {
+        const updatedPlayer = { ...players[0] };
+        updatedPlayer.isHost = true;
+        const updatedPlayers = [...players];
+        updatedPlayers[0] = updatedPlayer;
+        setPlayers(updatedPlayers);
+      }
+      else {
+        message.users.forEach((x) => {
+          console.log(x);
+          setPlayers(prevPlayers => [...prevPlayers, { ...x.player }]);
+        });
       }
     }
-    setMaximumVerse(maxtemp);
-    return verse;
-  };
-
-  
-  
-
-  const checkChoice = (chapterId:number| null,verseId:number| null) => {
-    const found = chapterId === confirmedChapter && (verseId === confirmedVerse || !askVerse);
-    return found;
+    else {
+      switch (message.type) {
+        case "GAMESETTING":
+          recvGameSettingMessage(message);
+          break;
+        case "PLAYER":
+          recvPlayerMessage(message);
+          break;
+        case "GAME":
+          recvGameMessage(message);
+          break;
+        case "AUDIO":
+          recvAudioMessage(message);
+          break;
+        default:
+          break;
+      }
+    }
   }
+
+
+
+  useEffect(() => {
+    if(mode === "Online" && socket === null){
+        console.log("Test test JOIN");
+        const { name, room } = queryString.parse(location.search);
+        socket = io(ENDPOINT);
+        setRoom(room);
+        setName(name);
+        const updatedPlayers = [...players]; // Créer une copie du tableau players
+        updatedPlayers[0].playerName = name; // Modifier la copie du tableau
+        setPlayers(updatedPlayers); // Mettre à jour l'état avec la 
+    
+        socket.emit("join", { name, room, player:updatedPlayers[0] }, (error) => {
+          if (error) {
+            alert(error);
+          }
+        });
+
+        socket.on("message", (message) => {
+            setMessages((messages) => [...messages, message]);
+            setLastMessages(message.text);
+        });
+    }
+  }, [location.search]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (message) {
+      socket.emit("sendMessage", { message :{ content :message, type:"CHAT"}});
+      setMessage("");
+    } else alert("empty input");
+  };
+  const sendScan = (e) => {
+    e.preventDefault();
+    setPlayers(prevPlayers => [...prevPlayers, { playerName: "Nouveau Joueur",
+      guessChapter: 1,
+      guessVerse: 0,
+      isHost:false,
+      streak: 0,
+      ready: false,
+      gameState: "not ready",
+      found: false,
+      correctChapter: -1,
+      correctVerse: -1,
+      showScore: false,
+      score: 0,
+      showLives: false,
+      lives: 1
+    } ]);
+    socket.emit("sendMessage", { message :{ content :"SCAN", type:"GAME"}});
+  };
+  const [game,setGame] = useState<Game>({
+    confirmedChapter: null,
+    confirmedVerse: 0,
+    previousChapter: null,
+    previousVerse: 0,
+    askVerse: false,
+    filterVerse: false,
+    verseDistribution: false,
+    numberOfAyat: 1,
+    minSurah: 1,
+    maxSurah: 114,
+    minVerse: 0,
+    maxVerse: 286,
+    maximumVerse: 286,
+    isLimited: false,
+    isSkip: false,
+    round: 1,
+    currentRound: 0,
+    activeLive: false,
+    lives: 1,
+    showScore: false,
+    allPReady: false,
+  });
+  
+
+  const setAllLive = (nbLives) => {
+    setLives(setGame,nbLives);
+
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      lives:nbLives
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+  const setAllActiveLive = (showA) => {
+    setActiveLive(setGame,showA);
+
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      showLives: showA,
+      lives:game.lives
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+  //Score
+  const setAllShowScore = (showS) => {
+    setShowScore(setGame,showS);
+
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      showScore: showS,
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+  
+  const resetScore = () =>{    
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      score: 0,
+      streak: 0
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+  
+
+  const setNotReady = () => {
+
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      gameState: 'not ready',
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+
+
+  
+
 
   const checkPlayers = () => {
     let allReady = true;
     players.forEach(player => {
-        if( ! player.isReady()) {
+        if( ! (player.gameState === 'ready' ||  player.gameState === 'next' ) ) {
           allReady =  false;
         }
     });
@@ -135,79 +338,81 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const isPlayersLost = () => {
     let allLost = true;
     players.forEach(player => {
-        if( player.isAlive()) {
+        if( !player.showLives || player.lives > 0) {
           allLost =  false;
         }
     });
     return allLost;
   }
-  const checkGuessAllPlayers = async () => {
-    if((!isLimited || currentRound  <= round) && (! isPlayersLost())){
-      const allReady = checkPlayers();
-      setallPReady(allReady);
-      if(allReady){
-        let fail = false;
-        players.forEach(player => {
-          if(player.gameState !== 'next'){
-            fail = checkGuess(player);
-          }
-          else{
-            fail = true;
-            player.setLives(player.lives -1);
-            player.setStreak(0);
-          }
+  const checkGuessAllPlayers = () => {
+    if(players[0].isHost){
+      if((!game.isLimited || game.currentRound  <= game.round) && (! isPlayersLost())){
+        const allReady = checkPlayers();
+        //setAllPReady(setGame,allReady);
 
-          if(!fail){
-            player.setLives(player.lives -1);
+        if(allReady){
+          let fail = false;
+          sendGameMessage({ content: 'update Players', action: 'CORRECT', type: 'PLAYER', value:{surah:game.confirmedChapter,verse:game.confirmedVerse} });
+          //correctAll(game.confirmedChapter,game.confirmedVerse);
+          let endResult :any[] = [];
+          players.forEach(player => {
+            if(player.gameState !== 'next'){
+              fail = checkGuess(player);
+              if(fail){
+                endResult.push({state:"win",player});
+              }
+              else {
+                endResult.push({state:"lose",player});
+              }
+            }
+            else{
+              endResult.push({state:"next",player});
+              fail = true;
+              //sendGameMessage({ content: 'update Player', action: 'NEXT', type: 'PLAYER', value:{player} });
+              //next(players,setPlayers, player);
+
+            }
+          });
+          
+          console.log("Test Everything Read");
+          sendGameMessage({ content: 'update ALL Players State', action: 'ENDROUND', type: 'GAME', value:endResult});
+          sendGameMessage({ content: 'update Players State', action: 'READY', type: 'GAME', value:allReady});
+          if(game.isSkip || fail){
+            playNext(game.currentRound);
           }
-          player.correct(confirmedChapter,confirmedVerse);
-        });
-        if(isSkip || fail){
-          await playNext(currentRound);
+          setTimeout(() => { handleEndofRound(); }, 1000); 
         }
+        else{
+          console.log("Test Everything Failed");
+          sendGameMessage({ content: 'update Players State', action: 'READY', type: 'GAME', value:allReady});
+
+        }
+        
+      }
+      else {
         setTimeout(() => { handleEndofRound(); }, 1000); 
       }
-      
-    }
-    else {
-      setTimeout(() => { handleEndofRound(); }, 1000); 
     }
   }
   const checkGuess = (player:Player) => {
-    const found = checkChoice(player.guessChapter,player.guessVerse);
-    if(found){
-      player.success();
-    }
-    else{
-      player.fail();
-    }
+    const found = checkChoice(game,player.guessChapter,player.guessVerse);
     return found;
   }
 
   const newSurah = (curRound: number) => {
-    if(isLimited){
-      setCurrentRound(curRound+1);
+    if( (!game.isLimited || curRound + 1 < game.round) &&  (! isPlayersLost()) ){
+      const randomChap = getRandomChapterNumber(game,chapters);
+      const {verse,maxtemp } = getRandomVerseNumber(game,chapters,randomChap);
+      sendGameMessage({ content: 'Game Play', action: 'NEWSURAH', type: 'GAME', value:{randomChap,verse,maxtemp} });
+      sendGameMessage({ content: 'Audio Fetch', action: 'AUDIOFETCH', type: 'AUDIO', value:{surah:randomChap,verse:verse} });
     }
-    if( (!isLimited || curRound < round) &&  (! isPlayersLost()) ){
-      const randomChap = getRandomChapterNumber();
-      const randomVerse = getRandomVerseNumber(randomChap);
-      setConfirmedChapter(randomChap);
-      setConfirmedVerse(randomVerse);
-      return [randomChap,randomVerse];
+    if(game.isLimited){
+      sendGameMessage({ content: 'Game Play', action: 'SETROUND', type: 'GAME', value:curRound+1 });
     }
-    else {
-      return [-1,-1];
-    }
-    
   }
 
-  const playNext = async (curRound: number) => { 
+  const playNext = (curRound: number) => { 
     const rand = newSurah(curRound); // Attendre le chargement du fichier audio  
-    if(rand[0] !== -1){
-      await audioSection.fetchAudioFile(rand[0], rand[1]);
-
-    }
-
   }
 
 
@@ -216,10 +421,9 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   const [showEnd, setShowEnd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const audioSection = new AudioSection({ numberOfAyat, maximumVerse,confirmedVerse, showInput});
+  const audioSection = new AudioSection({ numberOfAyat: game.numberOfAyat, maximumVerse: game.maximumVerse,confirmedVerse: game.confirmedVerse, showInput});
   
-  const [allPReady, setallPReady] = useState(false);
-  let players = [new Player({name:"Me",}),new Player({name:"Other",})];
+
   /*
   new LocalPlayer({
     name:playerHostName,
@@ -236,11 +440,11 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
   */
 
   const handleEndofRound = () => {
-    if((isLimited && currentRound >= round) || (isPlayersLost())){
-      setCurrentRound(0);
+    if((game.isLimited && game.currentRound >= game.round) || (isPlayersLost())){
+      setCurrentRound(setGame,0);
       setNotReady();
       resetScore();
-      setAllLive(lives);
+      setAllLive(game.lives);
       setShowEnd(true);
       setShowInput(false);
     }
@@ -248,9 +452,8 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
 
 
   const handleStartClick = async () => {
-    setShowInput(true);
-    setShowEnd(false);
-    await playNext(0);
+    sendGameMessage({ content: 'Start THE GAME', action: 'START', type: 'GAME'});
+    playNext(0);
   };  
 
   const handleSaveSettings = () => {
@@ -258,12 +461,153 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
     setShowSettings(false);
   };
 
-  const resetScore = () =>{
-    players.forEach(player => {
-      player.resetScore();
-    });
+  const recvGameSettingMessage = (message) => {
+    const { action, value } =  message;
+    recvGameSettingMSG(message,setGame);
+    switch (action) {
+      case "setShowScore":
+        setAllShowScore(value);
+        break;
+      case "setActiveLive":
+        setAllActiveLive(value);
+        break;
+      case "setLives":
+        setAllLive(value);
+        break;
+      case "resetScore":
+        resetScore();
+        break;
+      default:
+        break;
+    }
   }
 
+  const handleEndRound = (value) => {
+    const updatedPlayers = [...players];
+    value.forEach(element => {
+      const {state, player} = element;
+      const playerIndex = players.findIndex(otherPlayer => otherPlayer.playerName === player.playerName);
+      console.log(playerIndex, " - ", player.playerName);
+      if (playerIndex !== -1) {
+        const updatedPlayer = { ...players[playerIndex] };
+        switch(state){
+          case "win":
+            updatedPlayer.ready = false ;
+            updatedPlayer.gameState = 'win';
+            updatedPlayer.score = updatedPlayer.score +1;
+            updatedPlayer.streak = updatedPlayer.streak+1;
+            break;
+          case "lose":
+            updatedPlayer.ready = false ;
+            updatedPlayer.gameState = 'lose';
+            updatedPlayer.streak = 0;
+            updatedPlayer.lives = updatedPlayer.lives -1;
+            break;
+          case "next":
+            updatedPlayer.ready = false ;
+            updatedPlayer.gameState = 'next';
+            updatedPlayer.streak = 0;
+            updatedPlayer.lives = updatedPlayer.lives -1;
+            break;
+          default:
+            break;
+        }
+        updatedPlayers[playerIndex] = updatedPlayer;
+      }
+    });
+    console.log("VALUE ", value);
+    console.log(updatedPlayers);
+    setPlayers(updatedPlayers);
+  }
+  const recvGameMessage = (message) => {
+    const { action, value } =  message;
+    switch (action) {
+      case "checkGuessPlayer":
+        checkGuessAllPlayers();
+        break;
+        
+      case "NEWSURAH":
+        const {randomChap,verse,maxtemp} = value;
+        setMaximumVerse(setGame,maxtemp);
+        setConfirmedChapter(setGame,randomChap);
+        setConfirmedVerse(setGame,verse);
+        break;
+      case "SETROUND":
+        setCurrentRound(setGame,value);
+        break;
+      case "READY":
+        setAllPReady(setGame,value);
+        break;
+      case "ENDROUND":
+        handleEndRound(value);
+        break;
+      case "START":
+        setShowInput(true);
+        setShowEnd(false);
+        break;
+      default:
+        break;
+    }
+  }
+  
+const correctAll = (surah,verse) => {  
+  // Utiliser map pour créer une nouvelle liste de joueurs avec les mises à jour appliquées à chaque joueur
+  setPreviousChapter(setGame,surah);
+  setPreviousVerse(setGame,verse);
+
+}
+
+  const recvPlayerMessage = (message) => {
+    const { action, value } =  message;
+    switch (action) {
+      case "NEW":
+        setPlayers(prevPlayers => [...prevPlayers, {...value}]);
+        break;
+      case "makeGuess":
+        // Traitement pour makeGuess
+        makeGuess(players,setPlayers, value.player,value.surah,value.verse);
+        break;
+      case "setGuessChapter":
+        // Traitement pour setGuessChapter
+        setGuessChapter(players,setPlayers, value.player,value.surah);
+        break;
+      case "setGuessVerse":
+        setGuessVerse(players,setPlayers, value.player,value.verse);
+        // Traitement pour setGuessVerse
+        break;
+      case "setGameState":
+        setGameState(players,setPlayers, value.player,value.state);
+        break;
+      case "CORRECT":
+        correctAll(value.surah,value.verse);
+      default:
+        break;
+    }
+  }
+  
+  const recvAudioMessage = async (message) => {
+    const { action, value } =  message;
+    switch (action) {
+      case "AUDIOFETCH":
+        const {surah,verse} = value;
+        await audioSection.fetchAudioFile(surah, verse);
+        break;
+
+    default:
+      break;
+  }
+}
+  const sendGameMessage = async (message) => {
+    if(mode === "Online"){
+      socket.emit("sendMessage", { message});
+    }
+    else {
+      console.log("SEND - ",message);
+      setMessages((messages) => [...messages, {user:"LOCAL", text:message}]);
+      setLastMessages(message);
+      //parseMessage(message);
+    }
+  }
 
 
   useEffect(() => {
@@ -275,13 +619,38 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
 
   return (
     <div>
+    {mode === "Online" && (
+        <div>
+          <div className="chat-container" ref={chatContainerRef}>
+            <div className="chat-messages">
+          {messages.map((val, i) => {
+            return (
+            <div className={"message " + (val.user === name ? 'user-message' : 'other-message')} key={i}>
+                <div className="message-user">{val.user} :  </div>
+                <div className="message-text"> {val.text.content}</div>
+            </div>
+            );
+          })}
+          </div>
+          </div>
+          <form action="" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <input type="submit" />
+          </form>
+          <IonButton onClick={sendScan} >SCAN</IonButton>
+        </div>
+      )}
 
       
       {showInput && (
         <div>
-        {isLimited && (
+        {game.isLimited && (
           <>
-          <label> {currentRound}/{round} </label> 
+          <label> {game.currentRound}/{game.round} </label> 
           <br></br>
           </>
         )}
@@ -289,25 +658,42 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
 
         <div className='player-container'>
         {
-        players.map((player, index) => (
-          <div className='control-container' key={index}>
-          <React.Fragment key={index}>
-            <InputGame
-            replayAudio={audioSection.replayAudio}
-            chapters={chapters}
-            minSurah={minSurah}
-            maxSurah={maxSurah}
-            askVerse={askVerse}
-            maxVerse={maxVerse}
-            minVerse={minVerse}
-            allReady={allPReady}
-            checkGuessPlayer={checkGuessAllPlayers }
-            player={player}
-            />
-          {player.render()}
-          </React.Fragment>
-          </div>
-        ))
+          players.map((player, index) => (
+            <div className='control-container' key={index}>
+              <InputGame
+              replayAudio={audioSection.replayAudio}
+              chapters={chapters}
+              minSurah={game.minSurah}
+              maxSurah={game.maxSurah}
+              askVerse={game.askVerse}
+              maxVerse={game.maxVerse}
+              minVerse={game.minVerse}
+              allReady={game.allPReady}
+              correctChapter={game.previousChapter}
+              correctVerse={game.previousVerse}
+              sendGameMessage={sendGameMessage}
+              player={player}
+              />
+            
+              <div className='player'>
+              <p>Player : {player.playerName}</p>
+              <p>{player.gameState}</p>
+              { player.showScore && (
+                  <>
+                <p>Score: {player.score}</p>
+                <p>Streak: {player.streak}</p>
+                </>
+              )
+              }
+              { player.showLives && (
+                  <>
+                <p>Lives: {player.lives}</p>
+                </>
+              )
+              }
+              </div>
+            </div>
+          ))
         }
         </div>
 
@@ -318,47 +704,51 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters }) => {
       )}
 
       {!showInput && (
-        <button className="menu-button start"  onClick={handleStartClick}>Start</button>
+        <button className="menu-button start"  onClick={handleStartClick}>Start {mode}</button>
       )}
       <button className="menu-button settings"  onClick={() => setShowSettings(!showSettings)}>Settings</button>
       
       {showSettings && (
           <Settings
-          numberOfAyat={numberOfAyat}
-          minSurah={minSurah}
-          maxSurah={maxSurah}
-          minVerse={minVerse}
-          maxVerse={maxVerse}
+          numberOfAyat={game.numberOfAyat}
+          minSurah={game.minSurah}
+          maxSurah={game.maxSurah}
+          minVerse={game.minVerse}
+          maxVerse={game.maxVerse}
           chapters={chapters}
-          filterVerse={filterVerse}
-          askVerse={askVerse}
-          verseDistribustion={verseDistribustion}
+          filterVerse={game.filterVerse}
+          askVerse={game.askVerse}
+          verseDistribustion={game.verseDistribution}
           volume={audioSection.volume}
-          setNumberOfAyat={setNumberOfAyat}
-          setMinSurah={setMinSurah}
-          setMaxSurah={setMaxSurah}
-          setMinVerse={setMinVerse}
-          setMaxVerse={setMaxVerse}
-          setVerseDistribustion={setVerseDistribustion}
+          setNumberOfAyat={(value: number) => sendGameMessage({ content: 'update Game', action: 'setNumberOfAyat', type: 'GAMESETTING', value: value })}
+          setMinSurah={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMinSurah', type: 'GAMESETTING', value: value })}
+          setMaxSurah={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMaxSurah', type: 'GAMESETTING', value: value })}
+          setMinVerse={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMinVerse', type: 'GAMESETTING', value: value })}
+          setMaxVerse={(value: number) => sendGameMessage({ content: 'update Game', action: 'setMaxVerse', type: 'GAMESETTING', value: value })}
+          setVerseDistribustion={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setVerseDistribution', type: 'GAMESETTING', value: value })}
           setVolume={audioSection.setVolumeAudio}
           handleSaveSettings={handleSaveSettings}
-          setFilterVerse={setFilterVerse}
-          setAskVerse={setAskVerse}
-          resetscore={resetScore}
-          showScore={showScore}
-          setShowScore={setAllShowScore}
-          isLimited={isLimited}
-          setLimit={setLimit}
-          round={round}
-          setRound={setRound}
-          isSkip={isSkip}
-          setSkip={setSkip}
-          activeLive={activeLive}
-          setActiveLive={setAllActiveLive}
-          lives={lives}
-          setLives={setAllLive}
-          />
+          setFilterVerse={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setFilterVerse', type: 'GAMESETTING', value: value })}
+          setAskVerse={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setAskVerse', type: 'GAMESETTING', value: value })}
+          resetscore={ () => sendGameMessage({ content: 'update Game', action: 'resetScore', type: 'GAMESETTING'}) }
+          showScore={game.showScore}
+          setShowScore={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setShowScore', type: 'GAMESETTING', value: value })}
+          isLimited={game.isLimited}
+          setLimit={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setIsLimited', type: 'GAMESETTING', value: value })}
+          round={game.round}
+          setRound={(value: number) => sendGameMessage({ content: 'update Game', action: 'setRound', type: 'GAMESETTING', value: value })}
+          isSkip={game.isSkip}
+          setSkip={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setIsSkip', type: 'GAMESETTING', value: value })}
+          activeLive={game.activeLive}
+          setActiveLive={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setActiveLive', type: 'GAMESETTING', value: value })}
+          lives={game.lives}
+          setLives={(value: boolean) => sendGameMessage({ content: 'update Game', action: 'setLives', type: 'GAMESETTING', value: value })}
+        />
       )}
+
+      
+
+
     </div>
   );
 };
