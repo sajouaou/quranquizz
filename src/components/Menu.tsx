@@ -46,6 +46,7 @@ const Menu: React.FC = () => {
 
     const [name, setName] = useState("");
     const [room, setRoom] = useState(""); // State to hold the room's name
+    const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
     const [isConnected, setIsConnected] = useState(false);
 
     
@@ -98,6 +99,9 @@ const Menu: React.FC = () => {
     const handleRoomNameChange = (event) => {
         setRoom(event.target.value); // Update roomName state when input changes
     };
+    const handleServerChange = (e) => {
+      setENDPOINT(e.target.value);
+    }
 
     const handleJoin = () => {
       setIsConnected(true);
@@ -130,6 +134,12 @@ const Menu: React.FC = () => {
                     value={name}
                     onChange={handleNameChange}
                 />
+                <input
+                type="text"
+                placeholder="Enter address of Server"
+                value={ENDPOINT}
+                onChange={handleServerChange}
+            />
                   <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
                 
                 
@@ -137,7 +147,7 @@ const Menu: React.FC = () => {
           )}
           
           { isConnected  && (
-              <ExploreContainer  mode={state} chapters={chapters}  location={{search: `?name=${name}&room=${room}`}} />) }
+              <ExploreContainer  mode={state} chapters={chapters}  location={{search:{name,room,ENDPOINT} }} />) }
 
             </>
         }

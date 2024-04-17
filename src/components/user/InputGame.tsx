@@ -14,6 +14,7 @@ const InputGame = ({
   correctChapter,
   correctVerse,
   sendGameMessage,
+  checkGuessAllPlayers,
   player
 }) => {
     
@@ -21,6 +22,10 @@ const InputGame = ({
   const [showFailureAnimation, setShowFailureAnimation] = useState(false);
   const [showNextAnimation, setShowNextAnimation] = useState(false);
 
+
+  useEffect(() => {
+    checkGuessAllPlayers();
+  }, [player.gameState]);
 
   useEffect(() => {
     if (allReady ) {
@@ -40,11 +45,6 @@ const InputGame = ({
     }
   }, [allReady]);
 
-  //TODO : Faire le check si  tt le monde est  ready  chez l'host en local  avec l'état ready  et  pas avec les reponses
-  //        + executer que si  le player est  l'host
-  useEffect(() => {
-    sendGameMessage({ content: 'Checking the answers of all players', action: 'checkGuessPlayer', type: 'GAME' });
-  }, [player.gameState]);
     
     
   const handleSuccess = async () => {
