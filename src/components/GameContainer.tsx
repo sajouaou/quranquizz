@@ -21,6 +21,7 @@ import Chat from './client/GameClient';
 
 import "./GameClient.css";
 import './GameContainer.css';
+import EndScreen from './game/EndScreen';
 
 interface ContainerProps 
 {
@@ -499,6 +500,8 @@ const recvWelcomeMessage = (message: { users: any[]; }) => {
         </div>
       
       )}
+
+      {showEnd && <EndScreen players={players} />}
 
       {!showInput && (
         <button className="menu-button start"  onClick={handleStartClick}>Start {mode}</button>
