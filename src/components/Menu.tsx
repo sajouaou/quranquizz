@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import './Menu.css';
 import ExploreContainer from '../components/ExploreContainer';
-import GameClient from './client/GameClient';
-import { Link } from 'react-router-dom';
 import { IonButton } from '@ionic/react';
-import Chat from './client/GameClient';
+import './Menu.css';
+import "./client/GameClient.css"
 
 interface MenuItem {
   label: string;
