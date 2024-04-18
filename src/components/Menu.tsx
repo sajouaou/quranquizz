@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './Menu.css';
-import ExploreContainer from '../components/ExploreContainer';
+import ExploreContainer from './GameContainer';
 import { IonButton } from '@ionic/react';
 import { Chapter } from './game/Game';
 
@@ -36,7 +36,11 @@ const Menu: React.FC = () => {
 
     const [name, setName] = useState("");
     const [room, setRoom] = useState(""); // State to hold the room's name
+    //const [ENDPOINT, setENDPOINT] = useState("http://localhost:5000");
     const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
+    
+    //const [ENDPOINT, setENDPOINT] = useState("https://socketio-chat-h9jt.herokuapp.com");
+    
     const [isConnected, setIsConnected] = useState(false);
 
     

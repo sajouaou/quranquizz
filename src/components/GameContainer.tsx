@@ -20,7 +20,7 @@ import { DefaultEventsMap } from '@socket.io/component-emitter';
 import Chat from './client/GameClient';
 
 import "./GameClient.css";
-import './ExploreContainer.css';
+import './GameContainer.css';
 
 interface ContainerProps 
 {
@@ -45,39 +45,72 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   //////////////////////////////////
   const [name, setName] = useState("");
   const [room, setRoom] = useState("");
-  //const ENDPOINT = "http://localhost:5000";
-  //const ENDPOINT = "http://localhost:5000";
 
   useEffect(() => {
+    /*
     if(socket){
       socket.disconnect();
       socket = null;
     }
+    */
     if(mode === "Online" && (socket === null )){
-        console.log("TEST REAL 3 JOIN");
         const { name, room, ENDPOINT } = location.search;
-        console.log("TEST TEST PARSE ",location);
-        socket = io(ENDPOINT);
-        console.log("IO ENDPOINT");
+        socket = io(ENDPOINT, {
+          // WARNING: in that case, there is no fallback to long-polling
+          transports: [ "websocket", "polling" ] // or [ "websocket", "polling" ] (the order matters)
+        });
+        console.log("IO ENDPOINT - ",ENDPOINT);
         setRoom(room);
         setName(name);
         const updatedPlayers = [...players]; // Créer une copie du tableau players
         updatedPlayers[0].playerName = name; // Modifier la copie du tableau
         setPlayers(updatedPlayers); // Mettre à jour l'état avec la 
-    
-        console.log("IO BEFOR EMIT JOIN");
+
         socket.emit("join", { name, room, player:updatedPlayers[0] }, (error: any) => {
           if (error) {
             alert(error);
           }
         });
-
-        console.log("IO BEFOR EMIT MESSAGE");
         socket.on("message", (message) => {
             setMessages((prevMessages) => [...prevMessages, message]);
             setLastMessages(message.text);
         });
-        console.log("IO AFTER EMIT MESSAGE");
+        
+        console.log(socket.connect());
+        socket.emit('add user', "YoloTest");
+        // tell server to execute 'new message' and send along one parameter
+        socket.emit('new message', "Yooo");
+
+      socket.on('typing', (data) => {
+        console.log("Yess");
+      });
+      // Whenever the server emits 'new message', update the chat body
+      socket.on('new message', (data) => {
+        console.log(data);
+      });
+      
+      // Whenever the server emits 'login', log the login message
+      socket.on('login', (data) => {
+        // Display the welcome message
+        var message = "Welcome to Socket.IO Chat – ";
+        console.log(data);
+      });
+      // Événement de connexion
+      socket.on("connect", () => {
+          console.log("Connecté au serveur Socket.IO");
+      });
+      
+      // Événement de déconnexion
+      socket.on("disconnect", () => {
+          console.log("Déconnecté du serveur Socket.IO");
+      });
+      
+      // Événement d'erreur
+      socket.on("error", (error) => {
+          console.error("Erreur de connexion au serveur Socket.IO:", error);
+      });
+    
+      console.log(socket);
     }
   }, [location.search]);
   

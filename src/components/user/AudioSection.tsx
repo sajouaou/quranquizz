@@ -11,7 +11,7 @@ class AudioSection extends Component<AudioSectionProps> {
   [x: string]: any;
   constructor(props:any) {
     super(props);
-    [this.volume, this.setVolume] = useState(0);
+    [this.volume, this.setVolume] = useState(0.3);
     [this.data, this.setData] = useState<Promise<any>>();
     [this.ayat, this.setAyat] = useState<number>(0);
     [this.audioFile, this.setAudioFile] = useState<string | null>(null);
