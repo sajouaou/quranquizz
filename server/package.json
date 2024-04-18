@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "server": "nodemon server",
+    "start": "node server.js --output public",
+    "server": "nodemon server --output public",
     "setup": "npm i && cd react-chat-app && npm i",
     "dev": "concurrently \"npm run server\" \"cd react-chat-app && npm start\""
   },
