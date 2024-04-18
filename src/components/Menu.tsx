@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ExploreContainer from '../components/ExploreContainer';
 import { IonButton } from '@ionic/react';
 import './Menu.css';
-import "../components/client/GameClient.css"
+import "./GameClient.css"
 
 interface MenuItem {
   label: string;
