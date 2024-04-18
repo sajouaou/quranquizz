@@ -53,7 +53,7 @@ io.on("connection", (socket) => {
      if(user !== undefined){
        io.to(user.room).emit("message", {
          user: "Admin",
-         text: {content:`${user.name} just left the room`,type:"CHAT"} ,
+         text: {content:`${user.name} just left the room`,type:"PLAYER",action:"REMOVE" ,value:user.player} ,
        });
        console.log("A disconnection has been made");
      }
