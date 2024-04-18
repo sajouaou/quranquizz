@@ -6,7 +6,7 @@ import InputGame from './user/InputGame'; // Import the InputGame component
 import AudioSection from './user/AudioSection'; // Import the InputGame component
 
 import io, { Socket } from "socket.io-client";
-import "./client/GameClient.css"
+import "./GameClient.css"
 import { IonButton } from "@ionic/react";
 
 import { 
