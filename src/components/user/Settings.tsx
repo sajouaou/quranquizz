@@ -1,6 +1,42 @@
 import React from 'react';
 
-const Settings = ({
+interface SettingsProps {
+  numberOfAyat: number;
+  minSurah: number;
+  maxSurah: number;
+  minVerse: number;
+  maxVerse: number;
+  verseDistribustion: any; // Remplacez 'any' par le type correct si possible
+  chapters: any[]; // Remplacez 'any[]' par le type correct si possible
+  filterVerse: any; // Remplacez 'any' par le type correct si possible
+  askVerse: boolean;
+  volume: number;
+  setNumberOfAyat: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  setMinSurah: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  setMaxSurah: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  setMinVerse: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  setMaxVerse: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  setVerseDistribustion: (value: any) => void; // Remplacez '(value: any) => void' par la signature correcte de la fonction si nécessaire
+  setVolume: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  handleSaveSettings: () => void; // Remplacez '() => void' par la signature correcte de la fonction si nécessaire
+  setFilterVerse: (value: any) => void; // Remplacez '(value: any) => void' par la signature correcte de la fonction si nécessaire
+  setAskVerse: (value: boolean) => void; // Remplacez '(value: boolean) => void' par la signature correcte de la fonction si nécessaire
+  resetscore: () => void; // Remplacez '() => void' par la signature correcte de la fonction si nécessaire
+  showScore: boolean;
+  setShowScore: (value: boolean) => void; // Remplacez '(value: boolean) => void' par la signature correcte de la fonction si nécessaire
+  isLimited: boolean;
+  setLimit: (value: boolean) => void; // Remplacez '(value: boolean) => void' par la signature correcte de la fonction si nécessaire
+  round: number;
+  setRound: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+  isSkip: boolean;
+  setSkip: (value: boolean) => void; // Remplacez '(value: boolean) => void' par la signature correcte de la fonction si nécessaire
+  activeLive: boolean;
+  setActiveLive: (value: boolean) => void; // Remplacez '(value: boolean) => void' par la signature correcte de la fonction si nécessaire
+  lives: number;
+  setLives: (value: number) => void; // Remplacez '(value: number) => void' par la signature correcte de la fonction si nécessaire
+}
+
+const Settings: React.FC<SettingsProps> = ({
   numberOfAyat,
   minSurah,
   maxSurah,

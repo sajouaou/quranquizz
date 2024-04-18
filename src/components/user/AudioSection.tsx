@@ -1,8 +1,15 @@
 import React, { Component, useState } from 'react';
 
-class AudioSection extends Component {
+interface AudioSectionProps {
+  numberOfAyat: number;
+  maximumVerse: number;
+  confirmedVerse: string; // Ajoutez confirmedVerse au type de props
+}
+
+
+class AudioSection extends Component<AudioSectionProps> {
   [x: string]: any;
-  constructor(props) {
+  constructor(props:any) {
     super(props);
     [this.volume, this.setVolume] = useState(0);
     [this.data, this.setData] = useState<Promise<any>>();
@@ -60,7 +67,7 @@ class AudioSection extends Component {
     this.playAudio();
   };
 
-  setVolumeAudio = (vol) => {
+  setVolumeAudio = (vol:number) => {
     this.setVolume(vol);
     if (this.audioRef.current) {
       this.audioRef.current.volume = vol;

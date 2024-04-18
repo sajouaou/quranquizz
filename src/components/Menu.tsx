@@ -92,14 +92,14 @@ const Menu: React.FC = () => {
     { label: '/////', action: handleOption3Click },
   ];
 
-    const handleNameChange = (event) => {
+    const handleNameChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setName(event.target.value);
     };
     
-    const handleRoomNameChange = (event) => {
+    const handleRoomNameChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setRoom(event.target.value); // Update roomName state when input changes
     };
-    const handleServerChange = (e) => {
+    const handleServerChange = (e: { target: { value: React.SetStateAction<string>; }; }) => {
       setENDPOINT(e.target.value);
     }
 

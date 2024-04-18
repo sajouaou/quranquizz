@@ -96,7 +96,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   //////////////////////////////////
   const [name, setName] = useState("");
   const [room, setRoom] = useState("");
-  const chatContainerRef = useRef(null);
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
   //const ENDPOINT = "http://localhost:5000";
   //const ENDPOINT = "http://localhost:5000";
 
@@ -134,23 +134,25 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     }
   }, [location.search]);
   
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    if (message) {
+    if (message && socket) {
       socket.emit("sendMessage", { message :{ content :message, type:"CHAT"}});
       setMessage("");
     } else alert("empty input");
   };
-  const sendScan = (e) => {
+  const sendScan = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    socket.emit("sendMessage", { message :{ content :"SCAN", type:"GAME"}});
+    if(socket){
+      socket.emit("sendMessage", { message :{ content :"SCAN", type:"GAME"}});
+    }
   };
   
-  const sendGameMessage = async (message) => {
-    if(mode === "Online"){
+  const sendGameMessage = async (message: any) => {
+    if(mode === "Online" && socket){
       socket.emit("sendMessage", { message});
     }
-    else {
+    else if(mode !== "Online"){
       console.log("SEND - ",message);
       setMessages((messages) => [...messages, {user:"LOCAL", text:message}]);
       setLastMessages(message);
@@ -202,14 +204,14 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     scrollToBottom();
 
     function scrollToBottom() {
-      if (chatContainerRef.current !== null) {
+      if (chatContainerRef.current !== null ) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight ;
       }
     }
   }, [messages,showChat]);
 
   
-  const  parseMessage = (message) => {
+  const  parseMessage = (message: any) => {
     //console.log("PARSE MESSAGE - " ,message);
     if (message.type === "CHAT") {
       //setMessages((messages) => [...messages, message]);
@@ -223,7 +225,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         setPlayers(updatedPlayers);
       }
       else {
-        message.users.forEach((x) => {
+        message.users.forEach((x: { player: { playerName: string; guessChapter: number; isHost: boolean; guessVerse: number; streak: number; ready: boolean; gameState: string; found: boolean; correctChapter: number; correctVerse: number; showScore: boolean; score: number; showLives: boolean; lives: number; }; }) => {
           console.log(x);
           setPlayers(prevPlayers => [...prevPlayers, { ...x.player }]);
         });
@@ -249,7 +251,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     }
   }
 
-  const recvGameSettingMessage = (message) => {
+  const recvGameSettingMessage = (message: any) => {
     const { action, value } =  message;
     recvGameSettingMSG(message,setGame);
     switch (action) {
@@ -270,7 +272,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     }
   }
   
-  const recvGameMessage = (message) => {
+  const recvGameMessage = (message: any) => {
     const { action, value } =  message;
     switch (action) {
       case "NEWSURAH":
@@ -299,7 +301,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         break;
     }
   }
-  const recvPlayerMessage = (message) => {
+  const recvPlayerMessage = (message:any) => {
     const { action, value } =  message;
     switch (action) {
       case "NEW":
@@ -327,7 +329,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     }
   }
   
-  const recvAudioMessage = async (message) => {
+  const recvAudioMessage = async (message: { action: any; value: any; }) => {
     const { action, value } =  message;
     switch (action) {
       case "AUDIOFETCH":
@@ -391,7 +393,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   }]);
 
 
-  const setAllLive = (nbLives) => {
+  const setAllLive = (nbLives: number) => {
     setLives(setGame,nbLives);
 
     const updatedPlayers = players.map(player => ({
@@ -401,7 +403,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
     setPlayers(updatedPlayers);
   }
-  const setAllActiveLive = (showA) => {
+  const setAllActiveLive = (showA: boolean) => {
     setActiveLive(setGame,showA);
 
     const updatedPlayers = players.map(player => ({
@@ -413,7 +415,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     setPlayers(updatedPlayers);
   }
   //Score
-  const setAllShowScore = (showS) => {
+  const setAllShowScore = (showS: boolean) => {
     setShowScore(setGame,showS);
 
     const updatedPlayers = players.map(player => ({
@@ -513,9 +515,9 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     }
   }
   
-  const handleEndRound = (value) => {
+  const handleEndRound = (value: any[]) => {
     const updatedPlayers = [...players];
-    value.forEach(element => {
+    value.forEach((element: { state: any; player: any; }) => {
       const {state, player} = element;
       const playerIndex = players.findIndex(otherPlayer => otherPlayer.playerName === player.playerName);
       console.log(playerIndex, " - ", player.playerName);
@@ -554,7 +556,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     return found;
   }
   
-  const correctAll = (surah,verse) => {  
+  const correctAll = (surah: number | null,verse: number) => {  
     // Utiliser map pour créer une nouvelle liste de joueurs avec les mises à jour appliquées à chaque joueur
     setPreviousChapter(setGame,surah);
     setPreviousVerse(setGame,verse);
@@ -759,7 +761,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
           activeLive={game.activeLive}
           setActiveLive={(value: boolean) => sendGameMessage({ content: 'The survival mode is ' + (value ? 'enabled' : 'disabled'), action: 'setActiveLive', type: 'GAMESETTING', value: value })}
           lives={game.lives}
-          setLives={(value: boolean) => sendGameMessage({ content: `The number of lives is set to ${value}`, action: 'setLives', type: 'GAMESETTING', value: value })}
+          setLives={(value: number) => sendGameMessage({ content: `The number of lives is set to ${value}`, action: 'setLives', type: 'GAMESETTING', value: value })}
         />
       )}
 

@@ -1,7 +1,24 @@
 import { play } from 'ionicons/icons';
 import React, { useState, useEffect } from 'react';
 
-const InputGame = ({
+interface InputGameProps {
+  replayAudio: any; // Remplacez 'any' par le type correct si possible
+  isPlayer: boolean;
+  chapters: any[]; // Remplacez 'any[]' par le type correct si possible
+  minSurah: number;
+  maxSurah: number;
+  maxVerse: number;
+  minVerse: number;
+  askVerse: boolean;
+  allReady: boolean;
+  correctChapter: number | null;
+  correctVerse: number;
+  sendGameMessage: (message: any) => void; // Remplacez '(message: string) => void' par la signature correcte de la fonction si nécessaire
+  checkGuessAllPlayers: () => void; // Remplacez '() => void' par la signature correcte de la fonction si nécessaire
+  player: any; // Remplacez 'any' par le type correct si possible
+}
+
+const InputGame:React.FC<InputGameProps> = ({
   replayAudio,
   isPlayer,
   chapters,
