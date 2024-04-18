@@ -1,83 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Game from '../components/Game';
-import './ExploreContainer.css';
+import React, { useState, useEffect } from 'react';
 import Settings from './user/Settings';
 import InputGame from './user/InputGame'; // Import the InputGame component
 import AudioSection from './user/AudioSection'; // Import the InputGame component
 
 import io, { Socket } from "socket.io-client";
-import "./GameClient.css"
-import { IonButton } from "@ionic/react";
+
 
 import { 
+  Chapter,
+  GameProps,
   checkChoice, 
+  defaultGame, 
   getRandomChapterNumber, 
   getRandomVerseNumber, 
-  recvGameSettingMSG, 
-  setActiveLive, 
-  setAllPReady, 
-  setConfirmedChapter, 
-  setConfirmedVerse, 
-  setCurrentRound, 
-  setLives, 
-  setMaximumVerse, 
-  setPreviousChapter, 
-  setPreviousVerse, 
-  setShowScore } from './game/Game';
-import { faillure, makeGuess, next, setGameState, setGuessChapter, setGuessVerse, success } from './Player';
+  recvGameMSG, 
+  recvGameSettingMSG } from './game/Game';
+import { PlayerProps, checkPlayers, defaultPlayer, isPlayersLost, recvPlayerMSG } from './Player';
 import { DefaultEventsMap } from '@socket.io/component-emitter';
+import Chat from './client/GameClient';
+
+import "./GameClient.css";
+import './ExploreContainer.css';
 
 interface ContainerProps 
 {
   mode: string;
   chapters: Chapter[];
   location:any;
-}
-
-
-interface Chapter {
-  id: number;
-  name_simple: string;
-  verses_count: number;
-}
-
-interface Game {
-  confirmedChapter: number | null;
-  confirmedVerse: number;
-  previousChapter: number| null;
-  previousVerse: number;
-  askVerse: boolean;
-  filterVerse: boolean;
-  verseDistribution: boolean;
-  numberOfAyat: number;
-  minSurah: number;
-  maxSurah: number;
-  minVerse: number;
-  maxVerse: number;
-  maximumVerse: number;
-  isLimited: boolean;
-  isSkip: boolean;
-  round: number;
-  currentRound: number;
-  activeLive: boolean;
-  lives: number;
-  showScore: boolean;
-  allPReady: boolean;
-}
-
-interface Player {
-  playerName: string;
-  guessChapter: number;
-  isHost: boolean;
-  guessVerse: number;
-  streak: number;
-  ready: boolean;
-  gameState: string;
-  found: boolean;
-  showScore: boolean;
-  score: number;
-  showLives: boolean;
-  lives: number;
 }
 
 let socket: Socket<DefaultEventsMap, DefaultEventsMap> | null = null;
@@ -96,12 +45,10 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   //////////////////////////////////
   const [name, setName] = useState("");
   const [room, setRoom] = useState("");
-  const chatContainerRef = React.useRef<HTMLDivElement>(null);
   //const ENDPOINT = "http://localhost:5000";
   //const ENDPOINT = "http://localhost:5000";
 
   useEffect(() => {
-    console.log(socket);
     if(socket){
       socket.disconnect();
       socket = null;
@@ -198,102 +145,22 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
       setReadCursor(i);
     }
   }, [readCursor]);
-
-  useEffect(() => {
-    // Scroll to the bottom of the chat container whenever messages change
-    scrollToBottom();
-
-    function scrollToBottom() {
-      if (chatContainerRef.current !== null ) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight ;
-      }
-    }
-  }, [messages,showChat]);
-
-  
-  const  parseMessage = (message: any) => {
-    //console.log("PARSE MESSAGE - " ,message);
-    if (message.type === "CHAT") {
-      //setMessages((messages) => [...messages, message]);
-    }
-    else if (message.type === "WELCOME") {
-      if (message.users.length < 1) {
-        const updatedPlayer = { ...players[0] };
-        updatedPlayer.isHost = true;
-        const updatedPlayers = [...players];
-        updatedPlayers[0] = updatedPlayer;
-        setPlayers(updatedPlayers);
-      }
-      else {
-        message.users.forEach((x: { player: { playerName: string; guessChapter: number; isHost: boolean; guessVerse: number; streak: number; ready: boolean; gameState: string; found: boolean; correctChapter: number; correctVerse: number; showScore: boolean; score: number; showLives: boolean; lives: number; }; }) => {
-          console.log(x);
-          setPlayers(prevPlayers => [...prevPlayers, { ...x.player }]);
-        });
-      }
-    }
-    else {
-      switch (message.type) {
-        case "GAMESETTING":
-          recvGameSettingMessage(message);
-          break;
-        case "PLAYER":
-          recvPlayerMessage(message);
-          break;
-        case "GAME":
-          recvGameMessage(message);
-          break;
-        case "AUDIO":
-          recvAudioMessage(message);
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  const recvGameSettingMessage = (message: any) => {
-    const { action, value } =  message;
-    recvGameSettingMSG(message,setGame);
-    switch (action) {
-      case "setShowScore":
-        setAllShowScore(value);
-        break;
-      case "setActiveLive":
-        setAllActiveLive(value);
-        break;
-      case "setLives":
-        setAllLive(value);
-        break;
-      case "resetScore":
-        resetScore();
-        break;
-      default:
-        break;
-    }
-  }
-  
+    
   const recvGameMessage = (message: any) => {
     const { action, value } =  message;
+    recvGameMSG(message,setGame,setPlayers,players,game);
     switch (action) {
-      case "NEWSURAH":
-        const {randomChap,verse,maxtemp} = value;
-        setMaximumVerse(setGame,maxtemp);
-        setConfirmedChapter(setGame,randomChap);
-        setConfirmedVerse(setGame,verse);
-        break;
-      case "SETROUND":
-        setCurrentRound(setGame,value);
-        break;
-      case "handleEndofRound":
-        handleEndofRound();
-        break;
-      case "READY":
-        setAllPReady(setGame,value);
+      case "ENDGAME":
+        setShowEnd(true);
+        setShowInput(false);
         break;
       case "ENDROUND":
         handleEndRound(value);
         break;
       case "START":
+        if(players[0].isHost){
+          playNext(0);
+        }
         setShowInput(true);
         setShowEnd(false);
         break;
@@ -301,33 +168,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         break;
     }
   }
-  const recvPlayerMessage = (message:any) => {
-    const { action, value } =  message;
-    switch (action) {
-      case "NEW":
-        setPlayers(prevPlayers => [...prevPlayers, {...value}]);
-        break;
-      case "makeGuess":
-        // Traitement pour makeGuess
-        makeGuess(players,setPlayers, value.player,value.surah,value.verse);
-        break;
-      case "setGuessChapter":
-        // Traitement pour setGuessChapter
-        setGuessChapter(players,setPlayers, value.player,value.surah);
-        break;
-      case "setGuessVerse":
-        setGuessVerse(players,setPlayers, value.player,value.verse);
-        // Traitement pour setGuessVerse
-        break;
-      case "setGameState":
-        setGameState(players,setPlayers, value.player,value.state);
-        break;
-      case "CORRECT":
-        correctAll(value.surah,value.verse);
-      default:
-        break;
-    }
-  }
+
   
   const recvAudioMessage = async (message: { action: any; value: any; }) => {
     const { action, value } =  message;
@@ -342,6 +183,42 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   }
 }
 
+const recvChatMessage = (message: { users: any[]; }) => {
+    ; 
+}
+
+const recvWelcomeMessage = (message: { users: any[]; }) => {
+  const { users } =  message;
+  setPlayers([{...players[0], isHost:users.length < 1}, ...users.map(x => ({...x.player})) ]);
+}
+
+
+  const  parseMessage = (message: any) => {
+    switch (message.type) {
+      case "GAMESETTING":
+        recvGameSettingMSG(message,setGame,setPlayers,players,game);
+        break;
+      case "PLAYER":
+        recvPlayerMSG(message,players,setPlayers);
+        break;
+      case "GAME":
+        recvGameMessage(message);
+        break;
+      case "AUDIO":
+        recvAudioMessage(message);
+        break;
+      case "WELCOME":
+        recvWelcomeMessage(message);
+        break;
+      case "CHAT":
+        recvChatMessage(message);
+        break;
+      default:
+        break;
+    }
+  }
+
+
 
   
   //////////////////////////////
@@ -351,135 +228,41 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   //
   //
   //////////////////////////////////
-  const [game,setGame] = useState<Game>({
-    confirmedChapter: null,
-    confirmedVerse: 0,
-    previousChapter: null,
-    previousVerse: 0,
-    askVerse: false,
-    filterVerse: false,
-    verseDistribution: false,
-    numberOfAyat: 1,
-    minSurah: 1,
-    maxSurah: 114,
-    minVerse: 0,
-    maxVerse: 286,
-    maximumVerse: 286,
-    isLimited: false,
-    isSkip: false,
-    round: 1,
-    currentRound: 0,
-    activeLive: false,
-    lives: 1,
-    showScore: false,
-    allPReady: false,
-  });
+  const [game,setGame] = useState<GameProps>({...defaultGame});
+  const [players,setPlayers] = useState<PlayerProps[]>([{...defaultPlayer,isHost: mode !== "Online"}]);
+
   
-  const [players,setPlayers] = useState([{
-    playerName: "ME",
-    guessChapter: 1,
-    isHost: mode !== "Online",
-    guessVerse: 0,
-    streak: 0,
-    ready: false,
-    gameState: "not ready",
-    found: false,
-    correctChapter: -1,
-    correctVerse: -1,
-    showScore: false,
-    score: 0,
-    showLives: false,
-    lives: 1
-  }]);
+  useEffect(() => {
+    switch(mode){
+      case "Arcade":
+        setGame((prevState: any) => ({ ...prevState, 
+          round: 10,
+          showScore: true,
+          isLimited:true,
+          isSkip: true 
+        }));
+        break;
+      default:
+        break;
+    }
+  }, [mode]);
 
 
-  const setAllLive = (nbLives: number) => {
-    setLives(setGame,nbLives);
-
-    const updatedPlayers = players.map(player => ({
-      ...player,
-      lives:nbLives
-    }));
-    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
-    setPlayers(updatedPlayers);
-  }
-  const setAllActiveLive = (showA: boolean) => {
-    setActiveLive(setGame,showA);
-
-    const updatedPlayers = players.map(player => ({
-      ...player,
-      showLives: showA,
-      lives:game.lives
-    }));
-    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
-    setPlayers(updatedPlayers);
-  }
-  //Score
-  const setAllShowScore = (showS: boolean) => {
-    setShowScore(setGame,showS);
-
-    const updatedPlayers = players.map(player => ({
-      ...player,
-      showScore: showS,
-    }));
-    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
-    setPlayers(updatedPlayers);
-  }
-  
-  const resetScore = () =>{    
-    const updatedPlayers = players.map(player => ({
-      ...player,
-      score: 0,
-      streak: 0
-    }));
-    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
-    setPlayers(updatedPlayers);
-  }
-  
-
-  const setNotReady = () => {
-
-    const updatedPlayers = players.map(player => ({
-      ...player,
-      gameState: 'not ready',
-    }));
-    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
-    setPlayers(updatedPlayers);
-  }
-
-  const checkPlayers = () => {
-    let allReady = true;
-    players.forEach(player => {
-        if( ! (player.gameState === 'ready' ||  player.gameState === 'next' ) ) {
-          allReady =  false;
-        }
-    });
-    return allReady;
-  }
-  const isPlayersLost = () => {
-    let allLost = true;
-    players.forEach(player => {
-        if( !player.showLives || player.lives > 0) {
-          allLost =  false;
-        }
-    });
-    return allLost;
-  }
   const checkGuessAllPlayers = () => {
     if(players[0].isHost){
-      if((!game.isLimited || game.currentRound  <= game.round) && (! isPlayersLost())){
-        const allReady = checkPlayers();
-        //setAllPReady(setGame,allReady);
+      if((!game.isLimited || game.currentRound  <= game.round) && (! isPlayersLost(players))){
+        const allReady = checkPlayers(players);
 
         if(allReady){
           let fail = false;
-          sendGameMessage({ content: `The correct  answer was chapter : ${game.confirmedChapter} verse : ${game.confirmedVerse}`, action: 'CORRECT', type: 'PLAYER', value:{surah:game.confirmedChapter,verse:game.confirmedVerse} });
-          //correctAll(game.confirmedChapter,game.confirmedVerse);
+          let everyoneFail = true;
+          sendGameMessage({ content: `The correct  answer was chapter : ${game.confirmedChapter} verse : ${game.confirmedVerse}`, action: 'CORRECT', type: 'GAME', value:{surah:game.confirmedChapter,verse:game.confirmedVerse} });
           let endResult :any[] = [];
           players.forEach(player => {
             if(player.gameState !== 'next'){
-              fail = checkGuess(player);
+              fail = checkChoice(game,player.guessChapter,player.guessVerse);
               if(fail){
+                everyoneFail=false;
                 endResult.push({state:"win",player});
               }
               else {
@@ -487,20 +270,19 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
               }
             }
             else{
+              everyoneFail=false;
               endResult.push({state:"next",player});
               fail = true;
-              //next(players,setPlayers, player);
-
             }
           });
           
           console.log("Test Everything Read");
           sendGameMessage({ content: 'The round is finished', action: 'ENDROUND', type: 'GAME', value:endResult});
-          sendGameMessage({ content: 'Everyone is ready the next round will start', action: 'READY', type: 'GAME', value:allReady});
-          if(game.isSkip || fail){
+          sendGameMessage({ content: 'The next round will start', action: 'READY', type: 'GAME', value:allReady});
+          if(game.isSkip || ! everyoneFail){
             playNext(game.currentRound);
           }
-          setTimeout(() => { sendGameMessage({ content: 'Handle of the Round', action: 'handleEndofRound', type: 'GAME'});  }, 1000); 
+          setTimeout(() => { handleEndGame();    }, 1000); 
         }
         else{
           console.log("Test Everything Failed");
@@ -510,7 +292,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         
       }
       else {
-        setTimeout(() => { sendGameMessage({ content: 'Handle of the Round', action: 'handleEndofRound', type: 'GAME'});  }, 1000); 
+        setTimeout(() => { handleEndGame();  }, 1000); 
       }
     }
   }
@@ -520,7 +302,6 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     value.forEach((element: { state: any; player: any; }) => {
       const {state, player} = element;
       const playerIndex = players.findIndex(otherPlayer => otherPlayer.playerName === player.playerName);
-      console.log(playerIndex, " - ", player.playerName);
       if (playerIndex !== -1) {
         const updatedPlayer = { ...players[playerIndex] };
         switch(state){
@@ -551,20 +332,9 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     setPlayers(updatedPlayers);
   }
 
-  const checkGuess = (player:Player) => {
-    const found = checkChoice(game,player.guessChapter,player.guessVerse);
-    return found;
-  }
-  
-  const correctAll = (surah: number | null,verse: number) => {  
-    // Utiliser map pour créer une nouvelle liste de joueurs avec les mises à jour appliquées à chaque joueur
-    setPreviousChapter(setGame,surah);
-    setPreviousVerse(setGame,verse);
-  
-  }
 
   const newSurah = (curRound: number) => {
-    if( (!game.isLimited || curRound  < game.round) &&  (! isPlayersLost()) ){
+    if( (!game.isLimited || curRound  < game.round) &&  (! isPlayersLost(players)) ){
       const randomChap = getRandomChapterNumber(game,chapters);
       const {verse,maxtemp } = getRandomVerseNumber(game,chapters,randomChap);
       sendGameMessage({ content: 'New surah  selected', action: 'NEWSURAH', type: 'GAME', value:{randomChap,verse,maxtemp} });
@@ -579,30 +349,23 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
     const rand = newSurah(curRound); // Attendre le chargement du fichier audio  
   }
 
-  const handleEndofRound = () => {
-    if((game.isLimited && game.currentRound > game.round) || (isPlayersLost())){
-      setCurrentRound(setGame,0);
-      setNotReady();
-      resetScore();
-      setAllLive(game.lives);
-      setShowEnd(true);
-      setShowInput(false);
-    }
-  }
   //////////////////////////////
   //
   //
-  //  PLAYER CONTROL INTERFACE
+  //  START/END CONTROL 
   //
   //
   //////////////////////////////////
 
   const handleStartClick = async () => {
     sendGameMessage({ content: 'The game is starting', action: 'START', type: 'GAME'});
-    playNext(0);
   };  
 
-
+  const handleEndGame = () => {
+    if((game.isLimited && game.currentRound > game.round) || (isPlayersLost(players))){
+      sendGameMessage({ content: 'The game is finished', action: 'ENDGAME', type: 'GAME'});
+    }
+  }
 
   
   //////////////////////////////
@@ -616,6 +379,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   const [showInput, setShowInput] = useState(false);
   const [showEnd, setShowEnd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
 
   const handleSaveSettings = () => {
     // Enregistrez les paramètres
@@ -633,30 +397,15 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   return (
     <div>
     {mode === "Online" && showChat && (
-          <div className="chat-container" ref={chatContainerRef}>
-            <div className="chat-messages">
-          {messages.map((val, i) => {
-            return (
-            <div className={"message " + (val.user === name ? 'user-message' : 'other-message')} key={i}>
-                <div className="message-user">{val.user} :  </div>
-                <div className="message-text"> {val.text.content}</div>
-            </div>
-            );
-          })}
-        
-          <form action="" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <input type="submit" />
-          </form>
-          <IonButton onClick={sendScan} >SCAN</IonButton>
-          <IonButton onClick={() => {setShowChat(!showChat); }} >Close</IonButton>
-          </div>
-        </div>
-      )}
+          <Chat messages={messages}
+          name={name}
+          message={message}
+          showChat={showChat}
+          handleSubmit={handleSubmit}
+          setMessage={setMessage}
+          setShowChat={setShowChat}
+          sendScan={sendScan} />
+    )}
 
       
       {showInput && (
@@ -693,7 +442,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
               <div className='player'>
               <p>Player : {player.playerName}</p>
               <p>{player.gameState}</p>
-              { player.showScore && (
+              { game.showScore && (
                   <>
                 <p>Score: {player.score}</p>
                 <p>Streak: {player.streak}</p>
@@ -729,39 +478,228 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
       
       {showSettings && (
           <Settings
-          numberOfAyat={game.numberOfAyat}
-          minSurah={game.minSurah}
-          maxSurah={game.maxSurah}
-          minVerse={game.minVerse}
-          maxVerse={game.maxVerse}
-          chapters={chapters}
-          filterVerse={game.filterVerse}
-          askVerse={game.askVerse}
-          verseDistribustion={game.verseDistribution}
-          volume={audioSection.volume}
-          setNumberOfAyat={(value: number) => sendGameMessage({ content: `The number of ayat is set to ${value}`, action: 'setNumberOfAyat', type: 'GAMESETTING', value: value })}
-          setMinSurah={(value: number) => sendGameMessage({ content: `The minimum surah is set to ${value}`, action: 'setMinSurah', type: 'GAMESETTING', value: value })}
-          setMaxSurah={(value: number) => sendGameMessage({ content: `The maximum surah is set to ${value}`, action: 'setMaxSurah', type: 'GAMESETTING', value: value })}
-          setMinVerse={(value: number) => sendGameMessage({ content: `The minimum verse is set to ${value+1}`, action: 'setMinVerse', type: 'GAMESETTING', value: value })}
-          setMaxVerse={(value: number) => sendGameMessage({ content: `The maximum verse is set to ${value+1}`, action: 'setMaxVerse', type: 'GAMESETTING', value: value })}
-          setVerseDistribustion={(value: boolean) => sendGameMessage({ content: 'The verse ditribution is ' + (value ? 'enabled' : 'disabled'), action: 'setVerseDistribution', type: 'GAMESETTING', value: value })}
-          setVolume={audioSection.setVolumeAudio}
-          handleSaveSettings={handleSaveSettings}
-          setFilterVerse={(value: boolean) => sendGameMessage({ content: 'The verse filter is ' + (value ? 'enabled' : 'disabled'), action: 'setFilterVerse', type: 'GAMESETTING', value: value })}
-          setAskVerse={(value: boolean) => sendGameMessage({ content: 'Asking verse for the answer is '+ (value ? 'enabled' : 'disabled'), action: 'setAskVerse', type: 'GAMESETTING', value: value })}
-          resetscore={ () => sendGameMessage({ content: 'Scores are reset', action: 'resetScore', type: 'GAMESETTING'}) }
-          showScore={game.showScore}
-          setShowScore={(value: boolean) => sendGameMessage({ content: (value ? 'Scores are visible' : 'Scores are not visible'), action: 'setShowScore', type: 'GAMESETTING', value: value })}
-          isLimited={game.isLimited}
-          setLimit={(value: boolean) => sendGameMessage({ content: (value ? 'The game is limited in rounds' : 'The game is endless'), action: 'setIsLimited', type: 'GAMESETTING', value: value })}
-          round={game.round}
-          setRound={(value: number) => sendGameMessage({ content: `The number of rounds is set to  ${value}`, action: 'setRound', type: 'GAMESETTING', value: value })}
-          isSkip={game.isSkip}
-          setSkip={(value: boolean) => sendGameMessage({ content: 'Automatic skip if everyone has a wrong answer is ' + (value ? 'enabled' : 'disabled'), action: 'setIsSkip', type: 'GAMESETTING', value: value })}
-          activeLive={game.activeLive}
-          setActiveLive={(value: boolean) => sendGameMessage({ content: 'The survival mode is ' + (value ? 'enabled' : 'disabled'), action: 'setActiveLive', type: 'GAMESETTING', value: value })}
-          lives={game.lives}
-          setLives={(value: number) => sendGameMessage({ content: `The number of lives is set to ${value}`, action: 'setLives', type: 'GAMESETTING', value: value })}
+          settingsParameters={
+            mode === "Training" ? 
+            [
+            {type:"SELECT",
+            condition:true,
+            label:"Number of Ayat :",
+            value:game.numberOfAyat,
+            data:[...Array(286).keys()]
+                  .map((x,i) =>({ id:x,value:x+1,label:x+1  })),
+            set:(event: React.ChangeEvent<HTMLSelectElement>) => sendGameMessage({ content: `The number of ayat is set to ${parseInt(event.target.value)}`, action: 'setNumberOfAyat', type: 'GAMESETTING', value: parseInt(event.target.value) })
+            },
+            {type:"SELECT",
+            condition:true,
+            label:"Minimum Surah:",
+            value:game.minSurah,
+            data:chapters
+                .filter((chapter) => chapter.id <= game.maxSurah)
+                .map((x,i) =>({ id:x.id,value:x.id,label:x.name_simple  })),
+            set:(event: React.ChangeEvent<HTMLSelectElement>) =>sendGameMessage({ content: `The minimum surah is set to ${parseInt(event.target.value) }`, action: 'setMinSurah', type: 'GAMESETTING', value: parseInt(event.target.value)  })
+            },
+            {type:"SELECT",
+            condition:game.filterVerse,
+            notNext:true,
+            value:game.minVerse,
+            data: [...Array(chapters
+                            .filter((chapter) => chapter.id === game.minSurah)[0].verses_count).keys()
+                  ]
+                  .filter((x) => game.minSurah !== game.maxSurah || x <= game.maxVerse)
+                  .map((x,i) =>({ id:x,value:x,label:x+1  })) 
+            ,
+            set:(event: React.ChangeEvent<HTMLSelectElement>) =>sendGameMessage({ content: `The minimum verse is set to ${parseInt(event.target.value)+1}`, action: 'setMinVerse', type: 'GAMESETTING', value: parseInt(event.target.value) })
+            },
+            {type:"SELECT",
+            condition:true,
+            label:"Maximum Surah:",
+            value:game.maxSurah,
+            data:chapters
+                .filter((chapter) => game.minSurah <= chapter.id)
+                .map((x,i) =>({ id:x.id,value:x.id,label:x.name_simple  })),
+            set:(event: React.ChangeEvent<HTMLSelectElement>) => sendGameMessage({ content: `The maximum surah is set to ${parseInt(event.target.value)}`, action: 'setMaxSurah', type: 'GAMESETTING', value: parseInt(event.target.value) })  
+            },
+            {type:"SELECT",
+            condition:game.filterVerse,
+            notNext:true,
+            value:game.maxVerse,
+            data: [...Array(chapters
+                            .filter((chapter) => chapter.id === game.maxSurah)[0].verses_count).keys()
+                  ]
+                  .filter((x) => game.minSurah !== game.maxSurah || game.minVerse  <= x)
+                  .map((x,i) =>({ id:x,value:x,label:x+1  })) 
+            ,
+            set:(event: React.ChangeEvent<HTMLSelectElement>) =>sendGameMessage({ content: `The maximum verse is set to ${parseInt(event.target.value)+1}`, action: 'setMaxVerse', type: 'GAMESETTING', value: parseInt(event.target.value) })
+            },
+
+              {type:"CHECKBOX",
+              label:"Ask Verses:",
+              value:game.askVerse,
+              set:(value: boolean) => sendGameMessage({ content: 'Asking verse for the answer is '+ (value ? 'enabled' : 'disabled'), action: 'setAskVerse', type: 'GAMESETTING', value: value })
+              },
+              {type:"CHECKBOX",
+              label:"Filter Verses:",
+              value:game.filterVerse,
+              set:(value: boolean) => sendGameMessage({ content: 'The verse filter is ' + (value ? 'enabled' : 'disabled'), action: 'setFilterVerse', type: 'GAMESETTING', value: value })
+            },
+              {type:"CHECKBOX",
+              label:"Random Verses Distribution:",
+              value:game.verseDistribution,
+              set:(value: boolean) => sendGameMessage({ content: 'The verse ditribution is ' + (value ? 'enabled' : 'disabled'), action: 'setVerseDistribution', type: 'GAMESETTING', value: value })
+            },
+              {type:"CHECKBOX",
+              label:"Limit :",
+              value:game.isLimited,
+              set:(value: boolean) => sendGameMessage({ content: (value ? 'The game is limited in rounds' : 'The game is endless'), action: 'setIsLimited', type: 'GAMESETTING', value: value })
+            },
+              {type:"SELECT",
+              condition:game.isLimited,
+              label:"Number of Round :",
+              value:game.round,
+              data:[...Array(50).keys()]
+              .map((x,i) =>({ id:x,value:x+1,label:x+1  })),
+              set:(event: React.ChangeEvent<HTMLSelectElement>) => sendGameMessage({ content: `The number of rounds is set to  ${parseInt(event.target.value)}`, action: 'setRound', type: 'GAMESETTING', value: parseInt(event.target.value) })
+            },
+            {type:"CHECKBOX",
+              label:"Skip if fail :",
+              value:game.isSkip,
+              set:(value: boolean) => sendGameMessage({ content: 'Automatic skip if everyone has a wrong answer is ' + (value ? 'enabled' : 'disabled'), action: 'setIsSkip', type: 'GAMESETTING', value: value })
+            },
+              {type:"CHECKBOX",
+              label:"Show Score :",
+              value:game.showScore,
+              set:(value: boolean) => sendGameMessage({ content: (value ? 'Scores are visible' : 'Scores are not visible'), action: 'setShowScore', type: 'GAMESETTING', value: value })
+            },
+              {type:"CHECKBOX",
+              label:"Active Lives :",
+              value:game.activeLive,
+              set:(value: boolean) => sendGameMessage({ content: 'The survival mode is ' + (value ? 'enabled' : 'disabled'), action: 'setActiveLive', type: 'GAMESETTING', value: value })
+            },
+              {type:"SELECT",
+              condition:game.activeLive,
+              label:"Number of Lives :",
+              value:game.lives,
+              data:[...Array(50).keys()]
+              .map((x,i) =>({ id:x,value:x+1,label:x+1  })),
+              set:(event: React.ChangeEvent<HTMLSelectElement>) => sendGameMessage({ content: `The number of lives is set to ${parseInt(event.target.value)}`, action: 'setLives', type: 'GAMESETTING', value: parseInt(event.target.value) })
+            },
+            { type:"BUTTON",
+              condition:game.showScore,
+              label:"Reset Score",
+              class:"menu-button settings",
+              click:() => sendGameMessage({ content: 'Scores are reset', action: 'resetScore', type: 'PLAYER'})
+            },
+            { type: "SLIDER",
+              label:"Volume:",
+              min:"0",
+              max:"1",
+              step:"0.01",
+              value:audioSection.volume,
+              set:(event: React.ChangeEvent<HTMLInputElement>) => {audioSection.setVolumeAudio(parseFloat(event.target.value))}
+            },
+            { type:"BUTTON",
+              condition:true,
+              label:"Save",
+              class:"menu-button settings",
+              click:handleSaveSettings
+            }
+            
+            ] : (mode === "Arcade" && !showInput) ?
+            [
+              {type:"SELECT",
+              condition:true,
+              label:"Number of Ayat :",
+              value:game.numberOfAyat,
+              data:[...Array(286).keys()]
+                    .map((x,i) =>({ id:x,value:x+1,label:x+1  })),
+              set:(event: React.ChangeEvent<HTMLSelectElement>) => sendGameMessage({ content: `The number of ayat is set to ${parseInt(event.target.value)}`, action: 'setNumberOfAyat', type: 'GAMESETTING', value: parseInt(event.target.value) })
+              },
+              {type:"SELECT",
+              condition:true,
+              label:"Minimum Surah:",
+              value:game.minSurah,
+              data:chapters
+                  .filter((chapter) => chapter.id <= game.maxSurah)
+                  .map((x,i) =>({ id:x.id,value:x.id,label:x.name_simple  })),
+              set:(event: React.ChangeEvent<HTMLSelectElement>) =>sendGameMessage({ content: `The minimum surah is set to ${parseInt(event.target.value) }`, action: 'setMinSurah', type: 'GAMESETTING', value: parseInt(event.target.value)  })
+              },
+              {type:"SELECT",
+              condition:game.filterVerse,
+              notNext:true,
+              value:game.minVerse,
+              data: [...Array(chapters
+                              .filter((chapter) => chapter.id === game.minSurah)[0].verses_count).keys()
+                    ]
+                    .filter((x) => game.minSurah !== game.maxSurah || x <= game.maxVerse)
+                    .map((x,i) =>({ id:x,value:x,label:x+1  })) 
+              ,
+              set:(event: React.ChangeEvent<HTMLSelectElement>) =>sendGameMessage({ content: `The minimum verse is set to ${parseInt(event.target.value)+1}`, action: 'setMinVerse', type: 'GAMESETTING', value: parseInt(event.target.value) })
+              },
+              {type:"SELECT",
+              condition:true,
+              label:"Maximum Surah:",
+              value:game.maxSurah,
+              data:chapters
+                  .filter((chapter) => game.minSurah <= chapter.id)
+                  .map((x,i) =>({ id:x.id,value:x.id,label:x.name_simple  })),
+              set:(event: React.ChangeEvent<HTMLSelectElement>) => sendGameMessage({ content: `The maximum surah is set to ${parseInt(event.target.value)}`, action: 'setMaxSurah', type: 'GAMESETTING', value: parseInt(event.target.value) })  
+              },
+              {type:"SELECT",
+              condition:game.filterVerse,
+              notNext:true,
+              value:game.maxVerse,
+              data: [...Array(chapters
+                              .filter((chapter) => chapter.id === game.maxSurah)[0].verses_count).keys()
+                    ]
+                    .filter((x) => game.minSurah !== game.maxSurah || game.minVerse  <= x)
+                    .map((x,i) =>({ id:x,value:x,label:x+1  })) 
+              ,
+              set:(event: React.ChangeEvent<HTMLSelectElement>) =>sendGameMessage({ content: `The maximum verse is set to ${parseInt(event.target.value)+1}`, action: 'setMaxVerse', type: 'GAMESETTING', value: parseInt(event.target.value) })
+              },
+  
+                {type:"CHECKBOX",
+                label:"Ask Verses:",
+                value:game.askVerse,
+                set:(value: boolean) => sendGameMessage({ content: 'Asking verse for the answer is '+ (value ? 'enabled' : 'disabled'), action: 'setAskVerse', type: 'GAMESETTING', value: value })
+                },
+                {type:"CHECKBOX",
+                label:"Filter Verses:",
+                value:game.filterVerse,
+                set:(value: boolean) => sendGameMessage({ content: 'The verse filter is ' + (value ? 'enabled' : 'disabled'), action: 'setFilterVerse', type: 'GAMESETTING', value: value })
+              },
+                {type:"CHECKBOX",
+                label:"Random Verses Distribution:",
+                value:game.verseDistribution,
+                set:(value: boolean) => sendGameMessage({ content: 'The verse ditribution is ' + (value ? 'enabled' : 'disabled'), action: 'setVerseDistribution', type: 'GAMESETTING', value: value })
+              },
+              { type: "SLIDER",
+                label:"Volume:",
+                min:"0",
+                max:"1",
+                step:"0.01",
+                value:audioSection.volume,
+                set:(event: React.ChangeEvent<HTMLInputElement>) => {audioSection.setVolumeAudio(parseFloat(event.target.value))}
+              },
+              { type:"BUTTON",
+                condition:true,
+                label:"Save",
+                class:"menu-button settings",
+                click:handleSaveSettings
+              }] : [{ type: "SLIDER",
+              label:"Volume:",
+              min:"0",
+              max:"1",
+              step:"0.01",
+              value:audioSection.volume,
+              set:(event: React.ChangeEvent<HTMLInputElement>) => {audioSection.setVolumeAudio(parseFloat(event.target.value))}
+            },
+            { type:"BUTTON",
+              condition:true,
+              label:"Save",
+              class:"menu-button settings",
+              click:handleSaveSettings
+            }]
+          }
         />
       )}
 

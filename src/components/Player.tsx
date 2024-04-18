@@ -1,6 +1,42 @@
 import { SetStateAction } from "react";
 
-export const setGuessChapter = (players: any[],setPlayers: { (value: SetStateAction<{ playerName: string; guessChapter: number; isHost: boolean; guessVerse: number; streak: number; ready: boolean; gameState: string; found: boolean; correctChapter: number; correctVerse: number; showScore: boolean; score: number; showLives: boolean; lives: number; }[]>): void; (arg0: any[]): void; }, playerToUpdate: { playerName: any; }, surah: any) => {
+
+
+
+export interface PlayerProps {
+  playerName: string;
+  guessChapter: number;
+  isHost: boolean;
+  guessVerse: number;
+  streak: number;
+  ready: boolean;
+  gameState: string;
+  found: boolean;
+  showScore: boolean;
+  score: number;
+  showLives: boolean;
+  lives: number;
+}
+
+
+export const defaultPlayer: PlayerProps = {
+  playerName: "ME",
+  guessChapter: 1,
+  isHost: false,
+  guessVerse: 0,
+  streak: 0,
+  ready: false,
+  gameState: "not ready",
+  found: false,
+  showScore: false,
+  score: 0,
+  showLives: false,
+  lives: 1
+};
+
+export const setGuessChapter = (players: any[],setPlayers: { 
+  (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }
+  , playerToUpdate: { playerName: any; }, surah: any) => {
     const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
     if (playerIndex !== -1) {
       const updatedPlayer = { ...players[playerIndex] };
@@ -11,7 +47,8 @@ export const setGuessChapter = (players: any[],setPlayers: { (value: SetStateAct
     }
   }
   
-  export const setGuessVerse = (players: any[],setPlayers: { (value: SetStateAction<{ playerName: string; guessChapter: number; isHost: boolean; guessVerse: number; streak: number; ready: boolean; gameState: string; found: boolean; correctChapter: number; correctVerse: number; showScore: boolean; score: number; showLives: boolean; lives: number; }[]>): void; (arg0: any[]): void; }, playerToUpdate: { playerName: any; }, verse: any) => {
+  export const setGuessVerse = (players: any[],setPlayers: { 
+    (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, playerToUpdate: { playerName: any; }, verse: any) => {
     const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
     if (playerIndex !== -1) {
       const updatedPlayer = { ...players[playerIndex] };
@@ -23,66 +60,20 @@ export const setGuessChapter = (players: any[],setPlayers: { (value: SetStateAct
   }
   
   
-  export const setGameState = (players: any[],setPlayers: { (value: SetStateAction<{ playerName: string; guessChapter: number; isHost: boolean; guessVerse: number; streak: number; ready: boolean; gameState: string; found: boolean; correctChapter: number; correctVerse: number; showScore: boolean; score: number; showLives: boolean; lives: number; }[]>): void; (arg0: any[]): void; }, playerToUpdate: { playerName: any; }, state: any) => {
-    const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
-    if (playerIndex !== -1) {
-      const updatedPlayer = { ...players[playerIndex] };
-      updatedPlayer.gameState = state;
-      const updatedPlayers = [...players];
-      updatedPlayers[playerIndex] = updatedPlayer;
-      setPlayers(updatedPlayers);
-    }
+export const setGameState = (players: any[],setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, playerToUpdate: { playerName: any; }, state: any) => {
+  const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
+  if (playerIndex !== -1) {
+    const updatedPlayer = { ...players[playerIndex] };
+    updatedPlayer.gameState = state;
+    const updatedPlayers = [...players];
+    updatedPlayers[playerIndex] = updatedPlayer;
+    setPlayers(updatedPlayers);
   }
+}
   
 
-  export const next = (players: any[],setPlayers: (arg0: any[]) => void, playerToUpdate: { playerName: any; }) => {
-    const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
-    if (playerIndex !== -1) {
-      const updatedPlayer = { ...players[playerIndex] };
-      updatedPlayer.ready = false ;
-      updatedPlayer.gameState = 'next';
-      updatedPlayer.streak = 0;
-      updatedPlayer.lives = updatedPlayer.lives -1;
-      const updatedPlayers = [...players];
-      updatedPlayers[playerIndex] = updatedPlayer;
-      setPlayers(updatedPlayers);
-    }
-  } 
-  
-  export const success = (players: any[],setPlayers: (arg0: any[]) => void, playerToUpdate: { playerName: any; }) => {
-    const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
-    if (playerIndex !== -1) {
-      const updatedPlayer = { ...players[playerIndex] };
-      updatedPlayer.ready = false ;
-      updatedPlayer.gameState = 'win';
-      updatedPlayer.score = updatedPlayer.score +1;
-      updatedPlayer.streak = updatedPlayer.streak+1;
-      const updatedPlayers = [...players];
-      updatedPlayers[playerIndex] = updatedPlayer;
-      setPlayers(updatedPlayers);
-    }
-  
-  } 
-  export  const faillure = (players: any[],setPlayers: (arg0: any[]) => void, playerToUpdate: { playerName: any; }) => {
-    const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
-    console.log("TEST FIND - ",playerToUpdate);
-    console.log("TEST FOUND - ",playerIndex);
-    if (playerIndex !== -1) {
-      const updatedPlayer = { ...players[playerIndex] };
-      console.log("UPDATED FOUND - ",updatedPlayer);
-      updatedPlayer.ready = false ;
-      updatedPlayer.gameState = 'lose';
-      updatedPlayer.streak = 0;
-      updatedPlayer.lives = updatedPlayer.lives -1;
-      const updatedPlayers = [...players];
-      updatedPlayers[playerIndex] = updatedPlayer;
-      console.log("UPDATED  ff FOUND - ",updatedPlayers);
-      setPlayers(updatedPlayers);
-    }
-  
-  } 
-
-export const makeGuess = (players: any[],setPlayers: { (value: SetStateAction<{ playerName: string; guessChapter: number; isHost: boolean; guessVerse: number; streak: number; ready: boolean; gameState: string; found: boolean; correctChapter: number; correctVerse: number; showScore: boolean; score: number; showLives: boolean; lives: number; }[]>): void; (arg0: any[]): void; }, playerToUpdate: { playerName: any; },surah: number,verse: any) => {
+export const makeGuess = (players: PlayerProps[],setPlayers: { 
+  (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; },playerToUpdate: { playerName: any; },surah: number,verse: any) => {
   const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === playerToUpdate.playerName);
   if (playerIndex !== -1) {
     const updatedPlayer = { ...players[playerIndex] };
@@ -99,6 +90,82 @@ export const makeGuess = (players: any[],setPlayers: { (value: SetStateAction<{ 
     updatedPlayers[playerIndex] = updatedPlayer;
     setPlayers(updatedPlayers);
   }
-
 } 
 
+export const resetScore = (players: PlayerProps[],setPlayers: { 
+  (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }) => {
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      score: 0,
+      streak: 0
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+
+
+export const setNotReady = (players: PlayerProps[],setPlayers: { 
+  (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }) => {
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      gameState: 'not ready',
+      score: 0,
+      streak: 0
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+  }
+  
+
+  
+export const isPlayersLost = (players: PlayerProps[]) => {
+    let allLost = true;
+    players.forEach(player => {
+        if( !player.showLives || player.lives > 0) {
+          allLost =  false;
+        }
+    });
+    return allLost;
+}
+
+export const checkPlayers = (players:PlayerProps[]) => {
+  let allReady = true;
+  players.forEach(player => {
+      if( ! (player.gameState === 'ready' ||  player.gameState === 'next' ) ) {
+        allReady =  false;
+      }
+  });
+  return allReady;
+}
+
+
+
+export const recvPlayerMSG = (message:any,players: PlayerProps[],setPlayers: { 
+  (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; } ) => {
+  const { action, value } =  message;
+  switch (action) {
+    case "NEW":
+      setPlayers(prevPlayers => [...prevPlayers, {...value}]);
+      break;
+    case "makeGuess":
+      // Traitement pour makeGuess
+      makeGuess(players,setPlayers, value.player,value.surah,value.verse);
+      break;
+    case "setGuessChapter":
+      // Traitement pour setGuessChapter
+      setGuessChapter(players,setPlayers, value.player,value.surah);
+      break;
+    case "setGuessVerse":
+      setGuessVerse(players,setPlayers, value.player,value.verse);
+      // Traitement pour setGuessVerse
+      break;
+    case "setGameState":
+      setGameState(players,setPlayers, value.player,value.state);
+      break;
+    case "resetScore":
+      resetScore(players,setPlayers);
+      break;
+    default:
+      break;
+  }
+}

@@ -1,3 +1,60 @@
+import { SetStateAction } from "react";
+import { PlayerProps } from "../Player";
+
+export interface Chapter {
+  id: number;
+  name_simple: string;
+  verses_count: number;
+}
+
+
+export interface GameProps {
+  confirmedChapter: number | null;
+  confirmedVerse: number;
+  previousChapter: number| null;
+  previousVerse: number;
+  askVerse: boolean;
+  filterVerse: boolean;
+  verseDistribution: boolean;
+  numberOfAyat: number;
+  minSurah: number;
+  maxSurah: number;
+  minVerse: number;
+  maxVerse: number;
+  maximumVerse: number;
+  isLimited: boolean;
+  isSkip: boolean;
+  round: number;
+  currentRound: number;
+  activeLive: boolean;
+  lives: number;
+  showScore: boolean;
+  allPReady: boolean;
+}
+
+export const defaultGame: GameProps = {
+  confirmedChapter: null,
+  confirmedVerse: 0,
+  previousChapter: null,
+  previousVerse: 0,
+  askVerse: false,
+  filterVerse: false,
+  verseDistribution: false,
+  numberOfAyat: 1,
+  minSurah: 1,
+  maxSurah: 114,
+  minVerse: 0,
+  maxVerse: 286,
+  maximumVerse: 286,
+  isLimited: false,
+  isSkip: false,
+  round: 1,
+  currentRound: 0,
+  activeLive: false,
+  lives: 1,
+  showScore: false,
+  allPReady: false,
+};
 
 
 // Fonction pour générer un numéro de chapitre aléatoire
@@ -121,24 +178,47 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
     setGame((prevState: any) => ({ ...prevState, currentRound: value }));
   };
   
-  export const setActiveLive = (setGame: (arg0: (prevState: any) => any) => void, value: boolean) => {
+  export const setActiveLive = (setGame: (arg0: (prevState: any) => any) => void, value: boolean,
+  setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, players: PlayerProps[],game: GameProps) => {
     setGame((prevState: any) => ({ ...prevState, activeLive: value }));
+
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      showLives: value,
+      lives:game.lives
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
   };
   
-  export const setLives = (setGame: (arg0: (prevState: any) => any) => void, value: number) => {
-    setGame((prevState: any) => ({ ...prevState, lives: value }));
+  export const setLives = (setGame: (arg0: (prevState: any) => any) => void, value: number,
+  setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, players: PlayerProps[]) => {
+    setGame((prevState: any) => ({ ...prevState, lives: value })); 
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      lives:value
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
+
   };
   
-  export const setShowScore = (setGame: (arg0: (prevState: any) => any) => void, value: boolean) => {
+  export const setShowScore = (setGame: (arg0: (prevState: any) => any) => void, value: boolean,
+  setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, players: PlayerProps[]) => {
     setGame((prevState: any) => ({ ...prevState, showScore: value }));
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      showScore: value,
+    }));
+    // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+    setPlayers(updatedPlayers);
   };
   
-  export const setAllPReady = (setGame: (arg0: (prevState: any) => any) => void, value: boolean) => {
-    setGame((prevState: any) => ({ ...prevState, allPReady: value }));
-  };
 
 
-  export const recvGameSettingMSG = (message: { action: any; value: any; },setGame: (arg0: (prevState: any) => any) => void) => {
+
+  export const recvGameSettingMSG = (message: { action: any; value: any; },setGame: (arg0: (prevState: any) => any) => void,
+  setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, players: PlayerProps[],game: GameProps) => {
     const { action, value } =  message;
     switch (action) {
       case "update":
@@ -186,10 +266,70 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
       case "setVerseDistribution":
         setVerseDistribution(setGame,value);
         break;
+      case "setShowScore":
+        setShowScore(setGame,value,setPlayers,players);
+        break;
+      case "setActiveLive":
+        setActiveLive(setGame,value,setPlayers,players,game);
+        break;
+      case "setLives":
+        setLives(setGame,value,setPlayers,players);
+        break;
       default:
         break;
     }
 }
   
+export const setAllPReady = (setGame: (arg0: (prevState: any) => any) => void, value: boolean) => {
+  setGame((prevState: any) => ({ ...prevState, allPReady: value }));
+};
 
+export const beginGame = (setGame: (arg0: (prevState: any) => any) => void,
+setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, players: PlayerProps[],game: GameProps) => {
+  setGame((prevState: any) => ({ ...prevState, currentRound: 0 }));
+  const updatedPlayers = players.map(player => ({
+    ...player,
+    gameState: 'not ready',
+    score: 0,
+    streak: 0,
+    lives:game.lives
+  }));
+  // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+  setPlayers(updatedPlayers);
+}
+
+
+export const correctAll = (setGame: (arg0: (prevState: any) => any) => void,surah: number | null,verse: number) => {  
+  // Utiliser map pour créer une nouvelle liste de joueurs avec les mises à jour appliquées à chaque joueur
+  setGame((prevState: any) => ({ ...prevState, previousChapter: surah ,previousVerse:verse}));
+}
+
+const newSurah = (setGame: (arg0: (prevState: any) => any) => void, randomChap:number,verse:number,maxtemp:number) => {
+  setGame((prevState: any) => ({ ...prevState, maximumVerse: maxtemp,confirmedChapter: randomChap,confirmedVerse:verse }));
+};
+
+export const recvGameMSG = (message: { action: any; value: any; },setGame: (arg0: (prevState: any) => any) => void,
+setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, players: PlayerProps[],game: GameProps) => {
+  const { action, value } =  message;
+  switch (action) {
+    case "START":
+      beginGame(setGame,setPlayers,players,game);
+      break;
+    case "NEWSURAH":
+      const {randomChap,verse,maxtemp} = value;
+      newSurah(setGame,randomChap,verse,maxtemp);
+      break;
+    case "SETROUND":
+      setCurrentRound(setGame,value);
+      break;
+    case "READY":
+      setAllPReady(setGame,value);
+      break;
+    case "CORRECT":
+      correctAll(setGame, value.surah,value.verse);
+      break;
+    default:
+      break;
+  }
+}
   

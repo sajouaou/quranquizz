@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import './Menu.css';
 import ExploreContainer from '../components/ExploreContainer';
 import { IonButton } from '@ionic/react';
-import './Menu.css';
-import "./GameClient.css"
+import { Chapter } from './game/Game';
 
 interface MenuItem {
   label: string;
@@ -12,14 +12,6 @@ interface MenuItem {
 interface MenuProps {
   items: MenuItem[];
 }
-
-interface Chapter {
-  id: number;
-  name_simple: string;
-  verses_count: number;
-}
-
-
 
 const MenuComponent: React.FC<MenuProps> = ({ items }) => {
   return (
@@ -68,26 +60,24 @@ const Menu: React.FC = () => {
 
   
   const handleOption1Click = () => {
-    console.log('Option 1 clicked');
     setState('Training');
     // Mettez votre logique ou action ici
   };
 
   const handleOption2Click = () => {
-    console.log('Option 2 clicked');
     setState('Online');
     // Mettez votre logique ou action ici
   };
 
   const handleOption3Click = () => {
-    console.log('Option 3 clicked');
+    setState('Arcade');
     // Mettez votre logique ou action ici
   };
 
   const menuItems = [
     { label: 'Entrainement', action: handleOption1Click },
-    { label: '/////', action: handleOption2Click },
-    { label: '/////', action: handleOption3Click },
+    { label: 'Arcade', action: handleOption3Click },
+    { label: 'Online /!\\ IN DEV', action: handleOption2Click },
   ];
 
     const handleNameChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
@@ -98,7 +88,7 @@ const Menu: React.FC = () => {
         setRoom(event.target.value); // Update roomName state when input changes
     };
     const handleServerChange = (e: { target: { value: React.SetStateAction<string>; }; }) => {
-      setENDPOINT(e.target.value);
+        setENDPOINT(e.target.value);
     }
 
     const handleJoin = () => {
@@ -113,7 +103,7 @@ const Menu: React.FC = () => {
   </Link>*/
   return (
     <div id="container">
-        {(state === 'Training' || state === 'Survie') &&
+        {(state !== 'Online' && state !== '') &&
             <ExploreContainer mode={state} chapters={chapters} location={{search: null}}/>
         }
         {(state === 'Online') &&
