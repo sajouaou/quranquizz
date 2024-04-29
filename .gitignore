@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /server/node_modules
+/server/decrypted.key
 /.pnp
 .pnp.js
 
@@ -28,3 +29,6 @@ yarn-error.log*
 
 # Optional eslint cache
 .eslintcache
+
+resources/ios/**/*
+resources/android/**/*

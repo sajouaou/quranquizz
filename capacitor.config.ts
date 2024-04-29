@@ -8,6 +8,11 @@ const config: CapacitorConfig = {
     androidScheme: 'https'
   }
 ,
+  plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
     android: {
        buildOptions: {
           keystorePath: 'c:\Users\Anxoi\.keystore\anxoKeyTest.jks',

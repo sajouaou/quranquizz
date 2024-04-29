@@ -3,6 +3,7 @@ import './Menu.css';
 import ExploreContainer from './GameContainer';
 import { IonButton } from '@ionic/react';
 import { Chapter } from './game/Game';
+import { WebSocketDemo } from './client/testSocket';
 
 interface MenuItem {
   label: string;
@@ -69,7 +70,7 @@ const Menu: React.FC = () => {
   };
 
   const handleOption2Click = () => {
-    setState('Online');
+    setState('test');
     // Mettez votre logique ou action ici
   };
 
@@ -143,6 +144,41 @@ const Menu: React.FC = () => {
 
             </>
         }
+
+        { (state === 'test') && (
+          <>  
+          { !isConnected  && (
+          <>  
+          <input
+              type="text"
+              placeholder="Enter room name"
+              value={room}
+              onChange={handleRoomNameChange}
+          />
+              <input
+                  type="text"
+                  placeholder="Enter player name"
+                  value={name}
+                  onChange={handleNameChange}
+              />
+              <input
+              type="text"
+              placeholder="Enter address of Server"
+              value={ENDPOINT}
+              onChange={handleServerChange}
+          />
+                <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
+              
+              
+          </>
+        )}
+        
+        { isConnected  && (
+            <WebSocketDemo  endpoint={ENDPOINT} username={name} room={room}/>) }
+          </>
+          )
+
+          }
 
         {state === '' &&
             <MenuComponent items={menuItems} />

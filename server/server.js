@@ -1,7 +1,15 @@
 const http = require("http");
+const https = require("https");
+const fs = require("fs");
 const express = require("express");
 
 const app = express();
+const options = {
+  key: fs.readFileSync("./decrypted.key"),
+  cert: fs.readFileSync("./certificate.crt")
+};
+
+//const server = https.createServer(options, app);
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
@@ -13,7 +21,6 @@ const { addUser, removeUser, getRoomUser } = require("./user");
 
 const PORT = 5000;
 const HOST = "0.0.0.0";
-
 
 // Route pour la page principale
 app.get("/", (req, res) => {

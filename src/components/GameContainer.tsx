@@ -3,7 +3,6 @@ import Settings from './user/Settings';
 import InputGame from './user/InputGame'; // Import the InputGame component
 import AudioSection from './user/AudioSection'; // Import the InputGame component
 
-import io, { Socket } from "socket.io-client";
 
 
 import { 
@@ -16,7 +15,6 @@ import {
   recvGameMSG, 
   recvGameSettingMSG } from './game/Game';
 import { PlayerProps, checkPlayers, defaultPlayer, isPlayersLost, recvPlayerMSG } from './Player';
-import { DefaultEventsMap } from '@socket.io/component-emitter';
 import Chat from './client/GameClient';
 
 import "./GameClient.css";
@@ -30,7 +28,13 @@ interface ContainerProps
   location:any;
 }
 
-let socket: Socket<DefaultEventsMap, DefaultEventsMap> | null = null;
+
+//import io, { Socket } from "socket.io-client";
+import socketIOClient from "socket.io-client"
+//import { Socket } from 'ngx-socket-io';
+//import useWebSocket, { ReadyState } from 'react-use-websocket';
+
+let socket: any | null = null;
 
 
 const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location}) => {
@@ -48,18 +52,20 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   const [room, setRoom] = useState("");
 
   useEffect(() => {
-    /*
     if(socket){
       socket.disconnect();
       socket = null;
     }
-    */
     if(mode === "Online" && (socket === null )){
         const { name, room, ENDPOINT } = location.search;
-        socket = io(ENDPOINT, {
+        
+        socket = socketIOClient(ENDPOINT, {
           // WARNING: in that case, there is no fallback to long-polling
-          transports: [ "websocket", "polling" ] // or [ "websocket", "polling" ] (the order matters)
+          transports: [ "websocket", "polling" ], // or [ "websocket", "polling" ] (the order matters)
+          //rejectUnauthorized: false // Désactiver la vérification du certificat
         });
+        
+        //socket = new Socket({ url: ENDPOINT });
         console.log("IO ENDPOINT - ",ENDPOINT);
         setRoom(room);
         setName(name);
@@ -72,46 +78,12 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
             alert(error);
           }
         });
-        socket.on("message", (message) => {
+        socket.on("message", (message:any) => {
             setMessages((prevMessages) => [...prevMessages, message]);
             setLastMessages(message.text);
         });
         
-        console.log(socket.connect());
-        socket.emit('add user', "YoloTest");
-        // tell server to execute 'new message' and send along one parameter
-        socket.emit('new message', "Yooo");
-
-      socket.on('typing', (data) => {
-        console.log("Yess");
-      });
-      // Whenever the server emits 'new message', update the chat body
-      socket.on('new message', (data) => {
-        console.log(data);
-      });
-      
-      // Whenever the server emits 'login', log the login message
-      socket.on('login', (data) => {
-        // Display the welcome message
-        var message = "Welcome to Socket.IO Chat – ";
-        console.log(data);
-      });
-      // Événement de connexion
-      socket.on("connect", () => {
-          console.log("Connecté au serveur Socket.IO");
-      });
-      
-      // Événement de déconnexion
-      socket.on("disconnect", () => {
-          console.log("Déconnecté du serveur Socket.IO");
-      });
-      
-      // Événement d'erreur
-      socket.on("error", (error) => {
-          console.error("Erreur de connexion au serveur Socket.IO:", error);
-      });
-    
-      console.log(socket);
+        console.log(socket);
     }
   }, [location.search]);
   
