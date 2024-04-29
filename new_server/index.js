@@ -6,8 +6,7 @@ const url = require("url")
 const server = http.createServer()
 const wsServer = new WebSocketServer({ server })
 
-const port = 5000
-const host = "0.0.0.0";
+const port = process.env.PORT ||5000
 const connections = {}
 const users = {}
 const rooms = {}
@@ -66,6 +65,6 @@ wsServer.on("connection", (connection, request) => {
   connection.on("close", () => handleClose(uuid,room))
 })
 
-server.listen(port,host, () => {
+server.listen(port, () => {
   console.log(`WebSocket server is running on port ${port}`)
 })
