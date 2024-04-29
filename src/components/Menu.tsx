@@ -38,7 +38,8 @@ const Menu: React.FC = () => {
     const [name, setName] = useState("");
     const [room, setRoom] = useState(""); // State to hold the room's name
     //const [ENDPOINT, setENDPOINT] = useState("http://localhost:5000");
-    const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
+    //const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
+    const [ENDPOINT, setENDPOINT] = useState("https://quranquizz-server.onrender.com");
     
     //const [ENDPOINT, setENDPOINT] = useState("https://socketio-chat-h9jt.herokuapp.com");
     
@@ -70,7 +71,7 @@ const Menu: React.FC = () => {
   };
 
   const handleOption2Click = () => {
-    setState('test');
+    setState('Online');
     // Mettez votre logique ou action ici
   };
 
@@ -109,7 +110,7 @@ const Menu: React.FC = () => {
   return (
     <div id="container">
         {(state !== 'Online' && state !== '') &&
-            <ExploreContainer mode={state} chapters={chapters} location={{search: null}}/>
+            <ExploreContainer mode={state} chapters={chapters} location={{search: {name:"ME"}}}/>
         }
         {(state === 'Online') &&
             <>  
@@ -127,13 +128,8 @@ const Menu: React.FC = () => {
                     value={name}
                     onChange={handleNameChange}
                 />
-                <input
-                type="text"
-                placeholder="Enter address of Server"
-                value={ENDPOINT}
-                onChange={handleServerChange}
-            />
-                  <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
+                
+                <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
                 
                 
             </>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Settings from './user/Settings';
 import InputGame from './user/InputGame'; // Import the InputGame component
 import AudioSection from './user/AudioSection'; // Import the InputGame component
@@ -30,7 +30,9 @@ interface ContainerProps
 
 
 //import io, { Socket } from "socket.io-client";
-import socketIOClient from "socket.io-client"
+import socketIOClient from "socket.io-client";
+
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 //import { Socket } from 'ngx-socket-io';
 //import useWebSocket, { ReadyState } from 'react-use-websocket';
 
@@ -48,9 +50,20 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   //
   //
   //////////////////////////////////
-  const [name, setName] = useState("");
-  const [room, setRoom] = useState("");
+  const [name, setName] = useState(location.search.name);
+  const [room, setRoom] = useState(location.search.room);
+  const [socketUrl, setSocketUrl] = useState(location.search.ENDPOINT);
 
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl,{
+    queryParams: { username:name,
+      room,
+      player:JSON.stringify({...defaultPlayer,playerName:name})  ,
+      game:JSON.stringify({...defaultGame})
+  },
+    share: true,
+  });
+
+/*
   useEffect(() => {
     if(socket){
       socket.disconnect();
@@ -67,8 +80,6 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         
         //socket = new Socket({ url: ENDPOINT });
         console.log("IO ENDPOINT - ",ENDPOINT);
-        setRoom(room);
-        setName(name);
         const updatedPlayers = [...players]; // Créer une copie du tableau players
         updatedPlayers[0].playerName = name; // Modifier la copie du tableau
         setPlayers(updatedPlayers); // Mettre à jour l'état avec la 
@@ -86,24 +97,40 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
         console.log(socket);
     }
   }, [location.search]);
+  */
+
+  
+  // Run when a new WebSocket message is received (lastJsonMessage)
+  useEffect(() => {
+    if (lastJsonMessage !== null) {
+      console.log(lastJsonMessage);
+      setMessages((prevMessages) => [...lastJsonMessage.messages]);
+    }
+  }, [lastJsonMessage])
+
+  
+  const sendMessage = useCallback((msg:any) => sendJsonMessage(msg), []);
   
   const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    if (message && socket) {
-      socket.emit("sendMessage", { message :{ content :message, type:"CHAT"}});
+    if (message && mode === "Online") {
+      console.log("SEND MESSAGE");
+      sendMessage(  { message :{ content :message, type:"CHAT"}});
       setMessage("");
     } else alert("empty input");
   };
   const sendScan = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    if(socket){
-      socket.emit("sendMessage", { message :{ content :"SCAN", type:"GAME"}});
+    if(mode === "Online"){
+      console.log("SEND MESSAGE");
+      sendMessage( { message :{ content :"SCAN", type:"GAME"}} );
     }
   };
   
   const sendGameMessage = async (message: any) => {
-    if(mode === "Online" && socket){
-      socket.emit("sendMessage", { message});
+    if(mode === "Online"){
+      //console.log("SEND ONLINE - ",message);
+      sendMessage( { message ,game,players});
     }
     else if(mode !== "Online"){
       console.log("SEND - ",message);
@@ -150,7 +177,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
       i++;
       setReadCursor(i);
     }
-  }, [readCursor]);
+  }, [readCursor,messages]);
     
   const recvGameMessage = (message: any) => {
     const { action, value } =  message;
@@ -193,13 +220,16 @@ const recvChatMessage = (message: { users: any[]; }) => {
     ; 
 }
 
-const recvWelcomeMessage = (message: { users: any[]; }) => {
-  const { users } =  message;
-  setPlayers([{...players[0], isHost:users.length < 1}, ...users.map(x => ({...x.player})) ]);
+const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
+  const { game , players:pls } =  message;
+  setGame({...game});
+  console.log(pls);
+  setPlayers([...pls.filter((player) => player.playerName === players[0].playerName), ...pls.filter((player) => player.playerName !== players[0].playerName) ]);
 }
 
 
   const  parseMessage = (message: any) => {
+    console.log('RECV - ', message);
     switch (message.type) {
       case "GAMESETTING":
         recvGameSettingMSG(message,setGame,setPlayers,players,game);
@@ -235,7 +265,7 @@ const recvWelcomeMessage = (message: { users: any[]; }) => {
   //
   //////////////////////////////////
   const [game,setGame] = useState<GameProps>({...defaultGame});
-  const [players,setPlayers] = useState<PlayerProps[]>([{...defaultPlayer,isHost: mode !== "Online"}]);
+  const [players,setPlayers] = useState<PlayerProps[]>([{...defaultPlayer,playerName:name,isHost: mode !== "Online"}]);
 
   
   useEffect(() => {
@@ -410,7 +440,15 @@ const recvWelcomeMessage = (message: { users: any[]; }) => {
           handleSubmit={handleSubmit}
           setMessage={setMessage}
           setShowChat={setShowChat}
-          sendScan={sendScan} />
+          sendScan={sendScan} 
+          isHost={(name:string) => {
+            const playerIndex = players.findIndex((player: { playerName: any; }) => player.playerName === name);
+            if (playerIndex !== -1) {
+              return players[playerIndex].isHost;
+            }
+            return false;
+          }}
+          />
     )}
 
       
@@ -472,6 +510,35 @@ const recvWelcomeMessage = (message: { users: any[]; }) => {
         </div>
       
       )}
+      { !showInput && !showEnd && mode === "Online" && (
+        <div className='player-container'>
+          {
+            players.map((player, index) => (
+              <div className='control-container' key={index}>
+              
+                <div className='player'>
+                <p>Player : {player.playerName}</p>
+                <p>{player.gameState}</p>
+                { game.showScore && (
+                    <>
+                  <p>Score: {player.score}</p>
+                  <p>Streak: {player.streak}</p>
+                  </>
+                )
+                }
+                { player.showLives && (
+                    <>
+                  <p>Lives: {player.lives}</p>
+                  </>
+                )
+                }
+                </div>
+              </div>
+            ))
+          }
+          </div>
+        )
+      }
 
       {showEnd && <EndScreen players={players} />}
 
@@ -487,7 +554,7 @@ const recvWelcomeMessage = (message: { users: any[]; }) => {
       {showSettings && (
           <Settings
           settingsParameters={
-            mode === "Training" ? 
+            (mode === "Training" || (mode === "Online"  && !showInput) )? 
             [
             {type:"SELECT",
             condition:true,

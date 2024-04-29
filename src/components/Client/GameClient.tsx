@@ -8,7 +8,7 @@ interface ChatProps
   name: string;
   message: string;
   showChat: boolean;
-
+  isHost: any;
   handleSubmit:any;
   setMessage:any;
   setShowChat:any;
@@ -22,6 +22,7 @@ const Chat: React.FC<ChatProps>  = ({
   name,
   message,
   showChat,
+  isHost,
   handleSubmit,
   setMessage,
   setShowChat,
@@ -45,8 +46,9 @@ const Chat: React.FC<ChatProps>  = ({
             <div className="chat-messages">
           {messages.map((val, i) => {
             return (
-            <div className={"message " + (val.user === name ? 'user-message' : 'other-message')} key={i}>
-                <div className="message-user">{val.user} :  </div>
+
+            <div className={"message " + (val.user === name ? 'user-message ' : 'other-message ')  } key={i}>
+                <div className={"message-user " + (isHost(val.user) ? 'host' : '')}>{val.user} :  </div>
                 <div className="message-text"> {val.text.content}</div>
             </div>
             );

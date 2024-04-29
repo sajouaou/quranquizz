@@ -5,6 +5,7 @@ import { SetStateAction } from "react";
 
 export interface PlayerProps {
   playerName: string;
+  id : number;
   guessChapter: number;
   isHost: boolean;
   guessVerse: number;
@@ -21,6 +22,7 @@ export interface PlayerProps {
 
 export const defaultPlayer: PlayerProps = {
   playerName: "ME",
+  id : 0,
   guessChapter: 1,
   isHost: false,
   guessVerse: 0,
@@ -146,6 +148,9 @@ export const recvPlayerMSG = (message:any,players: PlayerProps[],setPlayers: {
   switch (action) {
     case "NEW":
       setPlayers(prevPlayers => [...prevPlayers, {...value}]);
+      break;
+    case "REMOVE":
+      setPlayers(prevPlayers => [...prevPlayers.filter((player) => {return player.playerName !== value.playerName })]);
       break;
     case "makeGuess":
       // Traitement pour makeGuess

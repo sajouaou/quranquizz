@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { useSocketIO } from 'react-use-websocket';
-import { SocketIOMessageData } from 'react-use-websocket/dist/lib/use-socket-io';
 
 interface WebSocketDemoProps 
 {
@@ -12,10 +10,10 @@ interface WebSocketDemoProps
 
 export const WebSocketDemo: React.FC<WebSocketDemoProps> = ({endpoint,username,room}) => {
   //Public API that will echo messages sent to it back to the client
-  const [socketUrl, setSocketUrl] = useState(endpoint);
   //const [messageHistory, setMessageHistory] = useState<SocketIOMessageData[]>([]);
   const [messageHistory, setMessageHistory] = useState<any[]>([]);
 
+  const [socketUrl, setSocketUrl] = useState(endpoint);
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl,{
     queryParams: { username,room },
     share: true,
@@ -35,7 +33,7 @@ export const WebSocketDemo: React.FC<WebSocketDemoProps> = ({endpoint,username,r
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
     if (lastJsonMessage !== null) {
-      console.log(`Got a new message: ${lastJsonMessage}`)
+      console.log(`Got a new message: ${JSON.parse(lastJsonMessage)}`)
     }
   }, [lastJsonMessage])
 
