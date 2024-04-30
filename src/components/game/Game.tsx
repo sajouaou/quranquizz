@@ -1,5 +1,5 @@
 import { SetStateAction } from "react";
-import { PlayerProps } from "../Player";
+import { PlayerProps } from "./Player";
 
 export interface Chapter {
   id: number;

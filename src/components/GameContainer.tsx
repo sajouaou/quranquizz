@@ -14,8 +14,8 @@ import {
   getRandomVerseNumber, 
   recvGameMSG, 
   recvGameSettingMSG } from './game/Game';
-import { PlayerProps, checkPlayers, defaultPlayer, isPlayersLost, recvPlayerMSG } from './Player';
-import Chat from './client/Chat';
+import { PlayerProps, checkPlayers, defaultPlayer, isPlayersLost, recvPlayerMSG } from './game/Player';
+import Chat from './game/Chat';
 
 import "./GameClient.css";
 import './GameContainer.css';

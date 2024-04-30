@@ -1,4 +1,4 @@
-import { PlayerProps } from "../Player";
+import { PlayerProps } from "./Player";
 
 interface EndScreenProps {
     players:PlayerProps[];
