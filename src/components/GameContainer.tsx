@@ -26,20 +26,14 @@ interface ContainerProps
   mode: string;
   chapters: Chapter[];
   location:any;
+  leave:any;
 }
 
 
-//import io, { Socket } from "socket.io-client";
-import socketIOClient from "socket.io-client";
-
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-//import { Socket } from 'ngx-socket-io';
-//import useWebSocket, { ReadyState } from 'react-use-websocket';
-
-let socket: any | null = null;
 
 
-const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location}) => {
+const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location, leave}) => {
   
 
 
@@ -54,15 +48,20 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   const [room, setRoom] = useState(location.search.room);
   const [socketUrl, setSocketUrl] = useState(location.search.ENDPOINT);
 
-  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl,{
+  const { sendJsonMessage, lastJsonMessage, readyState ,getWebSocket} = typeof socketUrl !== 'undefined' ? useWebSocket(socketUrl,{
     queryParams: { username:name,
       room,
       player:JSON.stringify({...defaultPlayer,playerName:name})  ,
       game:JSON.stringify({...defaultGame})
   },
     share: true,
-  });
+  }) : { sendJsonMessage:()=>{null}, lastJsonMessage:null, readyState:null,getWebSocket:()=>{null}};
 
+  useEffect(() => {
+    if(socketUrl === 'wss://echo.websocket.org'){
+      leave();
+    }
+  }, [socketUrl])
 /*
   useEffect(() => {
     if(socket){
@@ -103,7 +102,6 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
     if (lastJsonMessage !== null) {
-      console.log(lastJsonMessage);
       setMessages((prevMessages) => [...lastJsonMessage.messages]);
     }
   }, [lastJsonMessage])
@@ -114,7 +112,6 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (message && mode === "Online") {
-      console.log("SEND MESSAGE");
       sendMessage(  { message :{ content :message, type:"CHAT"}});
       setMessage("");
     } else alert("empty input");
@@ -122,8 +119,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location})
   const sendScan = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if(mode === "Online"){
-      console.log("SEND MESSAGE");
-      sendMessage( { message :{ content :"SCAN", type:"GAME"}} );
+      sendMessage( { message :{ content :"SCAN", type:"CHAT"}} );
     }
   };
   
@@ -223,7 +219,6 @@ const recvChatMessage = (message: { users: any[]; }) => {
 const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
   const { game , players:pls } =  message;
   setGame({...game});
-  console.log(pls);
   setPlayers([...pls.filter((player) => player.playerName === players[0].playerName), ...pls.filter((player) => player.playerName !== players[0].playerName) ]);
 }
 
@@ -542,7 +537,7 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
 
       {showEnd && <EndScreen players={players} />}
 
-      {!showInput && (
+      {!showInput && players[0].isHost && (
         <button className="menu-button start"  onClick={handleStartClick}>Start {mode}</button>
       )}
       <button className="menu-button settings"  onClick={() => setShowSettings(!showSettings)}>Settings</button>
@@ -550,11 +545,15 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
         <button className="menu-button settings"  onClick={() => setShowChat(!showChat)}>Chat</button>
       )
       }
+      {showInput && players[0].isHost &&  !game.isLimited && !game.activeLive  && (
+        <button className="menu-button end"  onClick={() => {sendGameMessage({ content: 'The game is finished', action: 'ENDGAME', type: 'GAME'});}}>End Game</button>
+      )
+      }
       
-      {showSettings && (
+      {showSettings  && (
           <Settings
           settingsParameters={
-            (mode === "Training" || (mode === "Online"  && !showInput) )? 
+            (mode === "Training" || (mode === "Online" && players[0].isHost  && !showInput) )? 
             [
             {type:"SELECT",
             condition:true,
@@ -779,6 +778,7 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
       )}
 
       
+      <button className="menu-button" onClick={() => {sendGameMessage({content:"Bye",type:"LEAVE",id:players[0].id }) ;leave();}}>Return</button>
 
 
     </div>

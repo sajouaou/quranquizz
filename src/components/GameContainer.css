@@ -68,6 +68,13 @@
 .settings:hover {
   background-color: #575757; /* Couleur de fond */
 }
+.end {
+  background-color: #ac2e2e; /* Couleur de fond */
+}
+
+.end:hover {
+  background-color: #a54747; /* Couleur de fond */
+}
 
 
 .success-animation {

@@ -1,5 +1,5 @@
 import { IonButton } from "@ionic/react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 
 interface ChatProps 
@@ -30,6 +30,9 @@ const Chat: React.FC<ChatProps>  = ({
 }) => {
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
   
+  const [showGame, setShowGame] = useState(false); 
+  
+  
   useEffect(() => {
     // Scroll to the bottom of the chat container whenever messages change
     scrollToBottom();
@@ -44,14 +47,15 @@ const Chat: React.FC<ChatProps>  = ({
   return (
     <div className="chat-container" ref={chatContainerRef}>
             <div className="chat-messages">
-          {messages.map((val, i) => {
+          {messages.filter((val)=> {return (val.text.type === "CHAT") || (val.text.type === "WELCOME") || showGame }).map((val, i) => {
             return (
 
             <div className={"message " + (val.user === name ? 'user-message ' : 'other-message ')  } key={i}>
                 <div className={"message-user " + (isHost(val.user) ? 'host' : '')}>{val.user} :  </div>
-                <div className="message-text"> {val.text.content}</div>
+                <div className="message-text"> {val.text.content } </div>
             </div>
-            );
+            )
+            ;
           })}
         
           <form action="" onSubmit={handleSubmit}>
@@ -64,6 +68,12 @@ const Chat: React.FC<ChatProps>  = ({
           </form>
           <IonButton onClick={sendScan} >SCAN</IonButton>
           <IonButton onClick={() => {setShowChat(!showChat); }} >Close</IonButton>
+          <>
+          <label className={`showCheck`}>
+            <input type="checkbox" checked={showGame} onChange={() => setShowGame(!showGame)} />
+            <span className="slider round"></span>
+          </label>
+          </>
           </div>
         </div>
   );

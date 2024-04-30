@@ -235,6 +235,12 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
         break;
       case "setMinVerse":
         setMinVerse(setGame,value);
+        const updatedPlayers = players.map(player => ({
+          ...player,
+          guessChapter:value
+        }));
+        // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
+        setPlayers(updatedPlayers);
         break;
       case "setMaxVerse":
         setMaxVerse(setGame,value);

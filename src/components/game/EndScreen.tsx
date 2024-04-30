@@ -6,7 +6,7 @@ interface EndScreenProps {
 
 const EndScreen: React.FC<EndScreenProps> = ({players}) => {
       // Trier les joueurs par score du plus bas au plus haut
-      const sortedPlayers = [...players].sort((a, b) => a.score - b.score);
+      const sortedPlayers = [...players].sort((a, b) => b.score - a.score );
 
       return (
           <div>

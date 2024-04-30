@@ -140,7 +140,18 @@ export const checkPlayers = (players:PlayerProps[]) => {
   return allReady;
 }
 
-
+export const removePlayers = (players: any[],setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; }, playerToUpdate: { id: any; }, state: any) => {
+  const playerIndex = players.findIndex((player: { id: any; }) => player.id === state)
+  console.log(state)
+  console.log(players)
+  const updatedPlayers = [...players];
+  if (playerIndex !== -1) {
+    const updatedPlayer = { ...players[playerIndex] };
+    updatedPlayer.isHost = true;
+    updatedPlayers[playerIndex] = updatedPlayer;
+  }
+  setPlayers(updatedPlayers.filter((player) => {return player.id !== playerToUpdate.id }));
+}
 
 export const recvPlayerMSG = (message:any,players: PlayerProps[],setPlayers: { 
   (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; } ) => {
@@ -150,7 +161,7 @@ export const recvPlayerMSG = (message:any,players: PlayerProps[],setPlayers: {
       setPlayers(prevPlayers => [...prevPlayers, {...value}]);
       break;
     case "REMOVE":
-      setPlayers(prevPlayers => [...prevPlayers.filter((player) => {return player.playerName !== value.playerName })]);
+      removePlayers(players,setPlayers, value.player,value.newHost)
       break;
     case "makeGuess":
       // Traitement pour makeGuess
