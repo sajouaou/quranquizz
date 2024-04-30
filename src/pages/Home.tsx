@@ -7,13 +7,13 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Quran Quizz v1.15 Online Test</IonTitle>
+          <IonTitle>Quran Quizz v1.16 Online Test</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <IonHeader collapse="condense">
           <IonToolbar>
-            <IonTitle size="large">Quran Quizz v1.15 Online Test</IonTitle>
+            <IonTitle size="large">Quran Quizz v1.16 Online Test</IonTitle>
           </IonToolbar>
         </IonHeader>
         <Menu />

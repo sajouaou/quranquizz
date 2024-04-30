@@ -3,7 +3,6 @@ import './Menu.css';
 import ExploreContainer from './GameContainer';
 import { IonButton } from '@ionic/react';
 import { Chapter } from './game/Game';
-import { WebSocketDemo } from './client/testSocket';
 
 interface MenuItem {
   label: string;
@@ -38,8 +37,8 @@ const Menu: React.FC = () => {
     const [name, setName] = useState("");
     const [room, setRoom] = useState(""); // State to hold the room's name
     //const [ENDPOINT, setENDPOINT] = useState("http://localhost:5000");
-    const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
-    //const [ENDPOINT, setENDPOINT] = useState("wss://quranquizz-server.onrender.com");
+    //const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
+    const [ENDPOINT, setENDPOINT] = useState("wss://quranquizz-server.onrender.com");
     
     //const [ENDPOINT, setENDPOINT] = useState("https://socketio-chat-h9jt.herokuapp.com");
     
@@ -169,8 +168,6 @@ const Menu: React.FC = () => {
           </>
         )}
         
-        { isConnected  && (
-            <WebSocketDemo  endpoint={ENDPOINT} username={name} room={room}/>) }
           </>
           )
 
