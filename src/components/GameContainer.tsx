@@ -15,7 +15,7 @@ import {
   recvGameMSG, 
   recvGameSettingMSG } from './game/Game';
 import { PlayerProps, checkPlayers, defaultPlayer, isPlayersLost, recvPlayerMSG } from './Player';
-import Chat from './client/GameClient';
+import Chat from '../components/client/GameClient';
 
 import "./GameClient.css";
 import './GameContainer.css';
