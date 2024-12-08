@@ -1,3 +1,4 @@
+import { IonButton, IonCheckbox } from '@ionic/react';
 import React from 'react';
 
 
@@ -17,13 +18,7 @@ const Settings: React.FC<SettingsProps> = ({
       { i > 0 && (element.condition || element.condition == null) && element.notNext == null && <br key={`br${i}`} />}
 
       { element.type === "CHECKBOX" && (
-      <>
-      <label htmlFor={`switch${i}`}  key ={`switchLab${i}`}>{element.label}</label>
-      <label className={`switch${i}`}  key ={`switch${i}`}>
-        <input type="checkbox" checked={element.value} onChange={() => element.set(!element.value)} />
-        <span className="slider round"></span>
-      </label>
-      </>    
+          <IonCheckbox checked={element.value} onClick={() => element.set(!element.value)} className={`switch${i}`}  key ={`switch${i}`} > {element.label} </IonCheckbox>    
       )}
       { element.type === "SELECT" && element.condition && (
           <>
@@ -42,7 +37,7 @@ const Settings: React.FC<SettingsProps> = ({
       )
       }
       {element.type === "BUTTON" && element.condition && (
-        <button className={element.class}  onClick={element.click}  key ={`btn${i}`}>{element.label}</button>
+        <IonButton className={element.class}  onClick={element.click}  key ={`btn${i}`}>{element.label}</IonButton>
       )
       }
       {element.type === "SLIDER" && (

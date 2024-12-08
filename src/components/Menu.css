@@ -1,19 +1,58 @@
-.menu-button {
-    background-color: #4caf50; /* Couleur de fond */
-    color: white; /* Couleur du texte */
-    padding: 10px 20px; /* Espacement intérieur */
-    border: none; /* Supprime la bordure */
-    cursor: pointer; /* Curseur au survol */
-    border-radius: 5px; /* Coins arrondis */
-    margin: 5px; /* Marge autour du bouton */
-  }
-  
-  
-.menu-button:hover {
-    background-color: #45a049; /* Couleur de fond au survol */
+/* Resetting default margin and padding for ul and li elements */
+.MenuComponent ul,
+.MenuComponent li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.MenuComponent ul {
-list-style-type: none; /* Supprime les puces de la liste */
-padding: 0; /* Supprime les marges intérieures de la liste */
+/* Styling the menu items */
+.menu-item {
+  display: inline-block;
+  margin: 5px;
+}
+
+/* Styling for local menu item */
+.menu-item.local ion-button {
+  --background: #93e9be;
+  --background-hover: #9ce0be;
+  --background-activated: #88f4be;
+  --background-focused: #88f4be;
+}
+
+/* Styling for train menu item */
+.menu-item.train ion-button {
+  --background: #f0932b;
+  --background-hover: #e67e22;
+  --background-activated: #ff9f43;
+  --background-focused: #ff9f43;
+}
+
+/* Styling for arcade menu item */
+.menu-item.arcade ion-button {
+  --background: #eb4d4b;
+  --background-hover: #e84118;
+  --background-activated: #ff6b6b;
+  --background-focused: #ff6b6b;
+}
+
+/* Styling for survival menu item */
+.menu-item.survival ion-button {
+  --background: #6ab04c;
+  --background-hover: #4b8939;
+  --background-activated: #7ed56f;
+  --background-focused: #7ed56f;
+}
+
+/* Styling for online menu item */
+.menu-item.online ion-button {
+  --background: #4b7bec;
+  --background-hover: #3867d6;
+  --background-activated: #74a6e5;
+  --background-focused: #74a6e5;
+}
+
+/* Hover effect */
+.menu-item ion-button:hover {
+  opacity: 0.8;
 }

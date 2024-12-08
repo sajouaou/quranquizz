@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import './Menu.css';
 import ExploreContainer from './GameContainer';
-import { IonButton } from '@ionic/react';
+import { IonButton, IonContent, IonInput, IonItem } from '@ionic/react';
 import { Chapter } from './game/Game';
 
 interface MenuItem {
   label: string;
+  className:string;
   action: () => void;
 }
 
@@ -15,15 +16,15 @@ interface MenuProps {
 
 const MenuComponent: React.FC<MenuProps> = ({ items }) => {
   return (
-    <div className="MenuComponent">
-      <ul>
-        {items.map((item, index) => (
-          <li className="menu-button" key={index} onClick={item.action}>
-            {item.label}
-          </li>
-        ))}
-      </ul>
-    </div>
+  <div className="MenuComponent">
+    <ul>
+      {items.map((item, index) => (
+        <li className={"menu-item " + item.className} key={index} onClick={item.action}>
+          <IonButton>{item.label}</IonButton>
+        </li>
+      ))}
+    </ul>
+  </div>
   );
 };
 
@@ -34,8 +35,8 @@ const Menu: React.FC = () => {
     const [number, setNumber] = useState(0);
 
 
-    const [name, setName] = useState("");
-    const [room, setRoom] = useState(""); // State to hold the room's name
+    const [name, setName] = useState<any>("");
+    const [room, setRoom] = useState<any>(""); // State to hold the room's name
     //const [ENDPOINT, setENDPOINT] = useState("http://localhost:5000");
     //const [ENDPOINT, setENDPOINT] = useState("http://192.168.1.14:5000");
     const [ENDPOINT, setENDPOINT] = useState("wss://quranquizz-server.onrender.com");
@@ -64,25 +65,13 @@ const Menu: React.FC = () => {
   }, []);
 
   
-  const handleOption1Click = () => {
-    setState('Training');
-    // Mettez votre logique ou action ici
-  };
 
-  const handleOption2Click = () => {
-    setState('Online');
-    // Mettez votre logique ou action ici
-  };
-
-  const handleOption3Click = () => {
-    setState('Arcade');
-    // Mettez votre logique ou action ici
-  };
 
   const menuItems = [
-    { label: 'Entrainement', action: handleOption1Click },
-    { label: 'Arcade', action: handleOption3Click },
-    { label: 'Online /!\\ IN DEV', action: handleOption2Click },
+    { label: 'Entrainement',className:"local train", action: () => { setState('Training'); } },
+    { label: 'Arcade',className:"local arcade", action:  () => { setState('Arcade'); } },
+    { label: 'Survival',className:"local survie", action:  () => { setState('Survie'); } },
+    { label: 'Online',className:"online", action: () => {setState('Online');} },
   ];
 
     const handleNameChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
@@ -92,12 +81,14 @@ const Menu: React.FC = () => {
     const handleRoomNameChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setRoom(event.target.value); // Update roomName state when input changes
     };
-    const handleServerChange = (e: { target: { value: React.SetStateAction<string>; }; }) => {
+    const handleServerChange = (e: any) => {
         setENDPOINT(e.target.value);
     }
 
     const handleJoin = () => {
-      setIsConnected(true);
+      if(name.length > 0 && room.length > 0){
+        setIsConnected(true);
+      }
     }
     
     /* 
@@ -114,65 +105,32 @@ const Menu: React.FC = () => {
         {(state === 'Online') &&
             <>  
             { !isConnected  && (
-            <>  
-            <input
-                type="text"
-                placeholder="Enter room name"
-                value={room}
-                onChange={handleRoomNameChange}
-            />
-            <input
-                type="text"
-                placeholder="Enter player name"
-                value={name}
-                onChange={handleNameChange}
-            />
-                
-                <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
-                <button className="menu-button" onClick={() => {setState('');setIsConnected(false);}}>Return</button>
-            </>
-          )}
+            <form onSubmit={handleJoin}>  
+                <IonInput
+                    placeholder="Enter room name"
+                    fill="outline"
+                    value={room}
+                    onIonInput={(e) => setRoom(e.target.value)}
+                />
+                <IonInput
+                    placeholder="Enter player name"
+                    fill="outline"
+                    value={name}
+                    onIonInput={(e) => setName(e.target.value) }
+                />
+              <IonItem>
+                  <IonButton onClick={handleJoin}>Join/Create Room</IonButton>
+                  <IonButton className="menu-button return" onClick={() => {setState('');setIsConnected(false);}}>Return</IonButton>
+              </IonItem>
+            </form>
+            )}
           
-          { isConnected  && (
+            { isConnected  && (
               <ExploreContainer  mode={state} chapters={chapters}  location={{search:{name,room,ENDPOINT} }} leave={() => {setState('');setIsConnected(false);}} />) }
 
             </>
         }
-
-        { (state === 'test') && (
-          <>  
-          { !isConnected  && (
-          <>  
-          <input
-              type="text"
-              placeholder="Enter room name"
-              value={room}
-              onChange={handleRoomNameChange}
-          />
-              <input
-                  type="text"
-                  placeholder="Enter player name"
-                  value={name}
-                  onChange={handleNameChange}
-              />
-
-              <input
-              type="text"
-              placeholder="Enter address of Server"
-              value={ENDPOINT}
-              onChange={handleServerChange}
-            />
-                <IonButton type="submit" onClick={handleJoin}>Join/Create Room</IonButton>
-              
-              
-          </>
-        )}
         
-          </>
-          )
-
-          }
-
         {state === '' &&
             <MenuComponent items={menuItems} />
         }

@@ -41,57 +41,37 @@
   text-decoration: none;
 }
 
-.replay {
-  background-color: #2b06d1; /* Couleur de fond */
-}
-.replay:hover {
-  background-color: #3209eb; /* Couleur de fond */
-}
-
-.next {
-  background-color: #be1532; /* Couleur de fond */
-}
-.next:hover {
-  background-color: #b42d70; /* Couleur de fond */
-}
-
-.start {
-  background-color: #1c1eb8; /* Couleur de fond */
-}
-.start:hover {
-  background-color: #354aa7; /* Couleur de fond */
-}
-
-.settings {
-  background-color: #242424; /* Couleur de fond */
-}
-.settings:hover {
-  background-color: #575757; /* Couleur de fond */
-}
-.end {
-  background-color: #ac2e2e; /* Couleur de fond */
-}
-
-.end:hover {
-  background-color: #a54747; /* Couleur de fond */
-}
 
 
-.success-animation {
-  background-color: #4caf50; /* Couleur de fond */
-  color: white; /* Couleur du texte */
-  padding: 10px 20px; /* Espacement intérieur */
-  border-radius: 5px; /* Coins arrondis */
-  margin-top: 20px; /* Marge supérieure */
-  animation: successAnimation 0.5s ease-out; /* Utilisation de l'animation */
+
+/* Styling for return IonButton */
+.GameContainer ion-button.menu-button.return {
+  --background: #2b06d1;
+  --background-hover: #3209eb;
 }
 
-/* Animation pour le succès */
-@keyframes successAnimation {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
+/* Styling for start IonButton */
+.GameContainer ion-button.menu-button.start {
+  --background: #1c1eb8;
+  --background-hover: #354aa7;
 }
 
+/* Styling for settings IonButton */
+.GameContainer ion-button.menu-button.settings {
+  --background: #242424;
+  --background-hover: #575757;
+}
+
+/* Styling for end IonButton */
+.GameContainer ion-button.menu-button.end {
+  --background: #ac2e2e;
+  --background-hover: #a54747;
+}
+
+/* Apply hover effect */
+.GameContainer ion-button.menu-button:hover {
+  opacity: 0.8;
+}
 
 
 #container {
@@ -122,36 +102,5 @@
   padding: 20px;
   border-radius: 5px;
 
-}
-
-/* Animation pour l'échec */
-@keyframes failureAnimation {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.failure-animation {
-  background-color: #f44336; /* Couleur de fond */
-  color: white; /* Couleur du texte */
-  padding: 10px 20px; /* Espacement intérieur */
-  border-radius: 5px; /* Coins arrondis */
-  margin-top: 20px; /* Marge supérieure */
-  animation: failureAnimation 0.5s ease-out; /* Utilisation de l'animation */
-}
-
-
-/* Animation pour l'échec */
-@keyframes nextAnimation {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.next-animation {
-  background-color: #c4a911; /* Couleur de fond */
-  color: white; /* Couleur du texte */
-  padding: 10px 20px; /* Espacement intérieur */
-  border-radius: 5px; /* Coins arrondis */
-  margin-top: 20px; /* Marge supérieure */
-  animation: failureAnimation 0.5s ease-out; /* Utilisation de l'animation */
 }
 

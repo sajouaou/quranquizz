@@ -1,5 +1,7 @@
 import { play } from 'ionicons/icons';
 import React, { useState, useEffect } from 'react';
+import './InputGame.css';
+import { IonButton } from '@ionic/react';
 
 interface InputGameProps {
   replayAudio: any; // Remplacez 'any' par le type correct si possible
@@ -100,13 +102,13 @@ const InputGame:React.FC<InputGameProps> = ({
 
 
   return (
-    <div>
+    <div className='InputContainer'>
       { isPlayer && (
         <>
       {replayAudio && (
-      <button className="menu-button replay" onClick={replayAudio}>Replay </button>
+      <IonButton className="menu-button replay" onClick={replayAudio}>Replay </IonButton>
       )}
-      <button className="menu-button confirm" onClick={handleConfirmButtonClick}>Confirm</button>
+      <IonButton className="menu-button confirm" onClick={handleConfirmButtonClick}>Confirm</IonButton>
       <br />
       <select id="chapterSelect" value={player.guessChapter} onChange={handleChapterSelect}>
         {chapters
@@ -135,7 +137,7 @@ const InputGame:React.FC<InputGameProps> = ({
       )}
 
       <br />
-      <button className="menu-button next" onClick={handleNextButtonClick}>Skip</button>
+      <IonButton className="menu-button next" onClick={handleNextButtonClick}>Skip</IonButton>
       </>
     )}
 
