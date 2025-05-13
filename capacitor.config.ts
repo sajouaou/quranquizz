@@ -1,24 +1,9 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'ionic.quranquizz',
-  appName: 'quranquizz',
-  webDir: 'dist',
-  server: {
-    androidScheme: 'https'
-  }
-,
-  plugins: {
-    CapacitorHttp: {
-      enabled: true,
-    },
-  },
-    android: {
-       buildOptions: {
-          keystorePath: 'c:\Users\Anxoi\.keystore\anxoKeyTest.jks',
-          keystoreAlias: 'AnxoDev',
-       }
-    }
-  };
+  appId: 'com.quranquizz',
+  appName: 'Quran Quizz',
+  webDir: 'dist'
+};
 
 export default config;

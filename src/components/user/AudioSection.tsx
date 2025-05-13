@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 
 interface AudioSectionProps {
   numberOfAyat: number;
@@ -20,10 +20,9 @@ class AudioSection extends Component<AudioSectionProps> {
   }
 
 
-
   fetchAudioFile = async (chapterId: number,verse: number) => {
     try {
-      const response = await fetch(`https://api.quran.com/api/v4/recitations/10/by_chapter/${chapterId}?per_page=286`);
+      const response =  await fetch(`https://api.quran.com/api/v4/recitations/10/by_chapter/${chapterId}?per_page=286`);
       if (response.ok) {
         const data = await response.json();
         if (data.audio_files.length > 0) {
@@ -47,6 +46,7 @@ class AudioSection extends Component<AudioSectionProps> {
     if (this.audioFile && this.audioRef.current && !this.isPlaying) {
       this.setPlay(true);
       this.audioRef.current.src = `https://verses.quran.com/${this.audioFile}`;
+      this.audioRef.current.load();
       this.audioRef.current.volume = this.volume;
       this.audioRef.current.play();
       this.audioRef.current.onended = () => {
@@ -63,8 +63,13 @@ class AudioSection extends Component<AudioSectionProps> {
     const { confirmedVerse } = this.props;
     this.setAyat(0);
     this.setPlay(false);
-    this.setAudioFile(this.data.audio_files[confirmedVerse].url);
-    this.playAudio();
+    this.isPlaying = false;
+    if(this.data?.audio_files?.[confirmedVerse])
+    {
+      this.setAudioFile(this.data.audio_files[confirmedVerse].url);
+      this.audioRef.current.pause();
+      this.playAudio();
+    }
   };
 
   setVolumeAudio = (vol:number) => {

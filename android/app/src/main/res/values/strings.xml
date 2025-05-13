@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">quranquizz</string>
-    <string name="title_activity_main">quranquizz</string>
-    <string name="package_name">ionic.quranquizz</string>
-    <string name="custom_url_scheme">ionic.quranquizz</string>
+    <string name="app_name">Quran Quizz</string>
+    <string name="title_activity_main">Quran Quizz</string>
+    <string name="package_name">com.quranquizz</string>
+    <string name="custom_url_scheme">com.quranquizz</string>
 </resources>

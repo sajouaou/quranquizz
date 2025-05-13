@@ -102,7 +102,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location, 
   
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
-    if (lastJsonMessage !== null) {
+    if (lastJsonMessage !== null ) {
       setMessages((prevMessages) => [...lastJsonMessage.messages]);
     }
   }, [lastJsonMessage])
@@ -124,15 +124,16 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location, 
     }
   };
   
-  const sendGameMessage = async (message: any) => {
+  const sendGameMessage = (message: any) => {
     if(mode === "Online"){
       //console.log("SEND ONLINE - ",message);
       sendMessage( { message ,game,players});
     }
     else if(mode !== "Online"){
-      console.log("SEND - ",message);
+      //console.log("SEND - ",message);
+      console.log("SEND - OFFLINE MESSAGE");
       setMessages((messages) => [...messages, {user:"LOCAL", text:message}]);
-      setLastMessages(message);
+      //setLastMessages(message);
       //parseMessage(message);
     }
   }
@@ -187,6 +188,13 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location, 
       case "ENDROUND":
         handleEndRound(value);
         break;
+      case "NEWSURAH":
+        const {randomChap,verse,maxtemp} = value;
+        console.log(value)
+        audioSection.fetchAudioFile(randomChap, verse)
+        .then(() => console.log("Audio fetched successfully"))
+        .catch(err => console.error("Error fetching audio:", err));
+        break;
       case "START":
         if(players[0].isHost){
           playNext(0);
@@ -205,7 +213,9 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location, 
     switch (action) {
       case "AUDIOFETCH":
         const {surah,verse} = value;
-        await audioSection.fetchAudioFile(surah, verse);
+        audioSection.fetchAudioFile(surah, verse)
+        .then(() => console.log("Audio fetched successfully"))
+        .catch(err => console.error("Error fetching audio:", err));
         break;
 
     default:
@@ -297,7 +307,7 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
             }
           });
           
-          console.log("Test Everything Read");
+          console.log("Test Everyone Ready");
           sendGameMessage({ content: 'The round is finished', action: 'ENDROUND', type: 'GAME', value:endResult});
           sendGameMessage({ content: 'The next round will start', action: 'READY', type: 'GAME', value:allReady});
           if(game.isSkip || ! everyoneFail){
@@ -306,7 +316,7 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
           setTimeout(() => { handleEndGame();    }, 1000); 
         }
         else{
-          console.log("Test Everything Failed");
+          console.log("Test Everyone Failed");
           sendGameMessage({ content: 'Not every one is ready', action: 'READY', type: 'GAME', value:allReady});
 
         }
@@ -359,10 +369,10 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
       const randomChap = getRandomChapterNumber(game,chapters);
       const {verse,maxtemp } = getRandomVerseNumber(game,chapters,randomChap);
       sendGameMessage({ content: 'New surah  selected', action: 'NEWSURAH', type: 'GAME', value:{randomChap,verse,maxtemp} });
-      sendGameMessage({ content: 'Downloading the audio', action: 'AUDIOFETCH', type: 'AUDIO', value:{surah:randomChap,verse:verse} });
+      //sendGameMessage({ content: 'Downloading the audio', action: 'AUDIOFETCH', type: 'AUDIO', value:{surah:randomChap,verse:verse} });
     }
     if(game.isLimited){
-      sendGameMessage({ content: `The round ${curRound+1} will start now`, action: 'SETROUND', type: 'GAME', value:curRound+1 });
+      //sendGameMessage({ content: `The round ${curRound+1} will start now`, action: 'SETROUND', type: 'GAME', value:curRound+1 });
     }
   }
 
@@ -378,7 +388,8 @@ const recvWelcomeMessage = (message: { game:GameProps, players: any[]; }) => {
   //
   //////////////////////////////////
 
-  const handleStartClick = async () => {
+  const handleStartClick = () => {
+    console.log("TEST DE CLICK")
     sendGameMessage({ content: 'The game is starting', action: 'START', type: 'GAME'});
   };  
 

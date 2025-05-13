@@ -1,4 +1,4 @@
-package ionic.quranquizz;
+package com.quranquizz;
 
 import com.getcapacitor.BridgeActivity;
 
