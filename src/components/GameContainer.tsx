@@ -103,7 +103,8 @@ const ExploreContainer: React.FC<ContainerProps> = ({ mode, chapters ,location, 
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
     if (lastJsonMessage !== null ) {
-      setMessages((prevMessages) => [...lastJsonMessage.messages]);
+      const typedMessage = lastJsonMessage as { messages: string[] };
+      setMessages((prevMessages) => [...typedMessage.messages ]);
     }
   }, [lastJsonMessage])
 
