@@ -1,2 +1,92 @@
-/* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
+/* Quran Quizz theme — deep emerald + gold. http://ionicframework.com/docs/theming/ */
+:root {
+  --ion-color-primary: #0f7a64;
+  --ion-color-primary-rgb: 15, 122, 100;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0d6b58;
+  --ion-color-primary-tint: #278774;
+
+  --ion-color-secondary: #c89b3c;
+  --ion-color-secondary-rgb: 200, 155, 60;
+  --ion-color-secondary-contrast: #1d1a12;
+  --ion-color-secondary-contrast-rgb: 29, 26, 18;
+  --ion-color-secondary-shade: #b08835;
+  --ion-color-secondary-tint: #cea550;
+
+  --ion-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --qq-bg: #f4f1ea;
+  --qq-card: #ffffff;
+  --qq-card-border: rgba(15, 122, 100, 0.12);
+  --qq-text: #1c2b27;
+  --qq-muted: #62726d;
+  --qq-shadow: 0 6px 24px rgba(20, 40, 35, 0.08);
+  --qq-radius: 18px;
+  --qq-success: #1f9d55;
+  --qq-danger: #d64545;
+  --qq-warning: #c98a12;
+
+  --ion-background-color: var(--qq-bg);
+  --ion-item-background: var(--qq-card);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #3cc0a0;
+    --ion-color-primary-rgb: 60, 192, 160;
+    --ion-color-primary-contrast: #06231c;
+    --ion-color-primary-contrast-rgb: 6, 35, 28;
+    --ion-color-primary-shade: #35a98d;
+    --ion-color-primary-tint: #50c6aa;
+
+    --qq-bg: #0e1513;
+    --qq-card: #17211e;
+    --qq-card-border: rgba(60, 192, 160, 0.15);
+    --qq-text: #e7eeeb;
+    --qq-muted: #97a8a2;
+    --qq-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+
+    --ion-background-color: var(--qq-bg);
+    --ion-item-background: var(--qq-card);
+  }
+}
+
+.arabic {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  direction: rtl;
+}
+
+.card {
+  background: var(--qq-card);
+  border: 1px solid var(--qq-card-border);
+  border-radius: var(--qq-radius);
+  box-shadow: var(--qq-shadow);
+  color: var(--qq-text);
+}
+
+.surah-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.2em;
+  height: 2.2em;
+  padding: 0 4px;
+  border-radius: 50%;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+}
+
+.setting-hint {
+  display: block;
+  font-size: 0.8em;
+  margin-top: 2px;
+  white-space: normal;
+}
+
+.settings-notice {
+  margin: 16px 20px 0;
+  color: var(--qq-muted);
+  font-size: 0.9em;
+}

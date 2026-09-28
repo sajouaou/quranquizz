@@ -1,8 +1,8 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders without crashing', () => {
-  const { baseElement } = render(<App />);
-  expect(baseElement).toBeDefined();
+test('renders the home screen', async () => {
+  render(<App />);
+  expect(await screen.findByText('Quran Quizz')).toBeInTheDocument();
+  expect(screen.getByText('Entraînement')).toBeInTheDocument();
 });

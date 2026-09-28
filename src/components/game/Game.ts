@@ -4,6 +4,7 @@ import { PlayerProps } from "./Player";
 export interface Chapter {
   id: number;
   name_simple: string;
+  name_arabic?: string;
   verses_count: number;
 }
 
@@ -61,7 +62,7 @@ export const defaultGame: GameProps = {
 export function getRandomChapterNumber(game:any, chapters: any[]) {
     let res = Math.floor(Math.random() * (game.maxSurah - game.minSurah + 1)) + game.minSurah;
     if (game.verseDistribution) {
-      let chapterArrays: any[] = [];
+      const chapterArrays: any[] = [];
       chapters
         .filter(function (chapter: { id: number; }) {
           return chapter.id <= game.maxSurah && chapter.id >= game.minSurah;
@@ -83,7 +84,8 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
     return res;
   }
   
-  // Fonction pour générer un numéro de verset aléatoire
+  // Fonction pour générer un numéro de verset aléatoire (index 0-based).
+  // The sequence of `numberOfAyat` verses always fits inside the allowed range.
   export function getRandomVerseNumber(game:any, chapters: any[], chapterId: any) {
     let maxtemp = chapters.filter(function (chapter: { id: any; }) {
       return chapter.id === chapterId;
@@ -95,13 +97,8 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
     if (game.filterVerse && chapterId === game.minSurah && game.minVerse <= maxtemp) {
       minimumVerse = game.minVerse;
     }
-    let verse = Math.floor(Math.random() * maxtemp) + minimumVerse;
-    if (verse + game.numberOfAyat >= maxtemp) {
-      verse = maxtemp - game.numberOfAyat;
-      if (verse < minimumVerse) {
-        verse = minimumVerse;
-      }
-    }
+    const lastStart = Math.max(minimumVerse, maxtemp - game.numberOfAyat);
+    const verse = minimumVerse + Math.floor(Math.random() * (lastStart - minimumVerse + 1));
     return {verse, maxtemp};
   }
 
@@ -233,15 +230,16 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
       case "setMaxSurah":
         setMaxSurah(setGame,value);
         break;
-      case "setMinVerse":
+      case "setMinVerse": {
         setMinVerse(setGame,value);
         const updatedPlayers = players.map(player => ({
           ...player,
-          guessChapter:value
+          guessVerse:value
         }));
         // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
         setPlayers(updatedPlayers);
         break;
+      }
       case "setMaxVerse":
         setMaxVerse(setGame,value);
         break;
@@ -321,10 +319,11 @@ setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; 
     case "START":
       beginGame(setGame,setPlayers,players,game);
       break;
-    case "NEWSURAH":
+    case "NEWSURAH": {
       const {randomChap,verse,maxtemp} = value;
       newSurah(setGame,randomChap,verse,maxtemp);
       break;
+    }
     case "SETROUND":
       setCurrentRound(setGame,value);
       break;

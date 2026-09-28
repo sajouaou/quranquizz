@@ -1,72 +1,58 @@
-
-/* Styling for next IonButton */
-.InputContainer ion-button.menu-button.next {
-    --background: #be1532;
-    --background-hover: #b42d70;
-  }
-/* Styling for Confirm IonButton */
-.InputContainer ion-button.confirm {
-    --background: #4CAF50; /* Couleur de fond */
-    --background-hover: #45a049; /* Couleur de fond au survol */
-    --color: #fff; /* Couleur du texte */
-  }
-  
-  /* Styling for Replay IonButton */
-  .InputContainer ion-button.replay {
-    --background: #2196F3; /* Couleur de fond */
-    --background-hover: #1e87cd; /* Couleur de fond au survol */
-    --color: #fff; /* Couleur du texte */
-  }
-  
-/* Apply hover effect */
-.InputContainer ion-button.menu-button:hover {
-    opacity: 0.8;
-  }
-  
-
-  
-.success-animation {
-  background-color: #4caf50; /* Couleur de fond */
-  color: white; /* Couleur du texte */
-  padding: 10px 20px; /* Espacement intérieur */
-  border-radius: 5px; /* Coins arrondis */
-  margin-top: 20px; /* Marge supérieure */
-  animation: successAnimation 0.5s ease-out; /* Utilisation de l'animation */
+.InputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
 }
 
-/* Animation pour le succès */
-@keyframes successAnimation {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
+.question { margin: 0; font-weight: 600; }
+
+.surah-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 14px;
+  font: inherit;
+  text-align: left;
+  color: var(--qq-text);
+  background: rgba(var(--ion-color-primary-rgb), 0.06);
+  border: 1.5px solid rgba(var(--ion-color-primary-rgb), 0.35);
+  border-radius: 14px;
+  cursor: pointer;
 }
 
-/* Animation pour l'échec */
-@keyframes failureAnimation {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
+.surah-button:disabled { opacity: 0.6; cursor: default; }
+.surah-button .surah-name { flex: 1; font-weight: 600; font-size: 1.05rem; }
+.surah-button .placeholder { color: var(--qq-muted); font-weight: 500; }
+.surah-button .arabic { font-size: 1.3rem; color: var(--ion-color-primary); }
+
+.verse-item { --background: transparent; --padding-start: 4px; }
+
+.answer-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+.answer-actions ion-button { margin: 0; }
+
+.waiting { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--qq-muted); min-height: 44px; }
+
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #fff;
+  animation: feedbackIn 0.3s ease-out;
 }
 
-.failure-animation {
-  background-color: #f44336; /* Couleur de fond */
-  color: white; /* Couleur du texte */
-  padding: 10px 20px; /* Espacement intérieur */
-  border-radius: 5px; /* Coins arrondis */
-  margin-top: 20px; /* Marge supérieure */
-  animation: failureAnimation 0.5s ease-out; /* Utilisation de l'animation */
-}
+.feedback ion-icon { font-size: 28px; flex: none; }
+.feedback div { display: flex; flex-direction: column; }
+.feedback span { font-size: 0.9em; opacity: 0.95; }
+.feedback-win { background: var(--qq-success); }
+.feedback-lose { background: var(--qq-danger); }
+.feedback-next { background: var(--qq-warning); }
 
-
-/* Animation pour l'échec */
-@keyframes nextAnimation {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.next-animation {
-  background-color: #c4a911; /* Couleur de fond */
-  color: white; /* Couleur du texte */
-  padding: 10px 20px; /* Espacement intérieur */
-  border-radius: 5px; /* Coins arrondis */
-  margin-top: 20px; /* Marge supérieure */
-  animation: failureAnimation 0.5s ease-out; /* Utilisation de l'animation */
+@keyframes feedbackIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

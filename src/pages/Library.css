@@ -1,0 +1,4 @@
+.bulk-actions { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px; }
+.library-warning { margin: 16px; color: var(--qq-danger); }
+.offline-count { color: var(--ion-color-primary) !important; }
+ion-item .arabic { margin-left: 6px; color: var(--ion-color-primary); }

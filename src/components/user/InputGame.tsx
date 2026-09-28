@@ -1,27 +1,33 @@
-import { play } from 'ionicons/icons';
 import React, { useState, useEffect } from 'react';
+import { IonButton, IonIcon, IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner } from '@ionic/react';
+import { checkmarkCircle, chevronDown, closeCircle, playSkipForward } from 'ionicons/icons';
+import SurahPicker from './SurahPicker';
+import type { Chapter } from '../game/Game';
+import type { PlayerProps } from '../game/Player';
 import './InputGame.css';
-import { IonButton } from '@ionic/react';
 
 interface InputGameProps {
-  replayAudio: any; // Remplacez 'any' par le type correct si possible
   isPlayer: boolean;
-  chapters: any[]; // Remplacez 'any[]' par le type correct si possible
+  chapters: Chapter[];
   minSurah: number;
   maxSurah: number;
   maxVerse: number;
   minVerse: number;
   askVerse: boolean;
+  filterVerse: boolean;
   allReady: boolean;
   correctChapter: number | null;
   correctVerse: number;
-  sendGameMessage: (message: any) => void; // Remplacez '(message: string) => void' par la signature correcte de la fonction si nécessaire
-  checkGuessAllPlayers: () => void; // Remplacez '() => void' par la signature correcte de la fonction si nécessaire
-  player: any; // Remplacez 'any' par le type correct si possible
+  sendGameMessage: (message: any) => void;
+  checkGuessAllPlayers: () => void;
+  player: PlayerProps;
 }
 
-const InputGame:React.FC<InputGameProps> = ({
-  replayAudio,
+type Feedback = 'win' | 'lose' | 'next' | null;
+
+// One instance per player: it holds the per-player round logic (readiness checks,
+// result feedback). Only the local player's instance renders the answer controls.
+const InputGame: React.FC<InputGameProps> = ({
   isPlayer,
   chapters,
   minSurah,
@@ -29,6 +35,7 @@ const InputGame:React.FC<InputGameProps> = ({
   maxVerse,
   minVerse,
   askVerse,
+  filterVerse,
   allReady,
   correctChapter,
   correctVerse,
@@ -36,124 +43,125 @@ const InputGame:React.FC<InputGameProps> = ({
   checkGuessAllPlayers,
   player
 }) => {
-    
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [showFailureAnimation, setShowFailureAnimation] = useState(false);
-  const [showNextAnimation, setShowNextAnimation] = useState(false);
-
+  const [feedback, setFeedback] = useState<Feedback>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     checkGuessAllPlayers();
   }, [player.gameState]);
 
   useEffect(() => {
-    if (allReady ) {
-      if(player.gameState === 'win'){
-        handleSuccess();
+    if (allReady) {
+      if (player.gameState === 'win' || player.gameState === 'lose' || player.gameState === 'next') {
+        setFeedback(player.gameState);
+        setTimeout(() => setFeedback(null), 2500);
       }
-      
-      if(player.gameState === 'next'){
-        handleNext();
-      }
-      if(player.gameState === 'lose' ){
-        handleFailure();
-      }
-      if(isPlayer){
+      if (isPlayer) {
         sendGameMessage({ content: `${player.playerName} is not ready`, action: 'setGameState', type: 'PLAYER', value:{player,state:"not ready"} });
       }
     }
   }, [allReady]);
 
-    
-    
-  const handleSuccess = async () => {
-    setShowSuccessAnimation(true);
-    setTimeout(() => {setShowSuccessAnimation(false); }, 1000); // Masquer l'animation après 1 seconde
-  };
-  
-  const handleNext = async () => {
-    setShowNextAnimation(true);
-    setTimeout(() => { setShowNextAnimation(false); }, 1000); // Masquer l'animation après 1 seconde
-  };
-
-  const handleFailure = async () => {
-    setShowFailureAnimation(true);
-    setTimeout(() => {setShowFailureAnimation(false); }, 1000); // Masquer l'animation après 1 seconde
-  };
-
-  const handleNextButtonClick =  () => {
+  const handleNextButtonClick = () => {
     sendGameMessage({ content: `${player.playerName} is ready  for the next  question`, action: 'makeGuess', type: 'PLAYER', value:{player,surah:-1,verse:1} });
   };
-  
-  const handleConfirmButtonClick =  () => {
+
+  const handleConfirmButtonClick = () => {
     sendGameMessage({ content: `${player.playerName} has confirmed his choice`, action: 'makeGuess', type: 'PLAYER', value:{player,surah:player.guessChapter,verse:player.guessVerse} });
   };
 
-
-  const handleChapterSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedChapterId = parseInt(event.target.value);
-    //setChapter(player,selectedChapterId);
+  const handleChapterSelect = (selectedChapterId: number) => {
     sendGameMessage({ content: `${player.playerName} has selected a chapter`, action: 'setGuessChapter', type: 'PLAYER', value:{player,surah:selectedChapterId} });
   };
-  const handleVerseSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedVerseId = parseInt(event.target.value);
+  const handleVerseSelect = (selectedVerseId: number) => {
     sendGameMessage({ content: `${player.playerName} has selected a verse`, action: 'setGuessVerse', type: 'PLAYER', value:{player,verse:selectedVerseId} });
   };
 
+  if (!isPlayer) return null;
+
+  const allowed = chapters.filter((chapter) => minSurah <= chapter.id && chapter.id <= maxSurah);
+  const selected = allowed.find((chapter) => chapter.id === player.guessChapter) ?? null;
+  const verses = selected
+    ? [...Array(selected.verses_count).keys()].filter(
+        (x) => !filterVerse || ((maxSurah !== selected.id || x <= maxVerse) && (minSurah !== selected.id || minVerse <= x)),
+      )
+    : [];
+  const verseValid = !askVerse || verses.includes(player.guessVerse);
+  const waiting = player.gameState === 'ready' || player.gameState === 'next';
+  const correct = chapters.find((chapter) => chapter.id === correctChapter);
 
   return (
-    <div className='InputContainer'>
-      { isPlayer && (
-        <>
-      {replayAudio && (
-      <IonButton className="menu-button replay" onClick={replayAudio}>Replay </IonButton>
-      )}
-      <IonButton className="menu-button confirm" onClick={handleConfirmButtonClick}>Confirm</IonButton>
-      <br />
-      <select id="chapterSelect" value={player.guessChapter} onChange={handleChapterSelect}>
-        {chapters
-          .filter((chapter) => minSurah <= chapter.id && chapter.id <= maxSurah)
-          .map((chapter) => (
-            <option key={chapter.id} value={chapter.id}>
-              {chapter.name_simple}
-            </option>
-          ))}
-      </select>
-      {askVerse && (
-        <select id="verseSelect" value={player.guessVerse} onChange={handleVerseSelect}>
-          {player.guessChapter &&
-            chapters
-              .filter((chapter) => chapter.id === player.guessChapter)
-              .map((chapter) =>
-                [...Array(chapter.verses_count).keys()]
-                  .filter((x, i) => (maxSurah !== player.guessChapter || i <= maxVerse) && (minSurah !== player.guessChapter || minVerse <= i))
-                  .map((x, i) => (
-                    <option key={x} value={x}>
-                      {x + 1}
-                    </option>
-                  ))
-              )}
-        </select>
-      )}
-
-      <br />
-      <IonButton className="menu-button next" onClick={handleNextButtonClick}>Skip</IonButton>
-      </>
-    )}
-
-      {showSuccessAnimation && (
-        <div className="success-animation">Bien jouej</div>
-      )}
-
-      {showFailureAnimation && (
-        <div className="failure-animation"> Nope </div>
-      )}
-      {showNextAnimation && (
-        <div className="next-animation">
-          {chapters.filter((chapter) => chapter.id === correctChapter).map((chapter) => (chapter.name_simple))} {askVerse ? correctVerse + 1 : ""}
+    <div className="InputContainer card">
+      {feedback && correct && (
+        <div className={`feedback feedback-${feedback}`} role="status">
+          <IonIcon icon={feedback === 'win' ? checkmarkCircle : feedback === 'lose' ? closeCircle : playSkipForward} />
+          <div>
+            <strong>{feedback === 'win' ? 'Bien joué !' : feedback === 'lose' ? 'Raté…' : 'Passé'}</strong>
+            <span>
+              C'était {correct.id}. {correct.name_simple}
+              {askVerse ? `, verset ${correctVerse + 1}` : ''}
+            </span>
+          </div>
         </div>
       )}
 
+      <p className="question">De quelle sourate provient cette récitation ?</p>
+
+      <button className="surah-button" type="button" disabled={waiting} onClick={() => setPickerOpen(true)}>
+        {selected ? (
+          <>
+            <span className="surah-number">{selected.id}</span>
+            <span className="surah-name">{selected.name_simple}</span>
+            {selected.name_arabic && <span className="arabic">{selected.name_arabic}</span>}
+          </>
+        ) : (
+          <span className="surah-name placeholder">Choisir une sourate</span>
+        )}
+        <IonIcon icon={chevronDown} />
+      </button>
+
+      {askVerse && selected && (
+        <IonItem lines="none" className="verse-item">
+          <IonLabel>Verset</IonLabel>
+          <IonSelect
+            interface="popover"
+            disabled={waiting}
+            placeholder="—"
+            value={verseValid ? player.guessVerse : undefined}
+            onIonChange={(e) => handleVerseSelect(Number(e.detail.value))}
+          >
+            {verses.map((x) => (
+              <IonSelectOption key={x} value={x}>{x + 1}</IonSelectOption>
+            ))}
+          </IonSelect>
+        </IonItem>
+      )}
+
+      {waiting ? (
+        <div className="waiting">
+          <IonSpinner name="dots" />
+          <span>{player.gameState === 'next' ? 'Passé — ' : 'Réponse envoyée — '}en attente des autres joueurs</span>
+        </div>
+      ) : (
+        <div className="answer-actions">
+          <IonButton fill="outline" color="medium" onClick={handleNextButtonClick}>
+            <IonIcon slot="start" icon={playSkipForward} />
+            Passer
+          </IonButton>
+          <IonButton className="confirm" disabled={!selected || !verseValid} onClick={handleConfirmButtonClick}>
+            <IonIcon slot="start" icon={checkmarkCircle} />
+            Valider
+          </IonButton>
+        </div>
+      )}
+
+      <SurahPicker
+        isOpen={pickerOpen}
+        chapters={allowed}
+        selected={selected?.id ?? null}
+        onSelect={handleChapterSelect}
+        onClose={() => setPickerOpen(false)}
+      />
     </div>
   );
 };
