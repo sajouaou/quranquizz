@@ -8,6 +8,7 @@ const LABELS: Record<AudioPlayer['status'], string> = {
   idle: 'En attente de la récitation',
   loading: 'Chargement…',
   playing: 'Écoute attentivement',
+  paused: 'En pause',
   ended: 'Appuie pour réécouter',
   blocked: 'Appuie pour écouter',
   error: 'Audio indisponible — réessayer',

@@ -3,7 +3,7 @@ import { cacheAudio, getCachedAudio } from '../lib/audioCache';
 import { getPrefs, setPrefs, usePrefs } from '../lib/prefs';
 import { forgetSurahAudioUrls, getSurahAudioUrls } from '../lib/quranApi';
 
-export type AudioStatus = 'idle' | 'loading' | 'playing' | 'ended' | 'blocked' | 'error';
+export type AudioStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 'blocked' | 'error';
 
 interface Request {
   reciterId?: number; // defaults to the reciter chosen in the preferences
@@ -49,6 +49,8 @@ export interface AudioPlayer {
   load: (surah: number, verse: number, count: number, reciterId?: number) => void;
   replay: () => void;
   stop: () => void;
+  pause: () => void;
+  resume: () => void;
   setVolume: (volume: number) => void;
 }
 
@@ -157,6 +159,22 @@ export function useAudioPlayer(): AudioPlayer {
     setStatus('idle');
   }, []);
 
+  const pause = useCallback(() => {
+    const audio = getSharedAudio();
+    if (!audio.paused) {
+      audio.pause();
+      setStatus('paused');
+    }
+  }, []);
+
+  const resume = useCallback(() => {
+    const audio = getSharedAudio();
+    const generation = generationRef.current;
+    audio.play()
+      .then(() => { if (generation === generationRef.current) setStatus('playing'); })
+      .catch(() => { if (generation === generationRef.current) setStatus('blocked'); });
+  }, []);
+
   const setVolume = useCallback((value: number) => {
     setPrefs({ volume: value });
     getSharedAudio().volume = value;
@@ -165,5 +183,5 @@ export function useAudioPlayer(): AudioPlayer {
   // Stop playback when the game screen goes away.
   useEffect(() => stop, [stop]);
 
-  return { status, current, total, volume, load, replay, stop, setVolume };
+  return { status, current, total, volume, load, replay, stop, pause, resume, setVolume };
 }

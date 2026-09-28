@@ -1,0 +1,64 @@
+@import '../../components/GameContainer.css';
+@import '../../components/user/InputGame.css';
+
+.stories-content { --background: var(--qq-bg); }
+.stories { max-width: 620px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 28px); color: var(--qq-text); display: flex; flex-direction: column; gap: 14px; }
+
+.stories-intro { display: flex; gap: 14px; padding: 16px; align-items: flex-start; }
+.stories-intro > ion-icon { font-size: 30px; color: var(--ion-color-secondary); flex: none; }
+.stories-intro p { margin: 0; }
+.stories-progress { margin-top: 8px !important; font-weight: 700; color: var(--ion-color-primary); }
+
+.quiz-card, .story-card {
+  font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--qq-card-border); border-radius: var(--qq-radius);
+  background: var(--qq-card); color: var(--qq-text); box-shadow: var(--qq-shadow);
+}
+.quiz-card { display: flex; align-items: center; gap: 14px; padding: 16px; color: #fff; border: none;
+  background: linear-gradient(135deg, #8a6d1f, #c89b3c); }
+.quiz-card ion-icon { font-size: 30px; flex: none; }
+.quiz-card span { display: flex; flex-direction: column; gap: 2px; }
+.quiz-card small { opacity: 0.9; }
+
+.story-group h2 { margin: 10px 0 0; font-size: 1.15rem; }
+.group-subtitle { margin: 2px 0 10px; color: var(--qq-muted); font-size: 0.9em; }
+.story-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.story-card { display: flex; flex-direction: column; gap: 4px; padding: 14px; }
+.story-title { font-weight: 700; }
+.story-ref { color: var(--qq-muted); font-size: 0.85em; }
+.story-status { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.8em; }
+.story-status span { display: inline-flex; align-items: center; gap: 4px; }
+.listened { color: var(--qq-success); }
+.not-listened { color: var(--qq-muted); }
+.stars { display: inline-flex; gap: 2px; color: var(--ion-color-secondary); }
+.honorific { font-size: 0.8em; color: var(--ion-color-secondary); font-weight: 400; }
+.stories-note { color: var(--qq-muted); font-size: 0.8em; text-align: center; }
+
+.story-header { text-align: center; }
+.story-header h1 { margin: 0 0 4px; font-size: 1.5rem; }
+.story-surah-ar { margin: 0; font-size: 1.8rem; color: var(--ion-color-secondary); }
+.story-summary, .story-lesson, .story-player, .timeline, .quiz { padding: 16px; }
+.story-summary h3, .story-lesson h3, .story-player h3 { margin: 0 0 8px; font-size: 1rem; color: var(--ion-color-primary); }
+.story-summary p { margin: 0; line-height: 1.55; }
+.story-lesson blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--ion-color-secondary); font-style: italic; line-height: 1.5; }
+.lesson-ref { margin: 8px 0 0; color: var(--qq-muted); font-size: 0.85em; }
+.adab { color: var(--qq-muted); font-size: 0.85em; margin: 0 0 10px; }
+.player-controls { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.player-position, .player-reciter { text-align: center; color: var(--qq-muted); font-size: 0.85em; margin: 6px 0 0; }
+.story-player ion-progress-bar { margin-top: 12px; border-radius: 4px; }
+
+.challenge-story, .round-counter { margin: 0; text-align: center; color: var(--qq-muted); font-weight: 600; }
+.timeline .question, .quiz .question { margin: 0 0 8px; font-weight: 600; }
+.timeline-guess { text-align: center; font-weight: 700; color: var(--ion-color-primary); }
+.timeline .feedback { margin-bottom: 8px; }
+
+.choices { display: grid; gap: 8px; }
+.choice { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 52px; padding: 10px 14px; font: inherit; font-weight: 600; text-align: left;
+  color: var(--qq-text); background: rgba(var(--ion-color-primary-rgb), 0.06); border: 1.5px solid rgba(var(--ion-color-primary-rgb), 0.3); border-radius: 14px; cursor: pointer; }
+.choice.right { background: var(--qq-success); border-color: var(--qq-success); color: #fff; }
+.choice.wrong { background: var(--qq-danger); border-color: var(--qq-danger); color: #fff; }
+.choice.dim { opacity: 0.5; }
+.choice ion-icon { font-size: 22px; flex: none; }
+.quiz-answer { color: var(--qq-muted); margin: 12px 0 4px; }
+.link { background: none; border: none; padding: 0; font: inherit; color: var(--ion-color-primary); text-decoration: underline; cursor: pointer; }
+.person { color: var(--qq-muted); font-size: 0.9em; }
+.story-header .person { font-size: 1rem; }

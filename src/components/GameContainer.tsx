@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ReadyState } from 'react-use-websocket';
-// Named import: the package's CJS default export isn't picked up by Vite's interop.
-import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
 import { useIonToast, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonProgressBar, IonTitle, IonToolbar } from '@ionic/react';
-import { arrowBack, chatbubbles, heart, personAdd, play, settingsOutline, stopCircleOutline } from 'ionicons/icons';
+import { arrowBack, chatbubbles, heart, qrCode, shareSocial, play, settingsOutline, stopCircleOutline } from 'ionicons/icons';
 import Settings from './user/Settings';
 import InputGame from './user/InputGame';
 import AudioPanel from './user/AudioPanel';
@@ -25,6 +22,8 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { getPrefs } from '../lib/prefs';
 import { recordScore } from '../lib/stats';
 import { shareRoom } from '../lib/feedback';
+import { LinkStatus, RoomLink, WebSocketLink } from '../lib/net/link';
+import HostPairing from './p2p/HostPairing';
 import './GameContainer.css';
 
 export const MODE_LABELS: Record<string, string> = {
@@ -32,79 +31,84 @@ export const MODE_LABELS: Record<string, string> = {
   Arcade: 'Arcade',
   Survie: 'Survie',
   Online: 'En ligne',
+  Local: 'Partie locale',
 };
+
+export const isNetworked = (mode: string) => mode === 'Online' || mode === 'Local';
 
 const MODE_INTRO: Record<string, string> = {
   Training: 'Écoute une récitation et retrouve la sourate. Personnalise la plage de sourates dans les réglages.',
   Arcade: '10 manches, un point par bonne réponse. Vise le score parfait !',
   Survie: 'Tu as 3 vies. Chaque erreur en coûte une : tiens le plus longtemps possible.',
   Online: "Partage le nom du salon à tes amis. L'hôte règle la partie puis la lance.",
+  Local: "Sans serveur : chaque joueur se connecte à l'hôte en scannant un code. Idéal sur le même Wi-Fi ou via le partage de connexion d'un téléphone.",
 };
+
+// Either a WebSocket room on the server, or an already connected peer-to-peer link.
+export type Connection =
+  | { type: 'server'; endpoint: string; room: string }
+  | { type: 'p2p'; link: RoomLink; label: string };
 
 interface ContainerProps {
   mode: string;
   chapters: Chapter[];
   name: string;
-  room?: string;
-  endpoint?: string;
+  connection?: Connection;
   leave: () => void;
   retry?: () => void;
 }
 
-// Close codes sent by the server when it refuses a connection.
-const CLOSE_REASONS: Record<number, string> = {
-  4000: 'Pseudo ou salon invalide.',
-  4001: 'Ce pseudo est déjà utilisé dans ce salon. Choisis-en un autre.',
-  4002: 'Ce salon est complet.',
+// Opens the server link for the lifetime of the screen, or uses the peer-to-peer one.
+function useRoomLink(connection: Connection | undefined, name: string): RoomLink | null {
+  const [link, setLink] = useState<RoomLink | null>(null);
+  useEffect(() => {
+    if (!connection) return;
+    if (connection.type === 'p2p') {
+      setLink(connection.link);
+      return;
+    }
+    const socket = new WebSocketLink(connection.endpoint, {
+      username: name,
+      room: connection.room,
+      player: JSON.stringify({ ...defaultPlayer, playerName: name }),
+      game: JSON.stringify({ ...defaultGame }),
+      proto: '2',
+      clientId: getPrefs().clientId,
+    });
+    setLink(socket);
+    return () => socket.close();
+  }, [connection, name]);
+  return link;
 }
 
-const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, endpoint, leave, retry }) => {
-  const online = mode === 'Online';
+const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, connection, leave, retry }) => {
+  const online = isNetworked(mode);
+  const room = connection?.type === 'server' ? connection.room : undefined;
   const [presentToast] = useIonToast();
 
   //////////////////////////////
   //  ONLINE SECTION
   //////////////////////////////
-  // The server relays every message to every player of the room (sender included).
-  // Messages are replayed in order through `readCursor`. With `proto=2` the server
-  // only sends new messages ({append}); older servers send the whole history ({messages}).
+  // The server (or the peer-to-peer host) relays every message to every player of the
+  // room, sender included. Messages are replayed in order through `readCursor`.
+  const link = useRoomLink(connection, name);
+  const [linkStatus, setLinkStatus] = useState<LinkStatus>(online ? 'connecting' : 'open');
   const [closeReason, setCloseReason] = useState<string | null>(null);
-  const { sendJsonMessage, readyState } = useWebSocket(
-    online && endpoint ? endpoint : null,
-    {
-      queryParams: {
-        username: name,
-        room: room ?? '',
-        player: JSON.stringify({ ...defaultPlayer, playerName: name }),
-        game: JSON.stringify({ ...defaultGame }),
-        proto: '2',
-        clientId: getPrefs().clientId,
-      },
-      share: false,
-      shouldReconnect: () => false,
-      // onMessage sees every message; lastJsonMessage could skip some when they arrive together.
-      onMessage: (event) => {
-        let payload: { messages?: any[]; append?: any[] };
-        try {
-          payload = JSON.parse(event.data);
-        } catch {
-          return;
-        }
-        if (Array.isArray(payload.append)) {
-          const append = payload.append;
-          setMessages((prev) => [...prev, ...append]);
-        } else if (Array.isArray(payload.messages)) {
-          setMessages([...payload.messages]);
-        }
-      },
-      onClose: (event) => {
-        if (CLOSE_REASONS[event.code]) setCloseReason(CLOSE_REASONS[event.code]);
-      },
-      filter: () => false,
-    },
-  );
+  const [pairingOpen, setPairingOpen] = useState(false);
 
-  const sendMessage = useCallback((msg: any) => sendJsonMessage(msg), [sendJsonMessage]);
+  useEffect(() => {
+    if (!link) return;
+    const offMessages = link.subscribe((received, reset) => {
+      setMessages((prev) => (reset ? received : [...prev, ...received]));
+    });
+    const offStatus = link.onStatus((status) => {
+      setLinkStatus(status);
+      setCloseReason(link.closeReason);
+    });
+    return () => { offMessages(); offStatus(); };
+  }, [link]);
+
+  const sendMessage = useCallback((msg: any) => link?.send(msg), [link]);
 
   const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -391,8 +395,9 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
     if (showChat) setSeenChat(chatCount);
   }, [showChat, chatCount]);
 
-  const connecting = online && readyState === ReadyState.CONNECTING;
-  const disconnected = online && !closeReason && (readyState === ReadyState.CLOSED || readyState === ReadyState.CLOSING);
+  const connecting = online && linkStatus === 'connecting';
+  const disconnected = online && !closeReason && linkStatus === 'closed';
+  const p2p = connection?.type === 'p2p';
   const me = players[0];
 
   return (
@@ -406,9 +411,15 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
           </IonButtons>
           <IonTitle>
             {MODE_LABELS[mode] ?? mode}
-            {online && room ? <span className="room-name"> · {room}</span> : null}
+            {room ? <span className="room-name"> · {room}</span> : null}
+            {connection?.type === 'p2p' && connection.label ? <span className="room-name"> · {connection.label}</span> : null}
           </IonTitle>
           <IonButtons slot="end">
+            {p2p && link?.kind === 'host' && showInput && (
+              <IonButton onClick={() => setPairingOpen(true)} aria-label="Ajouter un joueur">
+                <IonIcon slot="icon-only" icon={qrCode} />
+              </IonButton>
+            )}
             {online && (
               <IonButton onClick={() => setShowChat(true)} aria-label="Discussion" className="badge-button">
                 <IonIcon slot="icon-only" icon={chatbubbles} />
@@ -436,12 +447,12 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
           {closeReason && (
             <div className="notice card notice-error">
               {closeReason}
-              <IonButton size="small" fill="clear" onClick={leave}>Changer</IonButton>
+              <IonButton size="small" fill="clear" onClick={leave}>Revenir au menu</IonButton>
             </div>
           )}
           {disconnected && (
             <div className="notice card notice-error">
-              Connexion perdue avec le serveur.
+              {p2p ? "La connexion avec l'hôte a été perdue." : 'Connexion perdue avec le serveur.'}
               <div>
                 {retry && <IonButton size="small" onClick={retry}>Se reconnecter</IonButton>}
                 <IonButton size="small" fill="clear" onClick={leave}>Revenir au menu</IonButton>
@@ -509,6 +520,12 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
                   {game.numberOfAyat > 1 ? ` · ${game.numberOfAyat} ayat` : ''}
                 </p>
               </div>
+              {p2p && link?.kind === 'host' && (
+                <IonButton expand="block" color="secondary" onClick={() => setPairingOpen(true)}>
+                  <IonIcon slot="start" icon={qrCode} />
+                  Ajouter un joueur
+                </IonButton>
+              )}
               {online && room && (
                 <IonButton expand="block" fill="outline" color="secondary"
                   onClick={async () => {
@@ -516,7 +533,7 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
                     if (result === 'copied') presentToast({ message: "Lien d'invitation copié", duration: 1800 });
                     if (result === 'failed') presentToast({ message: `Nom du salon : ${room}`, duration: 2500 });
                   }}>
-                  <IonIcon slot="start" icon={personAdd} />
+                  <IonIcon slot="start" icon={shareSocial} />
                   Inviter des amis
                 </IonButton>
               )}
@@ -559,6 +576,10 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
           setShowChat={setShowChat}
           isHost={(playerName: string) => players.find((player) => player.playerName === playerName)?.isHost ?? false}
         />
+      )}
+
+      {p2p && link?.kind === 'host' && (
+        <HostPairing isOpen={pairingOpen} onClose={() => setPairingOpen(false)} link={link} hostName={name} />
       )}
 
       <Settings

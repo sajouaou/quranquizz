@@ -180,7 +180,7 @@ chapters:Chapter[],audio:AudioPlayer): SettingItem[] => {
         nbAyatSettings, randomVerseDist,
     ];
 
-    if (mode === "Training" || (mode === "Online" && players[0].isHost  && !showInput)) {
+    if (mode === "Training" || ((mode === "Online" || mode === "Local") && players[0].isHost  && !showInput)) {
         return [
             ...selection,
             { type: "SECTION", label: "Règles" },

@@ -19,6 +19,12 @@ Pour utiliser un serveur local : `VITE_SERVER_URL=ws://localhost:5000 npm run de
 ## Fonctionnalités
 
 - Modes Entraînement, Arcade (10 manches), Survie (3 vies) et En ligne (salons, chat).
+- **Récits du Coran** : 20 récits (prophètes, figures de foi, sagesse) à écouter en entier avec
+  un résumé et une leçon, défi « Situe l'ayah » (étoiles) et quiz « Quel récit ? ».
+- **Partie locale sans serveur** : un appareil héberge, les autres s'y connectent en WebRTC en
+  scannant un code QR (ou en le collant). Fonctionne sur le même Wi-Fi ou un partage de connexion,
+  même sans Internet.
+- Version web installable et utilisable hors-ligne (service worker).
 - Choix du récitateur (préférence locale à chaque appareil, n'affecte pas les autres joueurs).
 - Hors-ligne : les ayat écoutées sont gardées en cache, et on peut télécharger des sourates,
   le Juz' 'Amma ou tout le Coran depuis « Récitateurs & hors-ligne ».
@@ -26,6 +32,8 @@ Pour utiliser un serveur local : `VITE_SERVER_URL=ws://localhost:5000 npm run de
 - En ligne : lien d'invitation (`/online?room=…`), arrivée en cours de partie, reconnexion,
   joueurs éliminés en spectateurs. Le client parle le protocole v2 du serveur (messages
   incrémentaux) et reste compatible avec l'ancien serveur.
+
+Conception, récits et architecture multijoueur : [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md).
 
 ## Publier sur le Play Store avec une nouvelle clé
 

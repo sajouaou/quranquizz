@@ -1,9 +1,12 @@
 import { IonContent, IonIcon, IonPage, useIonRouter, useIonViewWillEnter } from '@ionic/react';
 import { useState } from 'react';
-import { cloudDownloadOutline, flash, globe, heart, school } from 'ionicons/icons';
+import { book, cloudDownloadOutline, flash, globe, heart, school, wifi } from 'ionicons/icons';
+import { STORIES } from '../data/stories';
+import { useStoryProgress } from '../lib/storyProgress';
 import { usePrefs } from '../lib/prefs';
 import { findReciter, reciterLabel } from '../lib/quranApi';
 import { getBestScore } from '../lib/stats';
+import { endSession } from '../lib/net/session';
 import './Home.css';
 
 const MODES = [
@@ -15,9 +18,14 @@ const MODES = [
 const Home: React.FC = () => {
   const router = useIonRouter();
   const { reciterId } = usePrefs();
+  const progress = useStoryProgress();
+  const listened = STORIES.filter((story) => progress[story.id]?.listened).length;
   // Ionic keeps this page mounted: refresh the records when coming back to it.
   const [, setVisit] = useState(0);
-  useIonViewWillEnter(() => setVisit((v) => v + 1));
+  useIonViewWillEnter(() => {
+    setVisit((v) => v + 1);
+    endSession(); // back on the menu (e.g. Android back button): a local game is over
+  });
 
   return (
     <IonPage>
@@ -39,10 +47,21 @@ const Home: React.FC = () => {
                 {getBestScore(m.mode) !== null && <span className="mode-best">Record : {getBestScore(m.mode)}</span>}
               </button>
             ))}
-            <button type="button" className="mode-card online wide" onClick={() => router.push('/online')}>
+            <button type="button" className="mode-card qasas wide" onClick={() => router.push('/stories')}>
+              <IonIcon icon={book} />
+              <span className="mode-title">Récits du Coran</span>
+              <span className="mode-text">Écoute les histoires des prophètes et relève leurs défis</span>
+              <span className="mode-best">{listened} / {STORIES.length} récits écoutés</span>
+            </button>
+            <button type="button" className="mode-card online" onClick={() => router.push('/online')}>
               <IonIcon icon={globe} />
-              <span className="mode-title">Jouer en ligne</span>
-              <span className="mode-text">Crée ou rejoins un salon avec tes amis</span>
+              <span className="mode-title">En ligne</span>
+              <span className="mode-text">Salon sur Internet avec tes amis</span>
+            </button>
+            <button type="button" className="mode-card local" onClick={() => router.push('/local')}>
+              <IonIcon icon={wifi} />
+              <span className="mode-title">Partie locale</span>
+              <span className="mode-text">Sans serveur, d'appareil à appareil</span>
             </button>
           </section>
 

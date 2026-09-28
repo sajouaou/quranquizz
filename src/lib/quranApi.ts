@@ -80,11 +80,11 @@ export async function getSurahAudioUrls(reciterId: number, surah: number): Promi
   let page: number | null = 1;
   // The API is paginated: follow next_page instead of assuming everything fits in one page.
   while (page) {
-    const response = await fetch(
+    const response: Response = await fetch(
       `${API}/recitations/${reciterId}/by_chapter/${surah}?per_page=300&page=${page}`,
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    const data: { audio_files: AudioFile[]; pagination?: { next_page: number | null } } = await response.json();
     (data.audio_files as AudioFile[]).forEach((file) => {
       const verse = parseInt(file.verse_key.split(':')[1], 10);
       urls[verse - 1] = normalizeAudioUrl(file.url);
