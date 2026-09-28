@@ -7,6 +7,7 @@
 #   preview    build then serve dist/ (offline mode / service worker)
 #   test       lint + unit tests
 #   android    build, sync and open Android Studio
+#   aab        signed Play Store bundle (see scripts/android-release.sh)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -d node_modules ] || ./scripts/setup.sh
@@ -26,5 +27,6 @@ case "${1:-dev}" in
   preview) npm run build && npx vite preview --host ;;
   test) npm run lint && npm run test.unit ;;
   android) npm run android ;;
-  *) sed -n '2,11p' "$0"; exit 1 ;;
+  aab) shift; ./scripts/android-release.sh "$@" ;;
+  *) sed -n '2,12p' "$0"; exit 1 ;;
 esac

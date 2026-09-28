@@ -15,6 +15,7 @@ Scripts prêts à l'emploi (Linux/macOS : `.sh`, Windows : `.ps1`) :
 ./scripts/run.sh preview          # build de production (mode hors-ligne)
 ./scripts/run.sh test             # lint + tests
 ./scripts/run.sh android          # build + ouvre Android Studio
+./scripts/run.sh aab --bump       # bundle signé pour le Play Store
 ```
 
 Windows : `.\scripts\setup.ps1` puis `.\scripts\run.ps1 dev`.
@@ -51,34 +52,30 @@ Pour utiliser un serveur local : `VITE_SERVER_URL=ws://localhost:5000 npm run de
 
 Conception, récits et architecture multijoueur : [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md).
 
-## Publier sur le Play Store avec une nouvelle clé
+## Publier sur le Play Store
 
-Si l'application utilise **Play App Signing** (activé par défaut pour les apps créées depuis 2021),
-Google détient la clé de signature de l'app : seule la **clé d'importation (upload key)** est perdue,
-et elle peut être réinitialisée.
+Un script construit le bundle signé (`.aab`) :
 
-1. Générer une nouvelle clé d'importation (à garder précieusement, hors du dépôt) :
-   ```bash
-   keytool -genkeypair -v -keystore android/upload-keystore.jks -alias upload \
-     -keyalg RSA -keysize 2048 -validity 10000
-   keytool -export -rfc -keystore android/upload-keystore.jks -alias upload -file upload_certificate.pem
-   ```
+```bash
+./scripts/android-release.sh keygen    # une seule fois : crée la clé d'importation + le certificat pour Google
+./scripts/android-release.sh --bump    # incrémente versionCode puis produit release/quranquizz-<version>.aab
+./scripts/android-release.sh --version-name 1.2.0 --bump
+```
+
+Prérequis : JDK 21 (celui d'Android Studio convient : `export JAVA_HOME=~/android-studio/jbr`) et le SDK
+Android (installé par Android Studio, ou `ANDROID_HOME`). La clé (`android/upload-keystore.jks`) et
+`android/keystore.properties` ne sont jamais commités : **garde-en une sauvegarde**.
+
+### Clé perdue
+
+Si l'application utilise **Play App Signing** (activé par défaut depuis 2021), seule la clé d'importation
+est perdue et elle peut être réinitialisée :
+
+1. `./scripts/android-release.sh keygen` crée la nouvelle clé et `release/upload_certificate.pem`.
 2. Play Console → l'app → *Test et publication* → *Intégrité de l'application* → *Signature de l'application*
    → **Demander la réinitialisation de la clé d'importation**, et envoyer `upload_certificate.pem`.
    Google valide en général sous quelques jours.
-3. Créer `android/keystore.properties` (ignoré par git) :
-   ```properties
-   storeFile=../upload-keystore.jks
-   storePassword=...
-   keyAlias=upload
-   keyPassword=...
-   ```
-4. Construire le bundle signé (augmenter `versionCode` dans `android/app/build.gradle` à chaque envoi) :
-   ```bash
-   npm run build && npx cap sync android
-   cd android && ./gradlew bundleRelease   # -> app/build/outputs/bundle/release/app-release.aab
-   ```
+3. Une fois validé : `./scripts/android-release.sh --bump` et envoyer le `.aab`.
 
-Si l'app n'était **pas** inscrite à Play App Signing et que la clé de signature d'origine est perdue,
-Google ne permet pas de mettre à jour cette fiche : il faut publier une nouvelle application avec un autre
-`applicationId` (par ex. `com.quranquizz.app`).
+Si l'app n'était **pas** inscrite à Play App Signing et que la clé d'origine est perdue, Google ne permet pas
+de mettre à jour cette fiche : il faut publier une nouvelle application avec un autre `applicationId`.

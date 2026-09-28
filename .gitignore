@@ -32,3 +32,7 @@ yarn-error.log*
 
 resources/ios/**/*
 resources/android/**/*
+# Android release output (bundles, certificates)
+/release
+*.jks
+keystore.properties
