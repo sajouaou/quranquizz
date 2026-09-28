@@ -130,10 +130,13 @@ export const isPlayersLost = (players: PlayerProps[]) => {
     return allLost;
 }
 
+// A player with no lives left keeps watching but no longer answers.
+export const isEliminated = (player: PlayerProps) => player.showLives && player.lives <= 0;
+
 export const checkPlayers = (players:PlayerProps[]) => {
   let allReady = true;
   players.forEach(player => {
-      if( ! (player.gameState === 'ready' ||  player.gameState === 'next' ) ) {
+      if( ! (player.gameState === 'ready' ||  player.gameState === 'next' || isEliminated(player)) ) {
         allReady =  false;
       }
   });
@@ -181,6 +184,13 @@ export const recvPlayerMSG = (message:any,players: PlayerProps[],setPlayers: {
     case "resetScore":
       resetScore(players,setPlayers);
       break;
+    case "sync": {
+      // Full player list shared by the host (scores, lives) when someone joins.
+      if (!Array.isArray(value) || players.length === 0) break;
+      const me = players[0].playerName;
+      setPlayers([...value.filter((p: PlayerProps) => p.playerName === me), ...value.filter((p: PlayerProps) => p.playerName !== me)]);
+      break;
+    }
     default:
       break;
   }

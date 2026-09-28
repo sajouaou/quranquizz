@@ -1,23 +1,23 @@
-import { IonButton, IonCheckbox, IonInput, IonItem, IonLabel, IonList, IonText } from "@ionic/react";
-import React, { useEffect, useState } from "react";
+import {
+  IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonModal,
+  IonTitle, IonToggle, IonToolbar,
+} from '@ionic/react';
+import { send } from 'ionicons/icons';
+import React, { useEffect, useRef, useState } from 'react';
 import './Chat.css';
 
-interface ChatProps 
-{
+interface ChatProps {
   messages: any[];
   name: string;
   message: string;
   showChat: boolean;
-  isHost: any;
-  handleSubmit:any;
-  setMessage:any;
-  setShowChat:any;
-  sendScan:any;
+  isHost: (name: string) => boolean;
+  handleSubmit: (e: { preventDefault: () => void }) => void;
+  setMessage: (value: string) => void;
+  setShowChat: (value: boolean) => void;
 }
 
-
-// TODO si possible deplacer la logique reseau ou message Managment ici
-const Chat: React.FC<ChatProps>  = ({
+const Chat: React.FC<ChatProps> = ({
   messages,
   name,
   message,
@@ -26,49 +26,64 @@ const Chat: React.FC<ChatProps>  = ({
   handleSubmit,
   setMessage,
   setShowChat,
-  sendScan
 }) => {
-  const chatContainerRef = React.useRef<any>(null);
-  
-  const [showGame, setShowGame] = useState(false); 
-  
-  
-  useEffect(() => {
-    // Scroll to the bottom of the chat container whenever messages change
-    scrollToBottom();
+  const contentRef = useRef<HTMLIonContentElement>(null);
+  const [showGame, setShowGame] = useState(false);
 
-    function scrollToBottom() {
-      if (chatContainerRef.current !== null ) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight ;
-      }
-    }
-  }, [messages,showChat]);
+  const visible = messages.filter(
+    (val) => val.text.type === 'CHAT' || val.text.type === 'WELCOME' || (showGame && val.text.content),
+  );
+
+  useEffect(() => {
+    contentRef.current?.scrollToBottom(200);
+  }, [visible.length, showChat]);
 
   return (
-    <IonList className="chat-container" ref={chatContainerRef}>
-          {messages.filter((val)=> {return (val.text.type === "CHAT") || (val.text.type === "WELCOME") || showGame }).map((val, i) => {
+    <IonModal isOpen={showChat} onDidDismiss={() => setShowChat(false)}>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Discussion</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => setShowChat(false)}>Fermer</IonButton>
+          </IonButtons>
+        </IonToolbar>
+        <IonToolbar>
+          <IonToggle className="chat-toggle" checked={showGame} onIonChange={(e) => setShowGame(e.detail.checked)}>
+            Afficher les évènements de jeu
+          </IonToggle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent ref={contentRef} className="chat-content">
+        <div className="chat-list">
+          {visible.map((val, i) => {
+            const mine = val.user === name;
+            const system = val.user === 'Admin' || val.text.type !== 'CHAT';
             return (
-
-            <IonItem  key={i}>
-                <IonLabel> <IonText className={"message-user " + (isHost(val.user) ? 'host' : '')}>{val.user}</IonText> : 
-                <IonText className={"message-text " + (val.user === name ? 'user-message ' : 'other-message ') }> {val.text.content } </IonText>  
-                </IonLabel>
-            </IonItem>
-            )
-            ;
+              <div key={i} className={`message ${system ? 'system-message' : mine ? 'user-message' : 'other-message'}`}>
+                {!system && !mine && (
+                  <span className={'message-user ' + (isHost(val.user) ? 'host' : '')}>{val.user}</span>
+                )}
+                <span className="message-content">{val.text.content}</span>
+              </div>
+            );
           })}
-          <form onSubmit={handleSubmit}>
-            <IonItem>
-              <IonInput label="" value={message} onIonInput={(e) => setMessage(e.target.value)} fill="outline" placeholder="Enter Message"></IonInput> 
-            </IonItem>
-            <IonItem>
-              <IonButton type="submit" >Send</IonButton> 
-              <IonButton onClick={sendScan} >SCAN</IonButton>
-              <IonButton onClick={() => {setShowChat(!showChat); }} >Close</IonButton> 
-              <IonCheckbox checked={showGame} onClick={() => setShowGame(!showGame)} className={`showCheck`}  > </IonCheckbox>  
-            </IonItem>
-          </form>
-    </IonList>
+        </div>
+      </IonContent>
+      <IonFooter>
+        <form onSubmit={handleSubmit} className="chat-form">
+          <IonInput
+            value={message}
+            onIonInput={(e) => setMessage(String(e.detail.value ?? ''))}
+            fill="outline"
+            placeholder="Écrire un message…"
+            enterkeyhint="send"
+          />
+          <IonButton type="submit" disabled={!message.trim()} aria-label="Envoyer">
+            <IonIcon slot="icon-only" icon={send} />
+          </IonButton>
+        </form>
+      </IonFooter>
+    </IonModal>
   );
 };
 

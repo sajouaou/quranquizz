@@ -4,6 +4,7 @@ import { PlayerProps } from "./Player";
 export interface Chapter {
   id: number;
   name_simple: string;
+  name_arabic?: string;
   verses_count: number;
 }
 
@@ -57,53 +58,58 @@ export const defaultGame: GameProps = {
 };
 
 
+// Allowed verse indexes (0-based, inclusive) of a surah for the current settings.
+// Values left over from another surah (e.g. minVerse 200 after switching to a
+// 7-verse surah) are clamped instead of producing impossible ranges.
+export function verseBounds(
+  game: Pick<GameProps, 'filterVerse' | 'minSurah' | 'maxSurah' | 'minVerse' | 'maxVerse'>,
+  chapter: Chapter,
+): [number, number] {
+  const last = chapter.verses_count - 1;
+  let lo = 0;
+  let hi = last;
+  if (game.filterVerse) {
+    if (chapter.id === game.minSurah) lo = Math.min(Math.max(game.minVerse, 0), last);
+    if (chapter.id === game.maxSurah) hi = Math.min(Math.max(game.maxVerse, 0), last);
+    if (lo > hi) [lo, hi] = [0, last];
+  }
+  return [lo, hi];
+}
+
+const chaptersInRange = (game: GameProps, chapters: Chapter[]) => {
+  const inRange = chapters.filter((chapter) => chapter.id >= game.minSurah && chapter.id <= game.maxSurah);
+  return inRange.length > 0 ? inRange : chapters;
+};
+
 // Fonction pour générer un numéro de chapitre aléatoire
-export function getRandomChapterNumber(game:any, chapters: any[]) {
-    let res = Math.floor(Math.random() * (game.maxSurah - game.minSurah + 1)) + game.minSurah;
-    if (game.verseDistribution) {
-      let chapterArrays: any[] = [];
-      chapters
-        .filter(function (chapter: { id: number; }) {
-          return chapter.id <= game.maxSurah && chapter.id >= game.minSurah;
-        })
-        .forEach((chapter: { verses_count: any; id: any; }) => {
-          let length = chapter.verses_count;
-          if (chapter.id === game.maxSurah && game.filterVerse) {
-            length = game.maxVerse;
-          }
-          if (chapter.id === game.minSurah && game.filterVerse) {
-            length = length - game.minVerse;
-          }
-          const array = Array.from({ length: length }, () => chapter.id);
-          chapterArrays.push(...array);
-        });
-      res = Math.floor(Math.random() * chapterArrays.length);
-      res = chapterArrays[res];
-    }
-    return res;
+export function getRandomChapterNumber(game: GameProps, chapters: Chapter[]): number {
+  const candidates = chaptersInRange(game, chapters);
+  if (!game.verseDistribution) {
+    return candidates[Math.floor(Math.random() * candidates.length)].id;
   }
-  
-  // Fonction pour générer un numéro de verset aléatoire
-  export function getRandomVerseNumber(game:any, chapters: any[], chapterId: any) {
-    let maxtemp = chapters.filter(function (chapter: { id: any; }) {
-      return chapter.id === chapterId;
-    })[0].verses_count;
-    if (game.filterVerse && chapterId === game.maxSurah && game.maxVerse + 1 <= maxtemp) {
-      maxtemp = game.maxVerse + 1;
-    }
-    let minimumVerse = 0;
-    if (game.filterVerse && chapterId === game.minSurah && game.minVerse <= maxtemp) {
-      minimumVerse = game.minVerse;
-    }
-    let verse = Math.floor(Math.random() * maxtemp) + minimumVerse;
-    if (verse + game.numberOfAyat >= maxtemp) {
-      verse = maxtemp - game.numberOfAyat;
-      if (verse < minimumVerse) {
-        verse = minimumVerse;
-      }
-    }
-    return {verse, maxtemp};
+  // Weighted by the number of playable verses of each surah.
+  const weights = candidates.map((chapter) => {
+    const [lo, hi] = verseBounds(game, chapter);
+    return hi - lo + 1;
+  });
+  let pick = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < candidates.length; i++) {
+    pick -= weights[i];
+    if (pick < 0) return candidates[i].id;
   }
+  return candidates[candidates.length - 1].id;
+}
+
+// Fonction pour générer un numéro de verset aléatoire (index 0-based).
+// The sequence of `numberOfAyat` verses always fits inside the allowed range.
+export function getRandomVerseNumber(game: GameProps, chapters: Chapter[], chapterId: number) {
+  const chapter = chapters.find((c) => c.id === chapterId) ?? chapters[0];
+  const [lo, hi] = verseBounds(game, chapter);
+  const maxtemp = hi + 1;
+  const lastStart = Math.max(lo, maxtemp - Math.max(1, game.numberOfAyat));
+  const verse = lo + Math.floor(Math.random() * (lastStart - lo + 1));
+  return {verse, maxtemp};
+}
 
   export function  checkChoice(game:any,chapterId:number| null,verseId:number| null) : boolean {
     const found = chapterId === game.confirmedChapter && (verseId === game.confirmedVerse || !game.askVerse);
@@ -233,15 +239,16 @@ export function getRandomChapterNumber(game:any, chapters: any[]) {
       case "setMaxSurah":
         setMaxSurah(setGame,value);
         break;
-      case "setMinVerse":
+      case "setMinVerse": {
         setMinVerse(setGame,value);
         const updatedPlayers = players.map(player => ({
           ...player,
-          guessChapter:value
+          guessVerse:value
         }));
         // Mettre à jour l'état des joueurs avec la nouvelle liste mise à jour
         setPlayers(updatedPlayers);
         break;
+      }
       case "setMaxVerse":
         setMaxVerse(setGame,value);
         break;
@@ -321,10 +328,11 @@ setPlayers:{ (value: SetStateAction<PlayerProps[]>): void; (arg0: any[]): void; 
     case "START":
       beginGame(setGame,setPlayers,players,game);
       break;
-    case "NEWSURAH":
+    case "NEWSURAH": {
       const {randomChap,verse,maxtemp} = value;
       newSurah(setGame,randomChap,verse,maxtemp);
       break;
+    }
     case "SETROUND":
       setCurrentRound(setGame,value);
       break;

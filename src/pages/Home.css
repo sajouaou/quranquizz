@@ -1,0 +1,95 @@
+.home-content {
+  --background: radial-gradient(120% 60% at 50% 0%, rgba(var(--ion-color-primary-rgb), 0.18), transparent 70%), var(--qq-bg);
+}
+
+.home {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 32px) 16px 32px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
+  color: var(--qq-text);
+}
+
+.hero-arabic {
+  font-size: 2.4rem;
+  margin: 0;
+  color: var(--ion-color-secondary);
+  line-height: 1.4;
+}
+
+.hero h1 {
+  margin: 4px 0 6px;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hero-sub {
+  margin: 0;
+  color: var(--qq-muted);
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 18px 16px;
+  border: none;
+  border-radius: var(--qq-radius);
+  text-align: left;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--qq-shadow);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.mode-card:active { transform: scale(0.97); }
+.mode-card:hover { filter: brightness(1.05); }
+.mode-card ion-icon { font-size: 28px; }
+.mode-title { font-size: 1.15rem; font-weight: 700; }
+.mode-text { font-size: 0.85rem; opacity: 0.9; }
+.mode-card.wide { grid-column: 1 / -1; }
+
+.mode-card.train { background: linear-gradient(135deg, #0f7a64, #16a085); }
+.mode-card.arcade { background: linear-gradient(135deg, #c0392b, #e67e22); }
+.mode-card.survival { background: linear-gradient(135deg, #8e44ad, #c0392b); }
+.mode-card.online { background: linear-gradient(135deg, #2c3e8f, #3867d6); }
+
+.library-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  font: inherit;
+  text-align: left;
+  color: var(--qq-text);
+  background: var(--qq-card);
+  border: 1px solid var(--qq-card-border);
+  border-radius: var(--qq-radius);
+  cursor: pointer;
+}
+
+.library-link ion-icon { font-size: 26px; color: var(--ion-color-primary); }
+.library-link span { display: flex; flex-direction: column; }
+.library-link small { color: var(--qq-muted); }
+
+.lobby-form { max-width: 520px; margin: 0 auto; }
+.lobby-help { color: var(--qq-muted); margin: 8px 16px 0; }
+.lobby-note { display: block; margin: 0 20px 20px; }
+.mode-best { margin-top: 4px; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); }
+.mode-card.qasas { background: linear-gradient(135deg, #7a5c14, #c89b3c); }
+.mode-card.local { background: linear-gradient(135deg, #1b6b5a, #2c3e8f); }

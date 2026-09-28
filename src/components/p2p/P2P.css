@@ -1,0 +1,19 @@
+.p2p-content { --background: var(--qq-bg); }
+.signal-code, .scan-signal { background: var(--qq-card); border: 1px solid var(--qq-card-border); border-radius: var(--qq-radius); padding: 16px; margin-bottom: 14px; color: var(--qq-text); }
+.signal-code h3, .scan-signal h3 { margin: 0 0 6px; font-size: 1rem; }
+.signal-hint { margin: 0 0 10px; color: var(--qq-muted); font-size: 0.9em; }
+.qr-frame { display: grid; place-items: center; min-height: 200px; background: #fff; border-radius: 12px; padding: 8px; }
+.qr-frame img { width: 100%; max-width: 300px; image-rendering: pixelated; }
+.signal-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 8px; }
+.signal-text summary { cursor: pointer; color: var(--ion-color-primary); font-size: 0.85em; margin-top: 6px; }
+.signal-text textarea { width: 100%; margin-top: 6px; font-family: monospace; font-size: 11px; border-radius: 8px; padding: 6px; background: var(--qq-bg); color: var(--qq-text); border: 1px solid var(--qq-card-border); }
+.camera-box { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px; }
+.camera-box video { width: 100%; max-width: 360px; border-radius: 12px; display: none; background: #000; }
+.camera-box video.active { display: block; }
+.paste-box { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.signal-error, .p2p-error p { color: var(--qq-danger); }
+.p2p-wait { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 24px; color: var(--qq-muted); }
+.p2p-error { text-align: center; }
+.local-choice { display: grid; gap: 12px; }
+.local-help { color: var(--qq-muted); font-size: 0.9em; }
+.local-help li { margin-bottom: 4px; }
