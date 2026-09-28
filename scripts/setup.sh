@@ -21,8 +21,22 @@ for arg in "$@"; do
   esac
 done
 
+# NTFS/exFAT/FAT partitions (e.g. /mnt/disk) can't hold symlinks, which npm uses for node_modules/.bin.
+supports_symlinks() {
+  local probe=".symlink-probe-$$"
+  if ln -s package.json "$probe" 2>/dev/null; then rm -f "$probe"; return 0; fi
+  rm -f "$probe" 2>/dev/null; return 1
+}
+npm_flags=()
+if ! supports_symlinks; then
+  echo "!! This folder's filesystem doesn't support symbolic links ($(df -T . 2>/dev/null | awk 'NR==2 {print $2}'))."
+  echo "   Installing without them. For best results, move the project to a Linux (ext4) partition, e.g. ~/IdeaProjects."
+  npm_flags+=(--no-bin-links)
+fi
+
 echo "==> Installing app dependencies"
-if $with_cypress; then npm ci; else CYPRESS_INSTALL_BINARY=0 npm ci; fi
+if $with_cypress; then npm ci "${npm_flags[@]}"; else CYPRESS_INSTALL_BINARY=0 npm ci "${npm_flags[@]}"; fi
+if [ ${#npm_flags[@]} -gt 0 ]; then node scripts/make-bin-shims.cjs; fi
 
 if $with_server; then
   server="../quranquizz_server"
