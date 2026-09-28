@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ReadyState } from 'react-use-websocket';
 // Named import: the package's CJS default export isn't picked up by Vite's interop.
 import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
-import { IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonProgressBar, IonTitle, IonToolbar } from '@ionic/react';
-import { arrowBack, chatbubbles, heart, play, settingsOutline, stopCircleOutline } from 'ionicons/icons';
+import { useIonToast, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonProgressBar, IonTitle, IonToolbar } from '@ionic/react';
+import { arrowBack, chatbubbles, heart, personAdd, play, settingsOutline, stopCircleOutline } from 'ionicons/icons';
 import Settings from './user/Settings';
 import InputGame from './user/InputGame';
 import AudioPanel from './user/AudioPanel';
 import Chat from './client/Chat';
-import EndScreen from './game/EndScreen';
+import EndScreen, { RoundResult } from './game/EndScreen';
 import PlayerList from './game/PlayerList';
 import {
   Chapter,
@@ -19,9 +19,12 @@ import {
   getRandomVerseNumber,
   recvGameMSG,
   recvGameSettingMSG } from './game/Game';
-import { PlayerProps, checkPlayers, defaultPlayer, isPlayersLost, recvPlayerMSG } from './game/Player';
+import { PlayerProps, checkPlayers, defaultPlayer, isEliminated, isPlayersLost, recvPlayerMSG } from './game/Player';
 import { getSettingsGameMode, setGameMode } from './game/GameMode';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { getPrefs } from '../lib/prefs';
+import { recordScore } from '../lib/stats';
+import { shareRoom } from '../lib/feedback';
 import './GameContainer.css';
 
 export const MODE_LABELS: Record<string, string> = {
@@ -45,17 +48,28 @@ interface ContainerProps {
   room?: string;
   endpoint?: string;
   leave: () => void;
+  retry?: () => void;
 }
 
-const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, endpoint, leave }) => {
+// Close codes sent by the server when it refuses a connection.
+const CLOSE_REASONS: Record<number, string> = {
+  4000: 'Pseudo ou salon invalide.',
+  4001: 'Ce pseudo est déjà utilisé dans ce salon. Choisis-en un autre.',
+  4002: 'Ce salon est complet.',
+}
+
+const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, endpoint, leave, retry }) => {
   const online = mode === 'Online';
+  const [presentToast] = useIonToast();
 
   //////////////////////////////
   //  ONLINE SECTION
   //////////////////////////////
-  // The server relays every message to every player of the room (sender included)
-  // and always sends back the whole history, which is replayed through `readCursor`.
-  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+  // The server relays every message to every player of the room (sender included).
+  // Messages are replayed in order through `readCursor`. With `proto=2` the server
+  // only sends new messages ({append}); older servers send the whole history ({messages}).
+  const [closeReason, setCloseReason] = useState<string | null>(null);
+  const { sendJsonMessage, readyState } = useWebSocket(
     online && endpoint ? endpoint : null,
     {
       queryParams: {
@@ -63,25 +77,39 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
         room: room ?? '',
         player: JSON.stringify({ ...defaultPlayer, playerName: name }),
         game: JSON.stringify({ ...defaultGame }),
+        proto: '2',
+        clientId: getPrefs().clientId,
       },
-      share: true,
+      share: false,
       shouldReconnect: () => false,
+      // onMessage sees every message; lastJsonMessage could skip some when they arrive together.
+      onMessage: (event) => {
+        let payload: { messages?: any[]; append?: any[] };
+        try {
+          payload = JSON.parse(event.data);
+        } catch {
+          return;
+        }
+        if (Array.isArray(payload.append)) {
+          const append = payload.append;
+          setMessages((prev) => [...prev, ...append]);
+        } else if (Array.isArray(payload.messages)) {
+          setMessages([...payload.messages]);
+        }
+      },
+      onClose: (event) => {
+        if (CLOSE_REASONS[event.code]) setCloseReason(CLOSE_REASONS[event.code]);
+      },
+      filter: () => false,
     },
   );
-
-  useEffect(() => {
-    if (lastJsonMessage !== null) {
-      const typedMessage = lastJsonMessage as { messages: any[] };
-      setMessages([...typedMessage.messages]);
-    }
-  }, [lastJsonMessage]);
 
   const sendMessage = useCallback((msg: any) => sendJsonMessage(msg), [sendJsonMessage]);
 
   const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (message.trim() && online) {
-      sendMessage({ message: { content: message.trim(), type: "CHAT" } });
+      sendMessage({ message: { content: message.trim().slice(0, 500), type: "CHAT" } });
       setMessage("");
     }
   };
@@ -93,6 +121,17 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
       setMessages((messages) => [...messages, { user: "LOCAL", text: message }]);
     }
   };
+
+  // Delayed host actions (next surah, end of game): cancelled when the game stops or the screen closes.
+  const timersRef = useRef<number[]>([]);
+  const later = (fn: () => void, ms: number) => {
+    timersRef.current.push(window.setTimeout(fn, ms));
+  };
+  const clearTimers = () => {
+    timersRef.current.forEach((t) => clearTimeout(t));
+    timersRef.current = [];
+  };
+  useEffect(() => clearTimers, []);
 
   //////////////////////////////
   //  MESSAGE MANAGMENT
@@ -115,7 +154,9 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
     recvGameMSG(message, setGame, setPlayers, players, game);
     switch (action) {
       case "ENDGAME":
+        clearTimers();
         audio.stop();
+        if (!online && (mode === 'Arcade' || mode === 'Survie')) setRecord(recordScore(mode, players[0].score));
         setShowEnd(true);
         setShowInput(false);
         break;
@@ -124,10 +165,14 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
         break;
       case "NEWSURAH": {
         const { randomChap, verse, maxtemp } = value;
-        audio.load(randomChap, verse, Math.min(game.numberOfAyat, maxtemp - verse));
+        setRevealed(false);
+        audio.load(randomChap, verse, Math.max(1, Math.min(game.numberOfAyat, maxtemp - verse)));
         break;
       }
       case "START":
+        clearTimers();
+        setHistory([]);
+        setRevealed(false);
         if (players[0].isHost) {
           // Scores and lives are being reset by this same message: don't check the old ones.
           newSurah(0, true);
@@ -147,10 +192,20 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
     }
   };
 
-  const recvWelcomeMessage = (message: { game: GameProps, players: any[]; }) => {
-    const { game, players: pls } = message;
-    setGame({ ...game });
+  const recvWelcomeMessage = (message: { game: GameProps, players: any[]; inProgress?: boolean; current?: any }) => {
+    const { game: roomGame, players: pls, inProgress, current } = message;
+    const merged = { ...defaultGame, ...roomGame };
+    setGame(merged);
     setPlayers([...pls.filter((player) => player.playerName === players[0].playerName), ...pls.filter((player) => player.playerName !== players[0].playerName)]);
+    // Joining a game that is already running: jump straight into the current round.
+    if (inProgress) {
+      setShowInput(true);
+      setShowEnd(false);
+      if (current) {
+        recvGameMSG({ action: 'NEWSURAH', value: current }, setGame, setPlayers, players, merged);
+        audio.load(current.randomChap, current.verse, Math.max(1, Math.min(merged.numberOfAyat, current.maxtemp - current.verse)));
+      }
+    }
   };
 
   const parseMessage = (message: any) => {
@@ -159,12 +214,25 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
         recvGameSettingMSG(message, setGame, setPlayers, players, game);
         break;
       case "PLAYER":
-        recvPlayerMSG(message, players, setPlayers);
-        // The server only knows the settings the room was created with:
-        // the host shares the current ones with whoever joins.
-        if (message.action === "NEW" && online && players[0].isHost) {
-          sendGameMessage({ content: 'Game settings synced', action: 'update', type: 'GAMESETTING', value: game });
+        if (message.action === "NEW") {
+          // Every client applies the room rules (lives, scores) to the newcomer the same way.
+          const newcomer: PlayerProps = {
+            ...defaultPlayer,
+            ...message.value,
+            showScore: game.showScore,
+            showLives: game.activeLive,
+            lives: game.activeLive ? game.lives : defaultPlayer.lives,
+          };
+          if (players.some((p) => p.id === newcomer.id)) break;
+          setPlayers((prev) => [...prev, newcomer]);
+          // The host shares the current settings and scores with whoever joins.
+          if (online && players[0].isHost) {
+            sendGameMessage({ content: 'Game settings synced', action: 'update', type: 'GAMESETTING', value: game });
+            sendGameMessage({ content: 'Players synced', action: 'sync', type: 'PLAYER', value: [...players, newcomer] });
+          }
+          break;
         }
+        recvPlayerMSG(message, players, setPlayers);
         break;
       case "GAME":
         recvGameMessage(message);
@@ -203,7 +271,9 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
     sendGameMessage({ content: `The correct  answer was chapter : ${game.confirmedChapter} verse : ${game.confirmedVerse}`, action: 'CORRECT', type: 'GAME', value: { surah: game.confirmedChapter, verse: game.confirmedVerse } });
     const endResult: any[] = [];
     players.forEach(player => {
-      if (player.gameState !== 'next') {
+      if (isEliminated(player)) {
+        endResult.push({ state: "out", player });
+      } else if (player.gameState !== 'next') {
         if (checkChoice(game, player.guessChapter, player.guessVerse)) {
           everyoneFail = false;
           endResult.push({ state: "win", player });
@@ -222,7 +292,7 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
     // Lives after this round (the players state is only updated once ENDROUND is processed).
     const livesAfter = endResult.map(({ state, player }) => ({
       ...player,
-      lives: state === 'win' ? player.lives : player.lives - 1,
+      lives: state === 'lose' || state === 'next' ? player.lives - 1 : player.lives,
     }));
     const moveOn = game.isSkip || !everyoneFail;
     const nextRound = moveOn ? game.currentRound + 1 : game.currentRound;
@@ -231,13 +301,21 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
     }
     const finished = (game.isLimited && nextRound >= game.round) || isPlayersLost(livesAfter);
     if (finished) {
-      setTimeout(() => sendGameMessage({ content: 'The game is finished', action: 'ENDGAME', type: 'GAME' }), 1500);
+      later(() => sendGameMessage({ content: 'The game is finished', action: 'ENDGAME', type: 'GAME' }), 1500);
     } else if (moveOn) {
-      setTimeout(() => newSurah(nextRound, true), 1200);
+      later(() => newSurah(nextRound, true), 1200);
     }
   };
 
   const handleEndRound = (value: any[]) => {
+    // The answer is only shown when the game moves on: if everybody was wrong and
+    // skipping is off, the same recitation is asked again.
+    const moveOn = game.isSkip || value.some(({ state }) => state === 'win' || state === 'next');
+    setRevealed(moveOn);
+    if (moveOn && game.confirmedChapter !== null) {
+      const me = value.find(({ player }) => player.playerName === players[0].playerName);
+      setHistory((h) => [...h, { surah: game.confirmedChapter as number, verse: game.confirmedVerse, result: me?.state ?? 'out' }]);
+    }
     const updatedPlayers = [...players];
     value.forEach((element: { state: any; player: any; }) => {
       const { state, player } = element;
@@ -278,6 +356,14 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
   //////////////////////////////
   //  START/END CONTROL
   //////////////////////////////
+  // When someone leaves (or the host changes), the remaining players may all have
+  // answered already: the host has to check again, nobody else will trigger it.
+  const playerIds = players.map((p) => p.id).join('|');
+  useEffect(() => {
+    if (players[0].isHost && showInput) checkGuessAllPlayers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerIds, players[0].isHost]);
+
   const handleStartClick = () => {
     sendGameMessage({ content: 'The game is starting', action: 'START', type: 'GAME' });
   };
@@ -294,16 +380,19 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
   const [showInput, setShowInput] = useState(false);
   const [showEnd, setShowEnd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [history, setHistory] = useState<RoundResult[]>([]);
+  const [record, setRecord] = useState<{ best: number; isRecord: boolean } | null>(null);
 
   const isHost = players[0].isHost;
-  const chatCount = messages.filter((m) => m.text?.type === 'CHAT').length;
+  const chatCount = messages.filter((m) => m.text?.type === 'CHAT' && m.user !== name).length;
   const unread = showChat ? 0 : chatCount - seenChat;
   useEffect(() => {
     if (showChat) setSeenChat(chatCount);
   }, [showChat, chatCount]);
 
   const connecting = online && readyState === ReadyState.CONNECTING;
-  const disconnected = online && (readyState === ReadyState.CLOSED || readyState === ReadyState.CLOSING);
+  const disconnected = online && !closeReason && (readyState === ReadyState.CLOSED || readyState === ReadyState.CLOSING);
   const me = players[0];
 
   return (
@@ -344,10 +433,19 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
               Connexion au salon… Le serveur peut mettre jusqu'à une minute à se réveiller.
             </div>
           )}
+          {closeReason && (
+            <div className="notice card notice-error">
+              {closeReason}
+              <IonButton size="small" fill="clear" onClick={leave}>Changer</IonButton>
+            </div>
+          )}
           {disconnected && (
             <div className="notice card notice-error">
               Connexion perdue avec le serveur.
-              <IonButton size="small" fill="clear" onClick={leave}>Revenir au menu</IonButton>
+              <div>
+                {retry && <IonButton size="small" onClick={retry}>Se reconnecter</IonButton>}
+                <IonButton size="small" fill="clear" onClick={leave}>Revenir au menu</IonButton>
+              </div>
             </div>
           )}
 
@@ -379,6 +477,7 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
                   maxVerse={game.maxVerse}
                   minVerse={game.minVerse}
                   allReady={game.allPReady}
+                  revealed={revealed}
                   correctChapter={game.previousChapter}
                   correctVerse={game.previousVerse}
                   sendGameMessage={sendGameMessage}
@@ -391,7 +490,7 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
 
               {isHost && !game.isLimited && (
                 <IonButton fill="clear" color="danger" className="end-button"
-                  onClick={() => sendGameMessage({ content: 'The game is finished', action: 'ENDGAME', type: 'GAME' })}>
+                  onClick={() => { clearTimers(); sendGameMessage({ content: 'The game is finished', action: 'ENDGAME', type: 'GAME' }); }}>
                   <IonIcon slot="start" icon={stopCircleOutline} />
                   Terminer la partie
                 </IonButton>
@@ -410,6 +509,17 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
                   {game.numberOfAyat > 1 ? ` · ${game.numberOfAyat} ayat` : ''}
                 </p>
               </div>
+              {online && room && (
+                <IonButton expand="block" fill="outline" color="secondary"
+                  onClick={async () => {
+                    const result = await shareRoom(room);
+                    if (result === 'copied') presentToast({ message: "Lien d'invitation copié", duration: 1800 });
+                    if (result === 'failed') presentToast({ message: `Nom du salon : ${room}`, duration: 2500 });
+                  }}>
+                  <IonIcon slot="start" icon={personAdd} />
+                  Inviter des amis
+                </IonButton>
+              )}
               {online && (
                 <>
                   <h3 className="section-title">Joueurs ({players.length})</h3>
@@ -417,7 +527,7 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
                 </>
               )}
               {isHost ? (
-                <IonButton expand="block" size="large" className="start-button" disabled={connecting || disconnected} onClick={handleStartClick}>
+                <IonButton expand="block" size="large" className="start-button" disabled={connecting || disconnected || !!closeReason} onClick={handleStartClick}>
                   <IonIcon slot="start" icon={play} />
                   Commencer
                 </IonButton>
@@ -432,7 +542,8 @@ const GameContainer: React.FC<ContainerProps> = ({ mode, chapters, name, room, e
           )}
 
           {showEnd && (
-            <EndScreen players={players} canRestart={isHost} onRestart={handleStartClick} onLeave={handleLeave} />
+            <EndScreen players={players} mode={mode} history={history} chapters={chapters} record={record}
+              canRestart={isHost} onRestart={handleStartClick} onLeave={handleLeave} />
           )}
         </div>
       </IonContent>

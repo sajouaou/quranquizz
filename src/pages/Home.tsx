@@ -1,7 +1,9 @@
-import { IonContent, IonIcon, IonPage, useIonRouter } from '@ionic/react';
+import { IonContent, IonIcon, IonPage, useIonRouter, useIonViewWillEnter } from '@ionic/react';
+import { useState } from 'react';
 import { cloudDownloadOutline, flash, globe, heart, school } from 'ionicons/icons';
 import { usePrefs } from '../lib/prefs';
 import { findReciter, reciterLabel } from '../lib/quranApi';
+import { getBestScore } from '../lib/stats';
 import './Home.css';
 
 const MODES = [
@@ -13,6 +15,9 @@ const MODES = [
 const Home: React.FC = () => {
   const router = useIonRouter();
   const { reciterId } = usePrefs();
+  // Ionic keeps this page mounted: refresh the records when coming back to it.
+  const [, setVisit] = useState(0);
+  useIonViewWillEnter(() => setVisit((v) => v + 1));
 
   return (
     <IonPage>
@@ -31,6 +36,7 @@ const Home: React.FC = () => {
                 <IonIcon icon={m.icon} />
                 <span className="mode-title">{m.title}</span>
                 <span className="mode-text">{m.text}</span>
+                {getBestScore(m.mode) !== null && <span className="mode-best">Record : {getBestScore(m.mode)}</span>}
               </button>
             ))}
             <button type="button" className="mode-card online wide" onClick={() => router.push('/online')}>

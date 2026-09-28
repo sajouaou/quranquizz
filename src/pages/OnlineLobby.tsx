@@ -4,12 +4,15 @@ import {
 } from '@ionic/react';
 import { enterOutline } from 'ionicons/icons';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getPrefs, setPrefs } from '../lib/prefs';
 
 const OnlineLobby: React.FC = () => {
   const router = useIonRouter();
   const [name, setName] = useState(getPrefs().playerName);
-  const [room, setRoom] = useState(getPrefs().lastRoom);
+  const location = useLocation();
+  // Invitation links open /online?room=xxx
+  const [room, setRoom] = useState(() => new URLSearchParams(location.search).get('room') ?? getPrefs().lastRoom);
   const valid = name.trim().length > 0 && room.trim().length > 0;
 
   const join = (e?: { preventDefault: () => void }) => {

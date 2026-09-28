@@ -79,12 +79,24 @@ export async function downloadSurah(
   const urls = (await getSurahAudioUrls(reciterId, surah)).filter(Boolean);
   let done = 0;
   let next = 0;
+  let failed = false;
   onProgress?.(0, urls.length);
   const worker = async () => {
-    while (next < urls.length) {
+    while (next < urls.length && !failed) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const url = urls[next++];
-      await cacheAudio(url, signal);
+      try {
+        await cacheAudio(url, signal);
+      } catch (error) {
+        if (signal?.aborted) throw error;
+        // One retry for flaky mobile connections, then stop the other workers too.
+        try {
+          await cacheAudio(url, signal);
+        } catch (retryError) {
+          failed = true;
+          throw retryError;
+        }
+      }
       onProgress?.(++done, urls.length);
     }
   };

@@ -9,6 +9,7 @@ export interface Prefs {
   autoCache: boolean;
   playerName: string;
   lastRoom: string;
+  clientId: string;
 }
 
 const KEY = 'qq.prefs';
@@ -19,9 +20,20 @@ export const DEFAULT_PREFS: Prefs = {
   autoCache: true,
   playerName: '',
   lastRoom: '',
+  clientId: '',
 };
 
 let current: Prefs = { ...DEFAULT_PREFS, ...readJSON<Partial<Prefs>>(KEY, {}) };
+
+// Random id identifying this device, so the server lets it take its place back
+// in a room after a network drop instead of refusing the (already used) name.
+if (!current.clientId) {
+  const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  current = { ...current, clientId: id };
+  writeJSON(KEY, current);
+}
 const listeners = new Set<() => void>();
 
 export function getPrefs(): Prefs {

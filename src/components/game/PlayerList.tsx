@@ -1,6 +1,6 @@
 import { IonIcon } from '@ionic/react';
 import { flame, heart, star } from 'ionicons/icons';
-import type { PlayerProps } from './Player';
+import { isEliminated, type PlayerProps } from './Player';
 
 const STATE_LABEL: Record<string, string> = {
   'not ready': 'Réfléchit…',
@@ -27,7 +27,11 @@ const PlayerList: React.FC<PlayerListProps> = ({ players, showScore, inGame }) =
             {index === 0 && <small> (toi)</small>}
             {player.isHost && <span className="host-badge" title="Hôte">★</span>}
           </span>
-          {inGame && <span className="player-state">{STATE_LABEL[player.gameState] ?? player.gameState}</span>}
+          {inGame && (
+            <span className="player-state">
+              {isEliminated(player) ? 'Éliminé' : STATE_LABEL[player.gameState] ?? player.gameState}
+            </span>
+          )}
         </span>
         <span className="player-stats">
           {showScore && (

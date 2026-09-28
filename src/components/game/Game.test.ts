@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { FALLBACK_CHAPTERS } from '../../data/chapters';
-import { checkChoice, defaultGame, getRandomChapterNumber, getRandomVerseNumber } from './Game';
-import { checkPlayers, defaultPlayer, isPlayersLost } from './Player';
+import { checkChoice, defaultGame, getRandomChapterNumber, getRandomVerseNumber, verseBounds } from './Game';
+import { checkPlayers, defaultPlayer, isEliminated, isPlayersLost } from './Player';
 
 describe('fallback chapters', () => {
   it('lists the 114 surahs and 6236 verses', () => {
@@ -67,5 +67,55 @@ describe('answers and players', () => {
     expect(isPlayersLost([{ ...p, showLives: true, lives: 0 }])).toBe(true);
     expect(isPlayersLost([{ ...p, showLives: true, lives: 1 }])).toBe(false);
     expect(isPlayersLost([{ ...p, showLives: false, lives: 0 }])).toBe(false);
+  });
+});
+
+describe('verse bounds and leftover settings', () => {
+  const chapter = (id: number) => FALLBACK_CHAPTERS[id - 1];
+
+  it('clamps verse limits left over from another surah', () => {
+    const game = { ...defaultGame, filterVerse: true, minSurah: 1, maxSurah: 114, minVerse: 200, maxVerse: 286 };
+    expect(verseBounds(game, chapter(1))).toEqual([6, 6]);
+    expect(verseBounds(game, chapter(114))).toEqual([0, 5]);
+    expect(verseBounds(game, chapter(2))).toEqual([0, 285]);
+  });
+
+  it('falls back to the whole surah when the range is inverted', () => {
+    const game = { ...defaultGame, filterVerse: true, minSurah: 2, maxSurah: 2, minVerse: 50, maxVerse: 10 };
+    expect(verseBounds(game, chapter(2))).toEqual([0, 285]);
+  });
+
+  it('never throws with weighted distribution and odd settings', () => {
+    const odd = [
+      { ...defaultGame, verseDistribution: true, filterVerse: true, minSurah: 1, maxSurah: 3, minVerse: 250, maxVerse: 0 },
+      { ...defaultGame, verseDistribution: true, minSurah: 10, maxSurah: 5 },
+      { ...defaultGame, numberOfAyat: 20, minSurah: 108, maxSurah: 108 },
+    ];
+    odd.forEach((game) => {
+      for (let i = 0; i < 100; i++) {
+        const surah = getRandomChapterNumber(game, FALLBACK_CHAPTERS);
+        const { verse, maxtemp } = getRandomVerseNumber(game, FALLBACK_CHAPTERS, surah);
+        const count = FALLBACK_CHAPTERS[surah - 1].verses_count;
+        expect(verse).toBeGreaterThanOrEqual(0);
+        expect(verse).toBeLessThan(count);
+        expect(maxtemp).toBeLessThanOrEqual(count);
+      }
+    });
+  });
+
+  it('weights surahs by their number of verses', () => {
+    const game = { ...defaultGame, verseDistribution: true, minSurah: 1, maxSurah: 2 };
+    let baqarah = 0;
+    for (let i = 0; i < 2000; i++) if (getRandomChapterNumber(game, FALLBACK_CHAPTERS) === 2) baqarah++;
+    expect(baqarah / 2000).toBeGreaterThan(0.9); // 286 of 293 verses
+  });
+});
+
+describe('eliminated players', () => {
+  it('do not block the round', () => {
+    const p = { ...defaultPlayer };
+    const out = { ...p, showLives: true, lives: 0, gameState: 'not ready' };
+    expect(isEliminated(out)).toBe(true);
+    expect(checkPlayers([{ ...p, gameState: 'ready' }, out])).toBe(true);
   });
 });

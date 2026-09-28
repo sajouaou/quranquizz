@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon, IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner } from '@ionic/react';
 import { checkmarkCircle, chevronDown, closeCircle, playSkipForward } from 'ionicons/icons';
 import SurahPicker from './SurahPicker';
-import type { Chapter } from '../game/Game';
-import type { PlayerProps } from '../game/Player';
+import { verseBounds, type Chapter } from '../game/Game';
+import { isEliminated, type PlayerProps } from '../game/Player';
+import { vibrateResult } from '../../lib/feedback';
 import './InputGame.css';
 
 interface InputGameProps {
@@ -16,6 +17,7 @@ interface InputGameProps {
   askVerse: boolean;
   filterVerse: boolean;
   allReady: boolean;
+  revealed: boolean;
   correctChapter: number | null;
   correctVerse: number;
   sendGameMessage: (message: any) => void;
@@ -37,6 +39,7 @@ const InputGame: React.FC<InputGameProps> = ({
   askVerse,
   filterVerse,
   allReady,
+  revealed,
   correctChapter,
   correctVerse,
   sendGameMessage,
@@ -54,6 +57,7 @@ const InputGame: React.FC<InputGameProps> = ({
     if (allReady) {
       if (player.gameState === 'win' || player.gameState === 'lose' || player.gameState === 'next') {
         setFeedback(player.gameState);
+        if (isPlayer) vibrateResult(player.gameState);
         setTimeout(() => setFeedback(null), 2500);
       }
       if (isPlayer) {
@@ -81,14 +85,23 @@ const InputGame: React.FC<InputGameProps> = ({
 
   const allowed = chapters.filter((chapter) => minSurah <= chapter.id && chapter.id <= maxSurah);
   const selected = allowed.find((chapter) => chapter.id === player.guessChapter) ?? null;
-  const verses = selected
-    ? [...Array(selected.verses_count).keys()].filter(
-        (x) => !filterVerse || ((maxSurah !== selected.id || x <= maxVerse) && (minSurah !== selected.id || minVerse <= x)),
-      )
-    : [];
+  const verses = (() => {
+    if (!selected) return [];
+    const [lo, hi] = verseBounds({ filterVerse, minSurah, maxSurah, minVerse, maxVerse }, selected);
+    return Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+  })();
   const verseValid = !askVerse || verses.includes(player.guessVerse);
   const waiting = player.gameState === 'ready' || player.gameState === 'next';
   const correct = chapters.find((chapter) => chapter.id === correctChapter);
+
+  if (isEliminated(player)) {
+    return (
+      <div className="InputContainer card eliminated">
+        <p className="question">Tu n'as plus de vies 💔</p>
+        <p className="waiting">Tu restes spectateur jusqu'à la fin de la partie.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="InputContainer card">
@@ -98,8 +111,9 @@ const InputGame: React.FC<InputGameProps> = ({
           <div>
             <strong>{feedback === 'win' ? 'Bien joué !' : feedback === 'lose' ? 'Raté…' : 'Passé'}</strong>
             <span>
-              C'était {correct.id}. {correct.name_simple}
-              {askVerse ? `, verset ${correctVerse + 1}` : ''}
+              {revealed
+                ? <>C'était {correct.id}. {correct.name_simple}{askVerse ? `, verset ${correctVerse + 1}` : ''}</>
+                : 'Personne n\'a trouvé : réécoute et retente ta chance !'}
             </span>
           </div>
         </div>

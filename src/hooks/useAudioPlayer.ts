@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cacheAudio, getCachedAudio } from '../lib/audioCache';
 import { getPrefs, setPrefs, usePrefs } from '../lib/prefs';
-import { getSurahAudioUrls } from '../lib/quranApi';
+import { forgetSurahAudioUrls, getSurahAudioUrls } from '../lib/quranApi';
 
 export type AudioStatus = 'idle' | 'loading' | 'playing' | 'ended' | 'blocked' | 'error';
 
 interface Request {
+  reciterId?: number; // defaults to the reciter chosen in the preferences
   surah: number;
   verse: number; // 0-based verse index
   count: number;
@@ -45,7 +46,7 @@ export interface AudioPlayer {
   current: number; // index of the ayah being played in the sequence
   total: number;
   volume: number;
-  load: (surah: number, verse: number, count: number) => void;
+  load: (surah: number, verse: number, count: number, reciterId?: number) => void;
   replay: () => void;
   stop: () => void;
   setVolume: (volume: number) => void;
@@ -93,7 +94,10 @@ export function useAudioPlayer(): AudioPlayer {
       else setStatus('ended');
     };
     audio.onerror = () => {
-      if (generation === generationRef.current) setStatus('error');
+      if (generation !== generationRef.current) return;
+      // The stored url list may be outdated: fetch it again on the next try.
+      if (!cached) forgetSurahAudioUrls(url);
+      setStatus('error');
     };
     audio.src = src;
     audio.volume = getPrefs().volume;
@@ -115,7 +119,8 @@ export function useAudioPlayer(): AudioPlayer {
       setCurrent(0);
       setTotal(request.count);
       try {
-        const all = await getSurahAudioUrls(reciterId, request.surah);
+        const reciter = request.reciterId ?? reciterId;
+        const all = await getSurahAudioUrls(reciter, request.surah);
         if (generation !== generationRef.current) return;
         const urls = all.slice(request.verse, request.verse + Math.max(1, request.count)).filter(Boolean);
         if (urls.length === 0) throw new Error('No audio for this verse');
@@ -131,8 +136,8 @@ export function useAudioPlayer(): AudioPlayer {
   );
 
   const load = useCallback(
-    (surah: number, verse: number, count: number) => {
-      requestRef.current = { surah, verse, count };
+    (surah: number, verse: number, count: number, reciter?: number) => {
+      requestRef.current = { surah, verse, count, reciterId: reciter };
       start(requestRef.current);
     },
     [start],

@@ -1,6 +1,6 @@
 import type { Chapter } from '../components/game/Game';
 import { FALLBACK_CHAPTERS } from '../data/chapters';
-import { readJSON, writeJSON } from './storage';
+import { readJSON, removeKey, writeJSON } from './storage';
 
 const API = 'https://api.quran.com/api/v4';
 const AUDIO_HOST = 'https://verses.quran.com/';
@@ -94,6 +94,18 @@ export async function getSurahAudioUrls(reciterId: number, surah: number): Promi
   if (urls.length === 0) throw new Error(`No audio for surah ${surah}`);
   writeJSON(urlsKey(reciterId, surah), urls);
   return urls;
+}
+
+// Drops the stored url list containing this url (used after a playback error).
+export function forgetSurahAudioUrls(url: string): void {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('qq.urls.') && readJSON<string[]>(key, []).includes(url)) removeKey(key);
+    }
+  } catch {
+    // ignore
+  }
 }
 
 export function getStoredSurahAudioUrls(reciterId: number, surah: number): string[] | null {

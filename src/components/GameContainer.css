@@ -135,3 +135,17 @@
 
 .badge-button { position: relative; }
 .badge-button ion-badge { position: absolute; top: 2px; right: 0; font-size: 10px; }
+
+.end-record { color: var(--ion-color-secondary); font-weight: 700; margin: 0 0 8px; }
+.end-best { color: var(--qq-muted); margin: 0 0 8px; }
+.round-history { text-align: left; margin: 0 0 16px; }
+.round-history summary { cursor: pointer; color: var(--ion-color-primary); font-weight: 600; padding: 6px 0; }
+.round-history ol { list-style: none; padding: 0; margin: 4px 0 0; max-height: 240px; overflow-y: auto; }
+.round-history li { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-bottom: 1px solid var(--qq-card-border); }
+.round-history li span { flex: 1; }
+.round-history li small { color: var(--qq-muted); }
+.result-win ion-icon { color: var(--qq-success); }
+.result-lose ion-icon, .result-out ion-icon { color: var(--qq-danger); }
+.result-next ion-icon { color: var(--qq-warning); }
+.eliminated .waiting { justify-content: flex-start; }
+.notice-error div { margin-top: 6px; }

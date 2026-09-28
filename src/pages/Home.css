@@ -90,3 +90,4 @@
 .lobby-form { max-width: 520px; margin: 0 auto; }
 .lobby-help { color: var(--qq-muted); margin: 8px 16px 0; }
 .lobby-note { display: block; margin: 0 20px 20px; }
+.mode-best { margin-top: 4px; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); }

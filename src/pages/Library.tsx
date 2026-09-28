@@ -100,21 +100,16 @@ const Library: React.FC = () => {
     });
   };
 
+  // Plays Al-Fatihah 1:1 with this reciter, without changing the chosen one.
   const preview = (id: number) => {
-    if (previewing === id && audio.status === 'playing') {
+    if (previewing === id && (audio.status === 'playing' || audio.status === 'loading')) {
       audio.stop();
       setPreviewing(null);
       return;
     }
-    setPrefs({ reciterId: id });
     setPreviewing(id);
+    audio.load(1, 0, 1, id);
   };
-
-  // Start the preview once the reciter preference has been applied to the player.
-  useEffect(() => {
-    if (previewing !== null && previewing === reciterId) audio.load(1, 0, 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewing, reciterId]);
 
   const visible = useMemo(() => filterChapters(chapters, query), [chapters, query]);
   const busy = job !== null;
