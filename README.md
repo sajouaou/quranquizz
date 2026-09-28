@@ -5,6 +5,22 @@ avec un mode multijoueur via [quranquizz_server](https://github.com/sajouaou/qur
 
 ## Développement
 
+Scripts prêts à l'emploi (Linux/macOS : `.sh`, Windows : `.ps1`) :
+
+```bash
+./scripts/setup.sh                # installe les dépendances (ajouter --with-server pour le serveur)
+./scripts/run.sh dev              # lance l'app sur http://localhost:5173
+./scripts/run.sh dev-local        # app + serveur multijoueur local (../quranquizz_server)
+./scripts/run.sh host             # app accessible depuis les téléphones du même Wi-Fi
+./scripts/run.sh preview          # build de production (mode hors-ligne)
+./scripts/run.sh test             # lint + tests
+./scripts/run.sh android          # build + ouvre Android Studio
+```
+
+Windows : `.\scripts\setup.ps1` puis `.\scripts\run.ps1 dev`.
+
+Ou directement avec npm :
+
 ```bash
 npm install
 npm run dev          # http://localhost:5173
