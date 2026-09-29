@@ -1,13 +1,15 @@
 extends RefCounted
 ## Sauvegarde locale (user://) : pages récoltées, objets, progression de l'histoire, réglages.
 
+const MushafData := preload("res://scripts/core/mushaf_data.gd")
 const DEFAULT_PATH := "user://ghafla_save.json"
 const VERSION := 1
 
 static var _inst: RefCounted
 
 var path: String = DEFAULT_PATH
-var collected: Dictionary = {}  # numéro de page -> true
+var collected: Dictionary = {}  # pages complètes (toutes leurs parties retrouvées) -> true
+var parts: Dictionary = {}  # « page:sourate » -> true : une partie de page = ce que porte une sourate sur cette page
 var items: Dictionary = {}  # identifiant d'objet -> true
 var revealed: Dictionary = {}  # identifiant de page cachée -> true
 var flags: Dictionary = {}  # repères d'histoire déjà vus
@@ -39,8 +41,43 @@ func has_page(page: int) -> bool:
 	return collected.has(page)
 
 
+## Prend toute la page : toutes ses parties.
 func add_page(page: int) -> void:
+	if not MushafData.get_instance().is_valid_page(page):
+		return
+	for s in MushafData.get_instance().surah_ids_on_page(page):
+		parts["%d:%d" % [page, s]] = true
 	collected[page] = true
+
+
+func has_part(page: int, surah_id: int) -> bool:
+	return parts.has("%d:%d" % [page, surah_id])
+
+
+## Prend la part d'une sourate sur une page ; la page est complète quand toutes ses parties sont là.
+func add_part(page: int, surah_id: int) -> void:
+	parts["%d:%d" % [page, surah_id]] = true
+	_refresh_page(page)
+
+
+func _refresh_page(page: int) -> void:
+	if not MushafData.get_instance().is_valid_page(page):
+		return
+	for s in MushafData.get_instance().surah_ids_on_page(page):
+		if not parts.has("%d:%d" % [page, s]):
+			collected.erase(page)
+			return
+	collected[page] = true
+
+
+## Combien de parties de la page sont retrouvées, sur combien (ex. 1 / 3).
+func page_progress(page: int) -> Vector2i:
+	var ids: Array = MushafData.get_instance().surah_ids_on_page(page)
+	var have := 0
+	for s in ids:
+		if parts.has("%d:%d" % [page, s]):
+			have += 1
+	return Vector2i(have, ids.size())
 
 
 func has_item(id: String) -> bool:
@@ -65,6 +102,7 @@ func to_dict() -> Dictionary:
 	return {
 		"version": VERSION,
 		"pages": pages,
+		"parts": parts.keys(),
 		"items": items.keys(),
 		"revealed": revealed.keys(),
 		"flags": flags.keys(),
@@ -82,8 +120,14 @@ func from_dict(d: Dictionary) -> void:
 	items.clear()
 	revealed.clear()
 	flags.clear()
-	for p in d.get("pages", []):
-		collected[int(p)] = true
+	parts.clear()
+	for k in d.get("parts", []):
+		parts[str(k)] = true
+	for k in parts.keys():
+		_refresh_page(int(str(k).get_slice(":", 0)))
+	for p in d.get("pages", []):  # anciennes sauvegardes : page entière
+		if typeof(p) == TYPE_INT or typeof(p) == TYPE_FLOAT:
+			add_page(int(p))
 	for i in d.get("items", []):
 		items[str(i)] = true
 	for r in d.get("revealed", []):
@@ -125,6 +169,7 @@ func load_file() -> bool:
 ## Nouvelle partie : on garde les réglages, pas la progression.
 func reset_progress() -> void:
 	collected.clear()
+	parts.clear()
 	items.clear()
 	revealed.clear()
 	flags.clear()

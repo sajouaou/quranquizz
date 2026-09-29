@@ -52,6 +52,7 @@ var _book_from_pause: bool = false
 var _autosave: float = 0.0
 var _pool_index: Dictionary = {}
 var _finale_done: bool = false
+var _leaving: bool = false
 
 
 func _ready() -> void:
@@ -506,10 +507,21 @@ func _on_book_closed() -> void:
 
 
 func _back_to_title() -> void:
+	if _leaving:
+		return  # un seul retour au menu, même si l'on clique plusieurs fois
+	_leaving = true
 	if world != null and state == State.PLAY:
 		_save_position()
 	save.save_file()
-	_fade_to(Color(0, 0, 0, 1), 0.5).finished.connect(show_title)
+	# on ferme tout de suite le menu de pause : plus rien à cliquer pendant le fondu
+	paused_menu = false
+	pause_menu.close()
+	get_tree().paused = false
+	if world != null and world.player != null:
+		world.player.frozen = true
+	_fade_to(Color(0, 0, 0, 1), 0.5).finished.connect(func() -> void:
+		_leaving = false
+		show_title())
 
 
 func _notification(what: int) -> void:
@@ -568,8 +580,8 @@ func debug_skip_cinematic() -> void:
 
 
 func debug_collect(page: int) -> void:
-	if world != null and world.pickups.has(page):
-		world.collect_page(world.pickups[page])
+	if world != null and world.pickups.has(str(page)):
+		world.collect_page(world.pickups[str(page)])
 
 
 func debug_rect(path: String) -> void:
@@ -602,3 +614,26 @@ func debug_touch(on: bool) -> void:
 func debug_player() -> void:
 	if world != null:
 		print("[state] player ", world.player.global_position, " vel ", world.player.velocity)
+
+
+func debug_collect_id(id: String) -> void:
+	if world != null and world.pickups.has(id):
+		world.collect_page(world.pickups[id])
+
+
+func debug_book(page: int) -> void:
+	book.open_book(page)
+
+
+## Texte factice (mots latins) pour vérifier la mise en page sans écrire aucun texte coranique.
+func debug_fake_text(page: int) -> void:
+	var verses := []
+	for pt in mushaf.parts_of_page(page):
+		for v in range(int(pt[1]), int(pt[2]) + 1):
+			var words := []
+			for i in range(8 + (v * 7) % 9):
+				words.append("mot" + str((v * 13 + i * 5) % 90))
+			verses.append({"key": "%d:%d" % [pt[0], v], "text": " ".join(words)})
+	DirAccess.make_dir_recursive_absolute("user://mushaf_text")
+	var f := FileAccess.open("user://mushaf_text/page_%03d.json" % page, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"page": page, "verses": verses}))

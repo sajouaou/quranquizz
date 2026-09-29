@@ -62,6 +62,7 @@ func build(w: Node2D) -> void:
 	door.prompt = "Ouvrir la porte"
 	door.position = Vector2(DOOR_X - 60.0, GROUND - 80.0)
 	door.used.connect(func(_id: String) -> void: open_door())
+	door.remember_in(w.save)
 	w.pages_root.add_child(door)
 	if w.save.flag("door_open"):
 		door_open = 1.0

@@ -37,19 +37,3 @@ func _draw() -> void:
 	for p in points:
 		edge.append(_stop_at(p.x)[3])
 	draw_polyline_colors(points, edge, 4.0, true)
-
-	# Petits détails : brins, cailloux, points lumineux (déterministes).
-	var rng := RandomNumberGenerator.new()
-	rng.seed = detail_seed
-	var x := first.x
-	while x < last.x:
-		var s := _stop_at(x)
-		var density: float = s[4]
-		if rng.randf() < density:
-			var y := DrawUtil.lerp_y(points, x)
-			var col: Color = (s[3] as Color).lightened(0.15)
-			var h := rng.randf_range(6.0, 16.0)
-			draw_line(Vector2(x, y + 1.0), Vector2(x + rng.randf_range(-4.0, 4.0), y - h), col, 2.0, true)
-			if rng.randf() < 0.3:
-				draw_line(Vector2(x + 5.0, y + 1.0), Vector2(x + 8.0, y - h * 0.7), col, 2.0, true)
-		x += rng.randf_range(14.0, 34.0)

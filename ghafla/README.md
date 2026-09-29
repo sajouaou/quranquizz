@@ -18,7 +18,7 @@ Il comprend sa négligence et décide de tout retrouver.
 - Chaque page est liée à son lieu : Al-Kahf entière dans une grotte, At-Takathur et Al-Humazah dans un souk, et le personnage réagit
   à chacune (par exemple le regret d'avoir délaissé Al-Kahf le vendredi).
 
-Détails : [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) · [docs/PAGES.md](docs/PAGES.md) · [docs/CINEMATIC.md](docs/CINEMATIC.md) · [docs/BUILD.md](docs/BUILD.md)
+Détails : [docs/PLAY_STORE.md](docs/PLAY_STORE.md) · [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) · [docs/PAGES.md](docs/PAGES.md) · [docs/CINEMATIC.md](docs/CINEMATIC.md) · [docs/BUILD.md](docs/BUILD.md)
 
 ## Lancer
 
@@ -38,6 +38,7 @@ Touches : flèches ou Q/D pour marcher, Espace pour sauter, E pour agir, M pour 
 ```bash
 tools/test.sh                 # données, sauvegarde, verrous, bot qui traverse le monde
 tools/export.sh linux         # ou windows, web, android-apk, android-aab
+tools/android-release.sh build --bump   # bundle signé pour le Play Store (voir docs/PLAY_STORE.md)
 ```
 
 ## État du prototype
@@ -46,11 +47,11 @@ tools/export.sh linux         # ou windows, web, android-apk, android-aab
 |---|---|
 | Cinématique | complète (~2 min, passable) |
 | Monde | maison avec escalier, rue, pont de nuages, souk, grotte, montée et sommet |
-| Pages | **19 sur 604** placées ; le reste est à construire |
+| Pages | **23 sur 604** touchées (23 objets à prendre) ; le reste est à construire |
 | Mushaf en jeu | livre, vue d'ensemble (604 cases), liste des sourates |
 | Sauvegarde | locale, automatique |
 | Sons | 8 bruits du quotidien, **pas de musique** |
-| Tests | 64 contrôles, un bot qui atteint les 19 pages et traverse le monde, 21 étapes de parcours |
+| Tests | 82 contrôles, un bot qui atteint chaque objet à prendre et traverse le monde, 22 étapes de parcours |
 
 Nombre de pages : le Mushaf de Médine en compte **604**, pas 605 ; le jeu affiche « n / 604 ».
 
@@ -63,9 +64,9 @@ Nombre de pages : le Mushaf de Médine en compte **604**, pas 605 ; le jeu affic
 
 ## Ce qui a été vérifié
 
-- **Godot 4.7.2 officiel (Linux, sans fenêtre)** : `tools/test.sh` passe — 64 contrôles (données, sauvegarde, entrées, sons, verrous, garde-fou
-  « aucun texte coranique », compilation de tous les scripts), un bot qui atteint les 19 pages et traverse le monde de la chambre au sommet, et un
-  parcours de fumée sur la vraie scène principale (menu → note → cinématique → jeu → page → Mushaf → pause → retour → fin) en 21 étapes, sans aucune erreur de script.
+- **Godot 4.7.2 officiel (Linux, sans fenêtre)** : `tools/test.sh` passe — 82 contrôles (données, sauvegarde, entrées, sons, verrous, garde-fou
+  « aucun texte coranique », compilation de tous les scripts), un bot qui atteint chaque objet à prendre et traverse le monde de la chambre au sommet, et un
+  parcours de fumée sur la vraie scène principale (menu → note → cinématique → jeu → page → Mushaf → pause → retour → fin) en 22 étapes, sans aucune erreur de script.
 - **Rendu** : les captures (cinématique, monde, HUD, dialogues, Mushaf, menus, tactile) ont été prises dans un moteur Godot compilé en WebAssembly
   (build non officiel, sans carte graphique). Ce moteur affiche les lettres arabes séparées ; le vrai moteur les met en forme.
 

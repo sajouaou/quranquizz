@@ -58,7 +58,8 @@ var backdrop: Node2D
 var story: Array = []
 var zone: String = ""
 var placed_pages: Array = []  # numéros des pages placées dans ce prototype
-var pickups: Dictionary = {}  # page -> PagePickup
+var pickups: Dictionary = {}  # identifiant (voir def_id) -> PagePickup
+var _defs: Array = []
 var checkpoints: PackedVector2Array = PackedVector2Array()
 var events: Dictionary = {}  # événements déjà déclenchés (pièces disparues, etc.)
 
@@ -93,16 +94,45 @@ func _load_data() -> void:
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) == TYPE_DICTIONARY:
 		placed_pages.clear()
-		for d in parsed.get("pages", []):
-			placed_pages.append(int(d["page"]))
+		_defs = parsed.get("pages", [])
+		for d in _defs:
+			for pg in pages_of_def(d):
+				if not placed_pages.has(pg):
+					placed_pages.append(pg)
 	var dlg: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue.json"))
 	if typeof(dlg) == TYPE_DICTIONARY:
 		story = dlg.get("triggers", [])
 
 
 func page_defs() -> Array:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_pages.json"))
-	return parsed.get("pages", []) if typeof(parsed) == TYPE_DICTIONARY else []
+	return _defs
+
+
+## Identifiant d'une page à prendre : « 322 » pour une page entière, « 600:102 » pour la part d'une sourate sur une page.
+static func def_id(d: Dictionary) -> String:
+	if d.has("part"):
+		return "%d:%d" % [int(d["page"]), int(d["part"])]
+	return str(int(d["page"]))
+
+
+## Pages touchées par une entrée : sa page, ou toutes les pages de la sourate offerte en entier.
+func pages_of_def(d: Dictionary) -> Array:
+	if d.has("grant_surah"):
+		return mushaf.surah_pages(int(d["grant_surah"]))
+	return [int(d["page"])]
+
+
+## Tout ce que porte cette entrée est-il déjà dans le Mushaf ?
+func owned(d: Dictionary) -> bool:
+	if d.has("part"):
+		return save.has_part(int(d["page"]), int(d["part"]))
+	if d.has("grant_surah"):
+		var sid := int(d["grant_surah"])
+		for pg in mushaf.surah_pages(sid):
+			if not save.has_part(pg, sid):
+				return false
+		return true
+	return save.has_page(int(d["page"]))
 
 
 func _build() -> void:
@@ -250,8 +280,7 @@ func add_glow(pos: Vector2, radius: float, color: Color, pulse: float = 0.0) -> 
 
 func _build_pages() -> void:
 	for d in page_defs():
-		var page := int(d["page"])
-		if save.has_page(page):
+		if owned(d):
 			continue
 		var x := float(d["x"])
 		var lift := float(d.get("lift", 60.0))
@@ -263,59 +292,64 @@ func _build_pages() -> void:
 		pk.position = Vector2(x, gy - lift)
 		pk.add_to_group("light_source")
 		pages_root.add_child(pk)
-		pickups[page] = pk
+		pickups[def_id(d)] = pk
 		if d.has("ledge"):
 			add_ledge(x, gy, float(d["ledge"]), float(d.get("ledge_w", 150.0)), bool(d.get("ledge_left", true)))
+	# une page qui attendait un événement déjà survenu (souk traversé) est visible d'emblée
+	for pk in pickups.values():
+		var rv: Dictionary = pk.data.get("reveal", {})
+		if pk.hidden_state and str(rv.get("type", "")) == "event" and save.flag("ev_" + str(rv.get("event", ""))):
+			pk.reveal()
 	for it in zones:
 		if it.has_method("after_pages"):
 			it.after_pages(self)
 
 
 func collect_page(pk: Node) -> void:
-	var page: int = pk.page
-	if save.has_page(page):
+	if owned(pk.data):
 		return
-	save.add_page(page)
+	var d: Dictionary = pk.data
+	if d.has("part"):
+		save.add_part(int(d["page"]), int(d["part"]))
+	elif d.has("grant_surah"):
+		var sid := int(d["grant_surah"])
+		for pg in mushaf.surah_pages(sid):
+			save.add_part(pg, sid)
+	else:
+		save.add_page(int(d["page"]))
 	pk.collected = true
-	pk.queue_redraw()
+	pk.visible = false  # plus de lueur ni de colonne de lumière une fois la page prise
 	pk.remove_from_group("light_source")
+	pk.remove_from_group("interactable")
 	Sfx.play("page", -4.0, 1.0)
 	save.save_file()
 	var screen: Vector2 = get_viewport().get_canvas_transform() * (pk.global_position as Vector2)
-	page_collected.emit(page, screen, pk.data)
-	if placed_pages.size() > 0 and _all_placed_collected():
-		pass
+	page_collected.emit(int(d["page"]), screen, d)
 
 
-func _all_placed_collected() -> bool:
-	for p in placed_pages:
-		if not save.has_page(int(p)):
+func others_collected(id: String) -> bool:
+	for d in _defs:
+		if def_id(d) != id and not owned(d):
 			return false
 	return true
 
 
-func others_collected(page: int) -> bool:
-	for p in placed_pages:
-		if int(p) != page and not save.has_page(int(p)):
-			return false
-	return true
-
-
-func others_progress(page: int) -> Vector2i:
+func others_progress(id: String) -> Vector2i:
 	var have := 0
 	var total := 0
-	for p in placed_pages:
-		if int(p) == page:
+	for d in _defs:
+		if def_id(d) == id:
 			continue
 		total += 1
-		if save.has_page(int(p)):
+		if owned(d):
 			have += 1
 	return Vector2i(have, total)
 
 
 func reveal_page(page: int) -> void:
-	if pickups.has(page):
-		pickups[page].reveal()
+	var id := str(page)
+	if pickups.has(id):
+		pickups[id].reveal()
 
 
 func toast_text(text: String) -> void:
@@ -335,6 +369,7 @@ func trigger_event(id: String) -> void:
 	if events.has(id):
 		return
 	events[id] = true
+	save.set_flag("ev_" + id)
 	for z in zones:
 		if z.has_method("on_event"):
 			z.on_event(self, id)

@@ -16,3 +16,4 @@ android/build/
 # Texte du Mushaf téléchargé par tools/fetch_mushaf_text.py (à ne pas redistribuer sans vérifier la licence)
 data/mushaf_text/
 manifest.json
+android/

@@ -34,7 +34,24 @@
     "auto": false
    },
    "hint": "Un coffre scellé. La clé doit se trouver parmi ces étoffes…",
-   "reaction": "asr_humazah"
+   "reaction": "humazah",
+   "part": 104
+  },
+  {
+   "page": 601,
+   "part": 103,
+   "x": 6620,
+   "lift": 72,
+   "kind": "visible",
+   "reaction": "asr"
+  },
+  {
+   "page": 601,
+   "part": 105,
+   "x": 7250,
+   "lift": 66,
+   "kind": "visible",
+   "reaction": "fil"
   },
   {
    "page": 600,
@@ -45,7 +62,24 @@
     "type": "event",
     "event": "coins_gone"
    },
-   "reaction": "takathur"
+   "reaction": "takathur",
+   "part": 102
+  },
+  {
+   "page": 600,
+   "part": 100,
+   "x": 5600,
+   "lift": 80,
+   "kind": "visible",
+   "reaction": "adiyat"
+  },
+  {
+   "page": 600,
+   "part": 101,
+   "x": 6100,
+   "lift": 72,
+   "kind": "visible",
+   "reaction": "qariah"
   },
   {
    "page": 293,
@@ -180,14 +214,16 @@
     "seconds": 2.4,
     "radius": 120
    },
-   "reaction": "sajdah"
+   "reaction": "sajdah",
+   "grant_surah": 32
   },
   {
    "page": 562,
    "x": 14990,
    "lift": 72,
    "kind": "visible",
-   "reaction": "mulk"
+   "reaction": "mulk",
+   "grant_surah": 67
   },
   {
    "page": 604,

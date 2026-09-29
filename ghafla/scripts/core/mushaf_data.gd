@@ -7,6 +7,7 @@ extends RefCounted
 ## souhaite suivre un autre mushaf.
 
 const PATH := "res://data/surahs.json"
+const PARTS_PATH := "res://data/page_parts.json"
 
 static var _inst: RefCounted
 
@@ -14,6 +15,7 @@ var total_pages: int = 604
 var juz_starts: Array = []
 var surahs: Array = []
 var loaded: bool = false
+var page_parts: Dictionary = {}  # page -> [[sourate, premier verset, dernier verset], ...] (numéros seulement)
 
 
 static func get_instance() -> RefCounted:
@@ -33,6 +35,10 @@ func load_data(path: String = PATH) -> bool:
 	juz_starts = parsed.get("juz_start_pages", [])
 	surahs = parsed.get("surahs", [])
 	loaded = surahs.size() == 114 and juz_starts.size() == 30
+	var pp: Variant = JSON.parse_string(FileAccess.get_file_as_string(PARTS_PATH))
+	if typeof(pp) == TYPE_DICTIONARY:
+		for k in pp.get("pages", {}).keys():
+			page_parts[int(k)] = pp["pages"][k]
 	return loaded
 
 
@@ -95,3 +101,37 @@ func page_title(page: int, arabic: bool = false) -> String:
 
 func is_valid_page(page: int) -> bool:
 	return page >= 1 and page <= total_pages
+
+
+## Les « parties » d'une page : une page peut porter la fin d'une sourate, une sourate entière, le début de la suivante…
+## Renvoie [[sourate, premier verset, dernier verset], ...] dans l'ordre de la page.
+func parts_of_page(page: int) -> Array:
+	if page_parts.has(page):
+		return page_parts[page]
+	if not is_valid_page(page):
+		return []
+	return [[int(surah_of_page(page).get("id", 1)), 1, 1]]
+
+
+func surah_ids_on_page(page: int) -> Array:
+	var ids := []
+	for pt in parts_of_page(page):
+		ids.append(int(pt[0]))
+	return ids
+
+
+## Pages qui portent au moins un verset de la sourate.
+func surah_pages(surah_id: int) -> Array:
+	var out := []
+	for p in range(1, total_pages + 1):
+		if surah_ids_on_page(p).has(surah_id):
+			out.append(p)
+	return out
+
+
+## La sourate commence-t-elle sur cette page (verset 1 présent) ?
+func surah_starts_on(page: int, surah_id: int) -> bool:
+	for pt in parts_of_page(page):
+		if int(pt[0]) == surah_id and int(pt[1]) == 1:
+			return true
+	return false

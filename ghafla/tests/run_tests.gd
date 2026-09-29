@@ -96,11 +96,11 @@ func _test_data() -> void:
 		var p := int(d["page"])
 		if p < 1 or p > 604:
 			in_range = false
-		seen[p] = true
+		seen[World.def_id(d)] = true
 		firsts += 1 if bool(d.get("first", false)) else 0
 		finals += 1 if bool(d.get("final", false)) else 0
 	ok(in_range, "pages placées entre 1 et 604")
-	ok(seen.size() == pages_def.size(), "pas de page placée en double")
+	ok(seen.size() == pages_def.size(), "pas de page (ni de partie de page) placée en double")
 	ok(firsts == 1 and finals == 1, "une seule première page et une seule dernière")
 
 	var reactions: Dictionary = dialogue.get("reactions", {})
@@ -120,7 +120,7 @@ func _test_data() -> void:
 			if not ["key", "pages", "others", "count"].has(str(lock.get("type", ""))):
 				locks_ok = false
 			for lp in lock.get("pages", []):
-				if not seen.has(int(lp)):
+				if not seen.has(str(int(lp))):
 					locks_ok = false
 			if str(lock.get("type", "")) == "others" and not bool(d.get("final", false)):
 				locks_ok = false
@@ -132,6 +132,14 @@ func _test_data() -> void:
 	ok(kinds_ok, "types de pages valides (visible, hidden, locked)")
 	ok(locks_ok, "verrous valides (les pages exigées existent, « others » seulement sur la dernière)")
 	ok(reveal_ok, "révélations valides (wait, event, vein)")
+	var parts_ok := true
+	for d in pages_def:
+		if d.has("part") and not mushaf.surah_ids_on_page(int(d["page"])).has(int(d["part"])):
+			parts_ok = false
+			print("[test]   la sourate ", d["part"], " n'est pas sur la page ", d["page"])
+		if d.has("grant_surah") and not mushaf.surah_pages(int(d["grant_surah"])).has(int(d["page"])):
+			parts_ok = false
+	ok(parts_ok, "chaque partie de page et chaque sourate offerte existe sur sa page")
 
 	# Dialogues : chaque déclencheur et chaque réaction a du texte, les références « sens approximatif » sont bien formées
 	var lines_ok := true
@@ -157,8 +165,7 @@ func _test_data() -> void:
 		var r: Dictionary = reactions.get(str(d.get("reaction", "")), {})
 		if r.has("meaning"):
 			var sid := int(str(r["meaning"]["ref"]).split(":")[0])
-			var rng: Vector2i = mushaf.surah_range(sid)
-			if int(d["page"]) < rng.x or int(d["page"]) > rng.y:
+			if not mushaf.surah_pages(sid).has(int(d["page"])):
 				match_ok = false
 				print("[test]   la page ", d["page"], " n'est pas dans la sourate ", sid)
 	ok(match_ok, "le « sens approximatif » cité correspond à la sourate de la page")
@@ -352,7 +359,7 @@ func _make_world() -> void:
 
 func _test_world() -> void:
 	await _make_world()
-	ok(world.placed_pages.size() == pages_def.size(), "le monde place toutes les pages du fichier (%d)" % world.placed_pages.size())
+	ok(world.placed_pages.size() >= 12, "le monde place les pages du fichier (%d pages touchées)" % world.placed_pages.size())
 	ok(world.pickups.size() == pages_def.size(), "une page dans le monde par entrée du fichier")
 
 	# Pages cachées : invisibles au départ
@@ -361,14 +368,14 @@ func _test_world() -> void:
 		if pk.hidden_state:
 			hidden += 1
 	ok(hidden >= 5, "il y a des pages cachées (%d)" % hidden)
-	ok(not world.pickups[600].can_interact(), "la page cachée (600) ne peut pas être prise")
+	ok(not world.pickups["600:102"].can_interact(), "la partie cachée (600 : At-Takathur) ne peut pas être prise")
 	world.trigger_event("coins_gone")
-	ok(not world.pickups[600].hidden_state, "l'événement « coins_gone » révèle la page 600")
+	ok(not world.pickups["600:102"].hidden_state, "l'événement « coins_gone » révèle At-Takathur")
 
 	# Prise d'une page
 	var got := []
 	world.page_collected.connect(func(page: int, _s: Vector2, _d: Dictionary) -> void: got.append(page))
-	var first: Node = world.pickups[322]
+	var first: Node = world.pickups["322"]
 	world.collect_page(first)
 	ok(got == [322] and save.has_page(322), "prendre une page émet page_collected et l'enregistre")
 	world.collect_page(first)
@@ -376,23 +383,97 @@ func _test_world() -> void:
 
 	# Verrous
 	save.collected.erase(322)
-	var chest: Node = world.pickups[601]
+	var chest: Node = world.pickups["601:104"]
 	ok(chest.locked and not chest.lock_satisfied(), "le coffre (601) est fermé sans clé")
 	world.give_item("key_chest")
 	ok(chest.lock_satisfied(), "la clé ouvre le coffre")
-	var seal: Node = world.pickups[304]
+	var seal: Node = world.pickups["304"]
 	ok(seal.locked and not seal.lock_satisfied(), "le sceau d'Al-Kahf (304) est fermé au début")
 	for p in range(293, 304):
 		save.add_page(p)
 	ok(seal.lock_satisfied(), "le sceau s'ouvre quand 293 à 303 sont retrouvées")
-	var last: Node = world.pickups[604]
+	var last: Node = world.pickups["604"]
 	ok(last.locked and not last.lock_satisfied(), "le sceau de l'aube (604) est fermé tant qu'il manque des pages")
-	for p in world.placed_pages:
-		if int(p) != 604:
-			save.add_page(int(p))
+	for d in world.page_defs():
+		if World.def_id(d) != "604":
+			_own_def(d)
 	ok(last.lock_satisfied(), "le sceau de l'aube s'ouvre quand toutes les autres pages sont là")
 
+	await _test_parts()
+	await _test_persistence()
 	DirAccess.remove_absolute(TMP_SAVE)
+
+
+func _own_def(d: Dictionary) -> void:
+	if d.has("part"):
+		save.add_part(int(d["page"]), int(d["part"]))
+	elif d.has("grant_surah"):
+		for pg in mushaf.surah_pages(int(d["grant_surah"])):
+			save.add_part(pg, int(d["grant_surah"]))
+	else:
+		save.add_page(int(d["page"]))
+
+
+## Ce qui a été fait ne réapparaît pas quand on recharge le monde avec la même sauvegarde.
+func _test_persistence() -> void:
+	await _make_world()
+	world.collect_page(world.pickups["322"])
+	world.collect_page(world.pickups["600:100"])
+	world.trigger_event("coins_gone")
+	for n in world.pages_root.get_children():
+		if n.get("id") == "rack" or n.get("id") == "vein_300" or n.get("id") == "door":
+			n.interact(world.player)
+	var data: Dictionary = save.to_dict()
+	world.queue_free()
+	await get_tree().process_frame
+	var save2 := SaveData.new()
+	save2.path = TMP_SAVE
+	save2.from_dict(JSON.parse_string(JSON.stringify(data)))
+	world = World.new()
+	world.name = "World"
+	add_child(world)
+	world.start(save2, mushaf)
+	await get_tree().physics_frame
+	ok(not world.pickups.has("322") and not world.pickups.has("600:100"), "les pages déjà prises ne réapparaissent pas au rechargement")
+	ok(world.pickups.has("600:101") and world.pickups.has("600:102"), "… mais celles qui restent à trouver sont là")
+	ok(not world.pickups["600:102"].hidden_state, "la partie révélée par les pièces reste révélée")
+	var market: Variant = null
+	for z in world.zones:
+		if z.get("coins") != null:
+			market = z
+	ok(market != null and (market.coins as Array).is_empty(), "les pièces dissoutes ne reviennent pas")
+	var usable := 0
+	for n in world.pages_root.get_children():
+		if (n.get("id") == "rack" or n.get("id") == "vein_300" or n.get("id") == "door") and n.can_interact():
+			usable += 1
+	ok(usable == 0, "le portant, la veine de lumière et la porte utilisés ne se réactivent pas")
+	ok(save2.has_item("key_chest"), "la clé trouvée est gardée")
+
+
+## Parties de page (une page peut porter plusieurs sourates) et sourates offertes en entier.
+func _test_parts() -> void:
+	await _make_world()
+	ok(mushaf.surah_ids_on_page(600) == [100, 101, 102], "la page 600 porte 3 sourates : Al-'Adiyat, Al-Qari'ah, At-Takathur")
+	ok(mushaf.surah_ids_on_page(601) == [103, 104, 105], "la page 601 porte Al-'Asr, Al-Humazah, Al-Fil")
+	ok(mushaf.surah_pages(67) == [562, 563, 564], "Al-Mulk occupe les pages 562 à 564")
+	world.collect_page(world.pickups["600:102"])
+	ok(save.has_part(600, 102) and not save.has_part(600, 101) and not save.has_page(600), "At-Takathur seule : la page 600 n'est pas complète")
+	ok(save.page_progress(600) == Vector2i(1, 3) and save.count() == 0, "progression de la page 600 : 1 partie sur 3, aucune page complète")
+	world.collect_page(world.pickups["600:100"])
+	world.collect_page(world.pickups["600:101"])
+	ok(save.has_page(600) and save.count() == 1, "les trois parties réunies complètent la page 600")
+	world.collect_page(world.pickups["601:103"])
+	ok(save.page_progress(601) == Vector2i(1, 3) and not save.has_page(601), "Al-'Asr est prise à part de Al-Humazah et Al-Fil")
+	world.collect_page(world.pickups["562"])
+	ok(save.has_page(562) and save.has_page(563), "Al-Mulk offerte en entier : pages 562 et 563 complètes")
+	ok(save.has_part(564, 67) and not save.has_page(564), "… et la part d'Al-Mulk sur la page 564 (qui porte aussi le début d'Al-Qalam)")
+	world.collect_page(world.pickups["415"])
+	ok(save.has_page(415) and save.has_page(416) and save.has_page(417), "As-Sajdah offerte en entier : pages 415 à 417")
+	# aller-retour de sauvegarde avec des parties
+	var s2 := SaveData.new()
+	s2.path = TMP_SAVE
+	s2.from_dict(save.to_dict())
+	ok(s2.has_part(564, 67) and s2.has_page(562) and s2.page_progress(601) == Vector2i(1, 3), "les parties survivent à la sauvegarde")
 
 
 # ----------------------------------------------------------------------------- 7. accessibilité (bot)
@@ -465,7 +546,7 @@ func _test_reachability() -> void:
 	var unreachable := []
 	for d in pages_def:
 		var page := int(d["page"])
-		var pk: Node2D = world.pickups[page]
+		var pk: Node2D = world.pickups[World.def_id(d)]
 		# on rend la page prenable, sans toucher aux règles : on veut seulement savoir si le corps du joueur l'atteint
 		pk.hidden_state = false
 		pk._appear = 1.0

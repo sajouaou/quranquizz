@@ -22,7 +22,10 @@ run_scene() {
   local label="$1" scene="$2" tag="$3"
   echo "== $label =="
   # --fixed-fps : la simulation avance aussi vite que possible au lieu du temps réel
-  "$GODOT_BIN" --headless --fixed-fps 60 --path . "$scene" >"$LOG" 2>&1 || true
+  # timeout : si un script ne se charge pas, Godot reste ouvert sans rien faire
+  local tmo=""
+  if command -v timeout >/dev/null 2>&1; then tmo="timeout 600"; fi
+  $tmo "$GODOT_BIN" --headless --fixed-fps 60 --path . "$scene" >"$LOG" 2>&1 || true
   grep -E "^\[$tag\]" "$LOG" | grep -v ' ok  ' || true
   if grep -qE "SCRIPT ERROR|Parse Error|Compile Error|^ERROR:" "$LOG"; then
     echo "Erreurs de script dans la sortie de Godot :" >&2

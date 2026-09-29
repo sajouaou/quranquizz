@@ -106,7 +106,11 @@ func _run() -> void:
 	ok(not main.paused_menu and not get_tree().paused, "la reprise fonctionne")
 
 	# retour au menu et « Continuer »
+	main._toggle_pause()
+	await _wait(0.2)
 	main._back_to_title()
+	main._back_to_title()  # plusieurs clics d'affilée : un seul retour au menu
+	ok(not main.pause_menu.visible and not get_tree().paused, "« Menu principal » ferme la pause immédiatement")
 	ok(await _until(func() -> bool: return _state() == "TITLE" and main.title != null, 5.0), "retour au menu principal")
 	await _wait(0.5)
 	main._on_continue()

@@ -35,7 +35,7 @@ retrouvée fait réagir le personnage, sans le juger ni le moquer.
 - **Déplacement** : marcher, courir, sauter (saut plus court si on relâche), interagir. Clavier (QWERTY et AZERTY),
   manette, souris et boutons tactiles.
 - **Le Mushaf sur soi** : en haut à gauche, un petit Mushaf se remplit ; touche `M` (ou le bouton « Mushaf ») ouvre le livre :
-  - *Livre* : double page ; une page retrouvée porte son texte, une page manquante est **blanche**.
+  - *Livre* : double page ; une page retrouvée porte son texte, **découpé par sourate** avec un bandeau au nom de chaque sourate qui commence sur la page. Une page manquante — ou la partie manquante d'une page — est **blanche**.
   - *Vue d'ensemble* : les 604 pages en 30 rangées de juz', dorées si retrouvées, blanches sinon.
   - *Sourates* : la liste des 114 sourates avec les pages retrouvées.
 - **Pages cachées** : elles n'apparaissent qu'après un geste :
@@ -69,7 +69,7 @@ l'affiche partout (« 12 / 604 »). Si l'on veut une page de plus (par exemple u
 
 ## 6. Ce que le prototype contient, et ce qu'il ne contient pas
 
-Contenu : cinématique complète, une maison, une rue, un pont, un souk, une grotte, une montée avec sommet, **19 pages placées**,
+Contenu : cinématique complète, une maison, une rue, un pont, un souk, une grotte, une montée avec sommet, **23 pages touchées** (dont deux pages à plusieurs sourates prises sourate par sourate),
 9 déclencheurs d'histoire, 10 réactions, le Mushaf en jeu, sauvegarde, menus, contrôles tactiles, 8 sons, tests et bot.
 
 Volontairement absent : les 585 autres pages, plusieurs modes de récupération à inventer, d'autres lieux (montagne enneigée, mer, désert de

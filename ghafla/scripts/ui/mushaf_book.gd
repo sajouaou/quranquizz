@@ -180,13 +180,10 @@ func close_book() -> void:
 
 
 func _latest_collected() -> int:
-	var best := 1
 	var latest := -1
-	for p in save.collected.keys():
-		latest = maxi(latest, int(p))
-	if latest > 0:
-		best = latest
-	return best
+	for k in save.parts.keys():
+		latest = maxi(latest, int(str(k).get_slice(":", 0)))
+	return latest if latest > 0 else 1
 
 
 func _spread_of(page: int) -> int:
@@ -267,7 +264,8 @@ func _draw_page(c: Control, r: Rect2, p: int) -> void:
 		c.draw_rect(r, Color("162e26"))
 		return
 	var font := Assets.font_book()
-	if not save.has_page(p):
+	var prog: Vector2i = save.page_progress(p)
+	if prog.x == 0:
 		# Page manquante : blanche, seulement son numéro tout en bas
 		c.draw_rect(r, Color("fbfaf6"))
 		c.draw_rect(r, Color(0, 0, 0, 0.07), false, 1.0)
@@ -275,42 +273,116 @@ func _draw_page(c: Control, r: Rect2, p: int) -> void:
 		if p in placed_pages:
 			c.draw_string(font, Vector2(r.position.x, r.get_center().y), "cette page attend quelque part dans le rêve", HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 17, Color(0.7, 0.7, 0.72, 0.8))
 		return
-	# Page retrouvée
+	# Page (au moins en partie) retrouvée
 	c.draw_rect(r, P.PARCHMENT)
 	var inner := r.grow(-12.0)
 	c.draw_rect(inner, P.GOLD_DEEP, false, 2.0)
 	c.draw_rect(inner.grow(-5.0), Color(P.GOLD_DEEP, 0.5), false, 1.0)
-	var title_ar: String = "سورة " + str(mushaf.page_title(p, true))
-	c.draw_string(font, Vector2(inner.position.x, inner.position.y + 44.0), title_ar, HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, 28, Color("6b4a12"))
-	c.draw_line(Vector2(inner.position.x + 30.0, inner.position.y + 58.0), Vector2(inner.end.x - 30.0, inner.position.y + 58.0), Color(P.GOLD_DEEP, 0.7), 1.5)
-	var body := Rect2(inner.position.x + 20.0, inner.position.y + 74.0, inner.size.x - 40.0, inner.size.y - 74.0 - 64.0)
-	var text := QuranText.get_text(p)
-	if text != "":
-		_draw_text_fit(c, font, text, body)
-	else:
-		_draw_script_lines(c, body, p)
-		c.draw_string(font, Vector2(body.position.x, body.end.y + 4.0), "Texte disponible en ligne", HORIZONTAL_ALIGNMENT_CENTER, body.size.x, 14, Color(0.4, 0.3, 0.15, 0.75))
+	var body := Rect2(inner.position.x + 20.0, inner.position.y + 18.0, inner.size.x - 40.0, inner.size.y - 18.0 - 56.0)
+	_draw_parts(c, font, body, p)
 	# Pied de page : numéro, juz, sourate
 	c.draw_string(font, Vector2(inner.position.x, inner.end.y - 30.0), DrawUtil.arabic_digits(p), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, 26, Color("6b4a12"))
 	c.draw_string(font, Vector2(inner.position.x + 14.0, inner.end.y - 12.0), "Juz' %d" % mushaf.juz_of_page(p), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(0.4, 0.3, 0.15, 0.8))
-	c.draw_string(font, Vector2(inner.position.x, inner.end.y - 12.0), mushaf.page_title(p), HORIZONTAL_ALIGNMENT_RIGHT, inner.size.x - 14.0, 15, Color(0.4, 0.3, 0.15, 0.8))
+	if prog.x < prog.y:
+		c.draw_string(font, Vector2(inner.position.x, inner.end.y - 12.0), "%d / %d parties" % [prog.x, prog.y], HORIZONTAL_ALIGNMENT_RIGHT, inner.size.x - 14.0, 15, Color(0.55, 0.3, 0.1, 0.9))
+	else:
+		c.draw_string(font, Vector2(inner.position.x, inner.end.y - 12.0), mushaf.page_title(p), HORIZONTAL_ALIGNMENT_RIGHT, inner.size.x - 14.0, 15, Color(0.4, 0.3, 0.15, 0.8))
 
 
-func _draw_text_fit(c: Control, font: Font, text: String, body: Rect2) -> void:
-	# Choisit la plus grande taille pour laquelle tout le texte de la page tient dans le cadre.
-	var chosen := 13
+## Le corps d'une page : une zone par sourate présente sur la page, séparées par un bandeau au nom de la sourate quand elle commence ici.
+## Une partie non retrouvée reste blanche.
+func _draw_parts(c: Control, font: Font, body: Rect2, p: int) -> void:
+	var parts: Array = mushaf.parts_of_page(p)
+	var segs: Array = QuranText.get_segments(p)
+	var text_of := {}
+	for sg in segs:
+		text_of[int(sg["surah"])] = str(sg["text"])
+	var all_text := text_of.size() >= parts.size()
+	# poids de chaque zone : longueur du texte si on l'a, sinon nombre de versets
+	var weights := []
+	var total := 0.0
+	for pt in parts:
+		var w: float = float(str(text_of.get(int(pt[0]), "")).length()) if all_text else float(int(pt[2]) - int(pt[1]) + 1)
+		w = maxf(w, 1.0) + (60.0 if all_text else 2.0) * (1.0 if int(pt[1]) == 1 else 0.0)
+		weights.append(w)
+		total += w
+	var gap := 12.0
+	var avail := body.size.y - gap * float(parts.size() - 1)
+	var y := body.position.y
+	var size_cap := 26
+	var layouts := []
+	for i in range(parts.size()):
+		var pt: Array = parts[i]
+		var h: float = avail * float(weights[i]) / total
+		var rect := Rect2(body.position.x, y, body.size.x, h)
+		var head := 0.0
+		if int(pt[1]) == 1:
+			head = 40.0
+		layouts.append({"rect": rect, "head": head})
+		y += h + gap
+	# une même taille de texte pour toute la page : la plus grande qui convient à chaque zone
+	if all_text:
+		for i in range(parts.size()):
+			var sid := int(parts[i][0])
+			var rect: Rect2 = layouts[i]["rect"]
+			var text_rect := Rect2(rect.position.x, rect.position.y + float(layouts[i]["head"]), rect.size.x, maxf(rect.size.y - float(layouts[i]["head"]), 10.0))
+			if bool(save.has_part(p, sid)):
+				size_cap = mini(size_cap, _fit_size(font, str(text_of[sid]), text_rect))
+	for i in range(parts.size()):
+		var pt: Array = parts[i]
+		var sid := int(pt[0])
+		var have: bool = save.has_part(p, sid)
+		var rect: Rect2 = layouts[i]["rect"]
+		var head: float = layouts[i]["head"]
+		if head > 0.0:
+			_draw_banner(c, font, Rect2(rect.position.x, rect.position.y, rect.size.x, 34.0), str(mushaf.surah(sid).get("name_ar", "")), have)
+		var text_rect := Rect2(rect.position.x, rect.position.y + head, rect.size.x, maxf(rect.size.y - head, 10.0))
+		if not have:
+			c.draw_rect(text_rect, Color("fbfaf6"))
+			c.draw_rect(text_rect, Color(0, 0, 0, 0.08), false, 1.0)
+			c.draw_string(font, Vector2(text_rect.position.x, text_rect.get_center().y + 6.0), "%s : à retrouver" % str(mushaf.surah(sid).get("name_fr", "")), HORIZONTAL_ALIGNMENT_CENTER, text_rect.size.x, 17, Color(0.62, 0.6, 0.6, 0.9))
+		elif text_of.has(sid):
+			_draw_text_fit(c, font, str(text_of[sid]), text_rect, size_cap)
+		else:
+			_draw_script_lines(c, text_rect, p * 31 + sid)
+	if segs.is_empty() and prog_any(p):
+		c.draw_string(font, Vector2(body.position.x, body.end.y + 22.0), "Texte disponible en ligne", HORIZONTAL_ALIGNMENT_CENTER, body.size.x, 14, Color(0.4, 0.3, 0.15, 0.75))
+
+
+func prog_any(p: int) -> bool:
+	return save.page_progress(p).x > 0
+
+
+## Bandeau de début de sourate : filets dorés et nom de la sourate.
+func _draw_banner(c: Control, font: Font, r: Rect2, name_ar: String, have: bool) -> void:
+	var col := Color("6b4a12") if have else Color(0.6, 0.58, 0.55, 0.9)
+	var mid := r.position.y + r.size.y * 0.5
+	c.draw_rect(Rect2(r.position.x, r.position.y, r.size.x, r.size.y), Color(P.GOLD, 0.16 if have else 0.0))
+	c.draw_rect(r, Color(col, 0.7), false, 1.5)
+	c.draw_line(Vector2(r.position.x + 6.0, r.position.y + 5.0), Vector2(r.end.x - 6.0, r.position.y + 5.0), Color(col, 0.35), 1.0)
+	c.draw_line(Vector2(r.position.x + 6.0, r.end.y - 5.0), Vector2(r.end.x - 6.0, r.end.y - 5.0), Color(col, 0.35), 1.0)
+	c.draw_string(font, Vector2(r.position.x, mid + 9.0), "سورة " + name_ar, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 24, col)
+
+
+func _fit_size(font: Font, text: String, body: Rect2) -> int:
 	for s in [26, 24, 22, 20, 18, 16, 14, 13]:
 		var h := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_FILL, body.size.x, s, -1, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND, TextServer.JUSTIFICATION_WORD_BOUND | TextServer.JUSTIFICATION_KASHIDA, TextServer.DIRECTION_RTL).y
 		if h <= body.size.y:
-			chosen = s
-			break
-	c.draw_multiline_string(font, Vector2(body.position.x, body.position.y + font.get_ascent(chosen)), text, HORIZONTAL_ALIGNMENT_FILL, body.size.x, chosen, -1, Color("2a1c08"), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND, TextServer.JUSTIFICATION_WORD_BOUND | TextServer.JUSTIFICATION_KASHIDA, TextServer.DIRECTION_RTL)
+			return s
+	return 13
+
+
+func _draw_text_fit(c: Control, font: Font, text: String, body: Rect2, size_cap: int = 26) -> void:
+	var chosen := mini(_fit_size(font, text, body), size_cap)
+	# jamais plus de lignes que la zone n'en contient (même si la mesure du texte diffère du rendu)
+	var max_lines := maxi(1, int(body.size.y / font.get_height(chosen)))
+	c.draw_multiline_string(font, Vector2(body.position.x, body.position.y + font.get_ascent(chosen)), text, HORIZONTAL_ALIGNMENT_FILL, body.size.x, chosen, max_lines, Color("2a1c08"), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND, TextServer.JUSTIFICATION_WORD_BOUND | TextServer.JUSTIFICATION_KASHIDA, TextServer.DIRECTION_RTL)
 
 
 func _draw_script_lines(c: Control, body: Rect2, seed_v: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_v * 131
-	var lines := 15
+	var lines := maxi(2, int(body.size.y / 26.0))
 	var step := body.size.y / float(lines)
 	for i in range(lines):
 		var y := body.position.y + step * (float(i) + 0.5)
@@ -346,7 +418,7 @@ func _cell_rect(lay: Dictionary, page: int) -> Rect2:
 func _draw_index(c: Control) -> void:
 	var lay := _grid_layout(c.size)
 	var font := Assets.font_book()
-	c.draw_string(font, Vector2(0, 22), "Or : page retrouvée   ·   Blanc : page manquante   ·   Clique une case pour ouvrir la page", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
+	c.draw_string(font, Vector2(0, 22), "Or : page retrouvée   ·   Rayures : page à moitié   ·   Blanc : page manquante   ·   Clique une case pour ouvrir la page", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
 	for juz in range(1, 31):
 		var col := 0 if juz <= 15 else 1
 		var row := (juz - 1) % 15
@@ -358,6 +430,11 @@ func _draw_index(c: Control) -> void:
 		var got: bool = save.has_page(p)
 		var color := P.GOLD if got else Color(0.96, 0.95, 0.9, 0.9)
 		c.draw_rect(r, color)
+		var pg: Vector2i = save.page_progress(p)
+		if not got and pg.x > 0:  # page à moitié retrouvée : autant de tranches dorées que de parties
+			for k in range(pg.y):
+				if save.has_part(p, int(mushaf.surah_ids_on_page(p)[k])):
+					c.draw_rect(Rect2(r.position.x, r.position.y + r.size.y * float(k) / float(pg.y), r.size.x, r.size.y / float(pg.y)), P.GOLD)
 		if got:
 			c.draw_rect(Rect2(r.position.x, r.end.y - 3.0, r.size.x, 3.0), P.GOLD_DEEP)
 		elif SHOW_PLACED_HINT and p in placed_pages:

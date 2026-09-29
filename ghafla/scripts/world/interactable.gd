@@ -11,11 +11,19 @@ var used_once: bool = true
 var draw_kind: String = ""  # "vein" | ""
 var focus_dy: float = 0.0
 var _done: bool = false
+var _save: RefCounted
 var _t: float = 0.0
 
 
 func _ready() -> void:
 	add_to_group("interactable")
+
+
+## Retient dans la sauvegarde qu'on a déjà utilisé cet objet (il ne se réactive pas au rechargement).
+func remember_in(save: RefCounted) -> void:
+	_save = save
+	if save.flag("used_" + id):
+		_done = true
 
 
 func can_interact() -> bool:
@@ -31,6 +39,8 @@ func interact(_player: Node) -> void:
 		return
 	if used_once:
 		_done = true
+		if _save != null:
+			_save.set_flag("used_" + id)
 	used.emit(id)
 	queue_redraw()
 

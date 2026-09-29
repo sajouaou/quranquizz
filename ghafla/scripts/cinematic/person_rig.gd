@@ -234,18 +234,18 @@ func _draw_book(h1: Vector2, h2: Vector2) -> void:
 	var mid := (h1 + h2) * 0.5 + Vector2(2, -6).rotated(body_rot)
 	var a := body_rot
 	if book < 1.5:
-		var pts := PackedVector2Array([Vector2(-11, -16), Vector2(11, -16), Vector2(11, 16), Vector2(-11, 16)])
+		var pts := PackedVector2Array([Vector2(-14, -20), Vector2(14, -20), Vector2(14, 20), Vector2(-14, 20)])
 		var out := PackedVector2Array()
 		for p in pts:
 			out.append(mid + p.rotated(a))
 		draw_colored_polygon(out, _col(P.EMERALD))
-		draw_colored_polygon(_xf(DrawUtil.star(Vector2.ZERO, 6.0, 3.2, 8), mid, a), _col(P.GOLD))
+		draw_colored_polygon(_xf(DrawUtil.star(Vector2.ZERO, 8.0, 4.2, 8), mid, a), _col(P.GOLD))
 	else:
-		var left := PackedVector2Array([Vector2(-22, -14), Vector2(0, -12), Vector2(0, 16), Vector2(-22, 18)])
-		var right := PackedVector2Array([Vector2(0, -12), Vector2(22, -14), Vector2(22, 18), Vector2(0, 16)])
+		var left := PackedVector2Array([Vector2(-27, -18), Vector2(0, -15), Vector2(0, 20), Vector2(-27, 23)])
+		var right := PackedVector2Array([Vector2(0, -15), Vector2(27, -18), Vector2(27, 23), Vector2(0, 20)])
 		draw_colored_polygon(_xf(left, mid, a), _col(P.PARCHMENT))
 		draw_colored_polygon(_xf(right, mid, a), _col(P.PARCHMENT_SHADE))
-		var cover := PackedVector2Array([Vector2(-24, -13), Vector2(24, -13), Vector2(24, 21), Vector2(-24, 21)])
+		var cover := PackedVector2Array([Vector2(-30, -17), Vector2(30, -17), Vector2(30, 27), Vector2(-30, 27)])
 		draw_polyline(_xf(cover, mid, a), _col(P.EMERALD), 2.0, true)
 
 

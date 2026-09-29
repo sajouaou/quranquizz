@@ -12,6 +12,7 @@ signal revealed_now(pickup: Node)
 signal unlocked_now(pickup: Node)
 
 var page: int = 0
+var id: String = ""
 var data: Dictionary = {}
 var world: Node2D
 var collected: bool = false
@@ -35,11 +36,12 @@ func setup(w: Node2D, d: Dictionary) -> void:
 	world = w
 	data = d
 	page = int(d["page"])
+	id = w.def_id(d)
 	lock = d.get("lock", {})
 	ground_dy = float(d.get("lift", 60.0))
 	var rs = w.save.revealed
-	hidden_state = d.get("kind", "visible") == "hidden" and not rs.has("page_%d" % page)
-	locked = d.get("kind", "visible") == "locked" and not rs.has("unlock_%d" % page)
+	hidden_state = d.get("kind", "visible") == "hidden" and not rs.has("page_" + id)
+	locked = d.get("kind", "visible") == "locked" and not rs.has("unlock_" + id)
 	_appear = 0.0 if hidden_state else 1.0
 	_unlock = 0.0 if locked else 1.0
 	_seed = page * 7919
@@ -96,7 +98,7 @@ func lock_satisfied() -> bool:
 					return false
 			return true
 		"others":
-			return world.others_collected(page)
+			return world.others_collected(id)
 		"count":
 			return world.save.count() >= int(lock.get("n", 1))
 	return true
@@ -113,7 +115,7 @@ func lock_hint() -> String:
 					have += 1
 			h += "  (%d / %d)" % [have, need.size()]
 		"others":
-			var c: Vector2i = world.others_progress(page)
+			var c: Vector2i = world.others_progress(id)
 			h += "  (%d / %d)" % [c.x, c.y]
 	return h
 
@@ -122,7 +124,7 @@ func unlock() -> void:
 	if not locked:
 		return
 	locked = false
-	world.save.revealed["unlock_%d" % page] = true
+	world.save.revealed["unlock_" + id] = true
 	unlocked_now.emit(self)
 	var tw := create_tween()
 	tw.tween_property(self, "_unlock", 1.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -132,7 +134,7 @@ func reveal() -> void:
 	if not hidden_state:
 		return
 	hidden_state = false
-	world.save.revealed["page_%d" % page] = true
+	world.save.revealed["page_" + id] = true
 	revealed_now.emit(self)
 	var tw := create_tween()
 	tw.tween_property(self, "_appear", 1.0, 1.1).set_trans(Tween.TRANS_SINE)

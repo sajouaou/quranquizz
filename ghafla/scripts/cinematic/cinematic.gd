@@ -132,10 +132,10 @@ class Room:
 		draw_line(Vector2(sx - 22.0, 500), Vector2(sx + 22.0, 448), wood.darkened(0.2), 5.0, true)
 		draw_line(Vector2(sx + 22.0, 500), Vector2(sx - 22.0, 448), wood.darkened(0.2), 5.0, true)
 		if book_on_stand:
-			var pts := PackedVector2Array([Vector2(sx - 30.0, 494), Vector2(sx + 30.0, 494), Vector2(sx + 26.0, 434), Vector2(sx - 26.0, 434)])
+			var pts := PackedVector2Array([Vector2(sx - 17.0, 494), Vector2(sx + 17.0, 494), Vector2(sx + 15.0, 452), Vector2(sx - 15.0, 452)])
 			draw_colored_polygon(pts, Color("1f6f5c").darkened(night * 0.45))
 			draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), Color("e9c46a").darkened(night * 0.3), 2.0, true)
-			draw_colored_polygon(DrawUtil.star(Vector2(sx, 464), 13.0, 6.5, 8), Color("e9c46a").darkened(night * 0.3))
+			draw_colored_polygon(DrawUtil.star(Vector2(sx, 472), 8.0, 4.0, 8), Color("e9c46a").darkened(night * 0.3))
 		# lampe de chevet
 		var lx := 764.0
 		draw_line(Vector2(lx, 500), Vector2(lx, 450), Color("2a1f38"), 4.0)
@@ -146,9 +146,9 @@ class Room:
 
 class BedCover:
 	extends Node2D
-	var color: Color = Color("3d4a8a")
-	var x0: float = 330.0
-	var x1: float = 560.0
+	var color: Color = Color("b0455a")
+	var x0: float = 236.0  # de la poitrine…
+	var x1: float = 425.0  # …un peu au-delà des pieds
 	var top_y: float = 476.0
 	var amount: float = 0.0  # 0 : pas de couverture ; 1 : tirée sur les jambes
 	var t: float = 0.0
@@ -196,15 +196,16 @@ class Light:
 		var moon: float = clampf(1.0 - float(room.dawn) * 1.3, 0.0, 1.0) * float(room.night) * 0.5
 		if moon > 0.01:
 			DrawUtil.glow(self, Vector2(1030, 260), 360.0, Color(0.6, 0.7, 1.0, 0.16 * moon))
-		# rayon de soleil qui traverse la chambre et remonte sur le lit
+		# rayon de soleil : il entre par la vitre (bord gauche de la fenêtre) et descend vers le lit
 		var ray: float = room.ray
 		if ray > 0.001:
-			var cx := lerpf(900.0, 330.0, ray)
-			var quad := PackedVector2Array([Vector2(936, 200), Vector2(1126, 200), Vector2(cx + 120.0, 500), Vector2(cx - 120.0, 500)])
+			var reach := 600.0 * ray
+			var slope := 0.30
 			var a := 0.30 * minf(1.0, ray * 2.0)
-			var cols := PackedColorArray([Color(1.0, 0.86, 0.5, a), Color(1.0, 0.86, 0.5, a), Color(1.0, 0.88, 0.6, a * 0.5), Color(1.0, 0.88, 0.6, a * 0.5)])
+			var quad := PackedVector2Array([Vector2(936, 170), Vector2(936, 368), Vector2(936.0 - reach, 368.0 + slope * reach), Vector2(936.0 - reach, 170.0 + slope * reach)])
+			var cols := PackedColorArray([Color(1.0, 0.86, 0.5, a), Color(1.0, 0.86, 0.5, a), Color(1.0, 0.88, 0.6, 0.0), Color(1.0, 0.88, 0.6, 0.0)])
 			draw_polygon(quad, cols)
-			DrawUtil.glow(self, Vector2(cx, 480), 200.0, Color(1.0, 0.86, 0.5, 0.45 * ray))
+			DrawUtil.glow(self, Vector2(936.0 - reach * 0.93, minf(368.0 + slope * reach * 0.93, 505.0)), 200.0, Color(1.0, 0.86, 0.5, 0.45 * ray))
 
 
 class CloseUp:
@@ -394,7 +395,7 @@ func _ready() -> void:
 	rig_a.shade = 0.35
 	rig_b.shade = 0.55
 	rig_b.thobe_color = Color("dcd6c8")
-	blanket.color = Color("3d4a8a")
+	blanket.color = Color("b0455a")
 	blanket.visible = false
 
 
@@ -551,7 +552,7 @@ func _run_steps() -> void:
 	rig_a.position.x = 1600.0
 	blanket.visible = false
 	blanket.amount = 0.0
-	blanket.color = Color("4a5478")
+	blanket.color = Color("a03f55")
 	room.warm = 0.15
 	room.night = 1.0
 	room.dawn = 0.0

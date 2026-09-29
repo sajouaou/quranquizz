@@ -13,6 +13,7 @@ static var inst: Node
 
 var allow_network: bool = true
 var _texts: Dictionary = {}  # page -> texte prêt à afficher
+var _segs: Dictionary = {}  # page -> [{surah, first, text}] : le texte découpé par sourate
 var _failed: Dictionary = {}  # page -> instant de l'échec (nouvel essai après 45 s)
 var _queue: Array = []
 var _busy: bool = false
@@ -35,6 +36,7 @@ func _lookup(page: int) -> String:
 	var verses := _read_local(page)
 	if not verses.is_empty():
 		_texts[page] = compose(verses)
+		_segs[page] = split_by_surah(verses)
 		return _texts[page]
 	if allow_network and not _queue.has(page):
 		var failed_at: int = _failed.get(page, -100000)
@@ -51,6 +53,35 @@ func _read_local(page: int) -> Array:
 			if typeof(parsed) == TYPE_DICTIONARY and parsed.has("verses"):
 				return parsed["verses"]
 	return []
+
+
+## Le texte de la page découpé par sourate : [{surah, first (premier verset présent), text}]. Vide tant que le texte n'est pas là.
+static func get_segments(page: int) -> Array:
+	if inst == null:
+		return []
+	inst._lookup(page)
+	return inst._segs.get(page, [])
+
+
+static func split_by_surah(verses: Array) -> Array:
+	var out := []
+	var cur := {}
+	var buf := []
+	for v in verses:
+		var key := str(v.get("key", ""))
+		var sid := int(key.get_slice(":", 0)) if key.contains(":") else 0
+		var num := int(key.get_slice(":", 1)) if key.contains(":") else 0
+		if cur.is_empty() or int(cur["surah"]) != sid:
+			if not cur.is_empty():
+				cur["text"] = compose(buf)
+				out.append(cur)
+			cur = {"surah": sid, "first": num, "text": ""}
+			buf = []
+		buf.append(v)
+	if not cur.is_empty():
+		cur["text"] = compose(buf)
+		out.append(cur)
+	return out
 
 
 ## Assemble les versets d'une page : texte, puis marque de fin de verset avec son numéro.
@@ -98,6 +129,7 @@ func _on_done(page: int, result: int, code: int, body: PackedByteArray) -> void:
 				if f != null:
 					f.store_string(JSON.stringify({"page": page, "verses": verses}))
 				_texts[page] = compose(verses)
+				_segs[page] = split_by_surah(verses)
 				ok = true
 				loaded.emit(page)
 	if not ok:

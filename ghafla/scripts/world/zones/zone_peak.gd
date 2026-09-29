@@ -21,8 +21,6 @@ func build(w: Node2D) -> void:
 		var side := rng.randf() < 0.5
 		w.add_prop("rock", Vector2(x, w.ground_at(x) + 4.0), {"w": rng.randf_range(90.0, 220.0), "h": rng.randf_range(50.0, 150.0), "color": Color("3b3560").lerp(Color("5a5088"), rng.randf() * 0.5)}, side)
 		x += rng.randf_range(160.0, 330.0)
-	for gx in [12500.0, 13100.0, 13700.0, 14300.0, 14900.0]:
-		w.add_prop("grass_tufts", Vector2(gx, w.ground_at(gx)), {"n": 20, "seed": int(gx)}, true)
 	# La porte de l'aube
 	w.add_prop("gate_dawn", Vector2(15300, 205), {"w": 250.0, "h": 320.0})
 	w.add_glow(Vector2(15300.0, 120.0), 460.0, Color(1.0, 0.86, 0.55, 0.32), 0.05)

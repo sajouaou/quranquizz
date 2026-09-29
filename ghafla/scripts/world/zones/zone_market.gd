@@ -16,6 +16,7 @@ const RACK_X := 6300.0
 
 var coins: Array = []
 var _dissolved: bool = false
+var _rack_glow: Node2D
 var _world: Node2D
 
 
@@ -52,12 +53,14 @@ func build(w: Node2D) -> void:
 	rack.prompt = "Fouiller les vêtements"
 	rack.position = Vector2(RACK_X, 620.0 - 80.0)
 	rack.used.connect(_on_rack)
+	rack.remember_in(w.save)
 	w.pages_root.add_child(rack)
 	if not w.save.has_item("key_chest"):
-		w.add_glow(Vector2(RACK_X + 4.0, 540.0), 52.0, Color(1.0, 0.85, 0.5, 0.35), 0.3)
+		_rack_glow = w.add_glow(Vector2(RACK_X + 4.0, 540.0), 52.0, Color(1.0, 0.85, 0.5, 0.35), 0.3)
 
-	# Les pièces d'or qui fuient
-	for i in range(COIN_COUNT):
+	# Les pièces d'or qui fuient (déjà dissoutes si l'on a déjà traversé le souk)
+	_dissolved = w.save.flag("ev_coins_gone")
+	for i in range(0 if _dissolved else COIN_COUNT):
 		var x := COIN_START + float(i) * 150.0
 		var y := 620.0 - 96.0 - 26.0 * sin(float(i) * 0.9)
 		var coin: Node2D = w.add_prop("coin", Vector2(x, y), {"r": 13.0, "seed": 500 + i, "alpha": 1.0}, true)
@@ -66,13 +69,15 @@ func build(w: Node2D) -> void:
 	# Le coin calme où le bruit s'arrête : de simples tertres, sans monument
 	w.add_prop("mounds", Vector2(7930, 620), {"n": 3})
 	w.add_prop("tree", Vector2(8300, 620), {"h": 190.0, "hue": 0.6, "seed": 77})
-	w.add_prop("grass_tufts", Vector2(7500, 620), {"n": 40, "seed": 12}, true)
 	# Transition vers la montagne
 	for rx in [8420.0, 8560.0, 8700.0]:
 		w.add_prop("rock", Vector2(rx, 620), {"w": 160.0 + float(int(rx) % 50), "h": 90.0 + float(int(rx) % 60), "color": Color("3b2f5c")}, false)
 
 
 func _on_rack(_id: String) -> void:
+	if _rack_glow != null:
+		_rack_glow.queue_free()
+		_rack_glow = null
 	_world.give_item("key_chest")
 	_world.toast_text("Au fond d'une poche : une petite clé de métal.")
 

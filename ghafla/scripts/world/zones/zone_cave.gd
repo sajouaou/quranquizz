@@ -43,6 +43,7 @@ func build(w: Node2D) -> void:
 	vein.used.connect(func(_id: String) -> void:
 		w.toast_text("La roche s'illumine.")
 		w.reveal_page(300))
+	vein.remember_in(w.save)
 	w.pages_root.add_child(vein)
 	# Lueur du dehors à l'entrée
 	w.add_glow(Vector2(9000.0, 470.0), 340.0, Color(1.0, 0.85, 0.6, 0.20), 0.03)

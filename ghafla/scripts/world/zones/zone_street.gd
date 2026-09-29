@@ -33,8 +33,6 @@ func build(w: Node2D) -> void:
 	for tx in [2400.0, 2860.0, 3310.0, 3720.0]:
 		w.add_prop("tree", Vector2(tx, w.ground_at(tx)), {"h": 210.0 + float(int(tx) % 40), "hue": 0.7 + float(int(tx) % 5) * 0.02, "seed": int(tx)})
 	w.add_prop("bench", Vector2(3450.0, w.ground_at(3450.0)), {"w": 120.0})
-	w.add_prop("grass_tufts", Vector2(2000.0, 620), {"n": 60, "seed": 4}, true)
-	w.add_prop("grass_tufts", Vector2(3300.0, 620), {"n": 60, "seed": 8}, true)
 
 	_build_bridge(w)
 
