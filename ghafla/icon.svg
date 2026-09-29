@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241c55"/>
+      <stop offset="0.6" stop-color="#7b4f9a"/>
+      <stop offset="1" stop-color="#f6b58a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#sky)"/>
+  <!-- open book, no lettering -->
+  <path d="M24 84 L64 74 L104 84 L104 100 L64 90 L24 100 Z" fill="#f5eedc"/>
+  <path d="M64 74 L64 90" stroke="#b8862b" stroke-width="2"/>
+  <!-- eight-pointed star rising from the pages -->
+  <g transform="translate(64 46)" fill="#e9c46a">
+    <rect x="-13" y="-13" width="26" height="26"/>
+    <rect x="-13" y="-13" width="26" height="26" transform="rotate(45)"/>
+  </g>
+</svg>

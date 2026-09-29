@@ -1,0 +1,206 @@
+{
+ "_comment": "Pages placées dans le prototype. x = position dans le monde ; lift = hauteur au-dessus du sol ; kind = visible | hidden | locked.",
+ "pages": [
+  {
+   "page": 322,
+   "x": 2030,
+   "lift": 78,
+   "kind": "visible",
+   "reaction": "anbiya",
+   "first": true
+  },
+  {
+   "page": 1,
+   "x": 3470,
+   "lift": 64,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.4,
+    "radius": 120
+   },
+   "hint": "Un léger scintillement près du banc… Reste immobile un instant.",
+   "reaction": "fatiha"
+  },
+  {
+   "page": 601,
+   "x": 6960,
+   "lift": 96,
+   "kind": "locked",
+   "lock": {
+    "type": "key",
+    "item": "key_chest",
+    "visual": "chest",
+    "auto": false
+   },
+   "hint": "Un coffre scellé. La clé doit se trouver parmi ces étoffes…",
+   "reaction": "asr_humazah"
+  },
+  {
+   "page": 600,
+   "x": 7700,
+   "lift": 70,
+   "kind": "hidden",
+   "reveal": {
+    "type": "event",
+    "event": "coins_gone"
+   },
+   "reaction": "takathur"
+  },
+  {
+   "page": 293,
+   "x": 9160,
+   "lift": 82,
+   "kind": "visible",
+   "reaction": "kahf_first"
+  },
+  {
+   "page": 294,
+   "x": 9470,
+   "lift": 66,
+   "kind": "visible",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 295,
+   "x": 9720,
+   "lift": 66,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.2,
+    "radius": 120
+   },
+   "hint": "Quelque chose luit dans l'ombre. Sois patient.",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 296,
+   "x": 9980,
+   "lift": 132,
+   "ledge": 70,
+   "kind": "visible",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 297,
+   "x": 10230,
+   "lift": 66,
+   "kind": "visible",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 298,
+   "x": 10440,
+   "lift": 66,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.2,
+    "radius": 120
+   },
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 299,
+   "x": 10660,
+   "lift": 202,
+   "ledge": 140,
+   "kind": "visible",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 300,
+   "x": 10900,
+   "lift": 70,
+   "kind": "hidden",
+   "reveal": {
+    "type": "vein"
+   },
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 301,
+   "x": 11120,
+   "lift": 66,
+   "kind": "visible",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 302,
+   "x": 11330,
+   "lift": 66,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.2,
+    "radius": 120
+   },
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 303,
+   "x": 11540,
+   "lift": 66,
+   "kind": "visible",
+   "reaction": "kahf_mid"
+  },
+  {
+   "page": 304,
+   "x": 11850,
+   "lift": 104,
+   "kind": "locked",
+   "lock": {
+    "type": "pages",
+    "pages": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303
+    ],
+    "visual": "seal"
+   },
+   "hint": "Un sceau de lumière. Les autres pages de la caverne doivent d'abord le rejoindre.",
+   "reaction": "kahf_last"
+  },
+  {
+   "page": 415,
+   "x": 13480,
+   "lift": 64,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.4,
+    "radius": 120
+   },
+   "reaction": "sajdah"
+  },
+  {
+   "page": 562,
+   "x": 14990,
+   "lift": 72,
+   "kind": "visible",
+   "reaction": "mulk"
+  },
+  {
+   "page": 604,
+   "x": 15300,
+   "lift": 140,
+   "kind": "locked",
+   "lock": {
+    "type": "others",
+    "visual": "seal"
+   },
+   "hint": "Le sceau de l'aube ne s'ouvrira que lorsque toutes les autres pages seront revenues.",
+   "reaction": "final",
+   "final": true
+  }
+ ]
+}
