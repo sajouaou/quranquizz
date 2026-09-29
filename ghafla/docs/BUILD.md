@@ -34,9 +34,12 @@ Les commandes tactiles s'affichent automatiquement sur téléphone ; on peut les
 tools/test.sh
 ```
 
-Lance la vérification de syntaxe (si `gdtoolkit` est installé : `pip install gdtoolkit`) puis `tests/run_tests.gd` dans Godot en mode sans fenêtre :
-données, références de versets, sauvegarde, sons, garde-fou « aucun texte coranique », verrous et pages cachées, puis **un bot qui atteint chacune
-des pages avec la physique du personnage et traverse tout le monde, de la chambre au sommet**.
+Lance la vérification de syntaxe (si `gdtoolkit` est installé : `pip install gdtoolkit`), puis dans Godot en mode sans fenêtre :
+- `tests/run_tests.gd` : compilation de tous les scripts, données, références de versets, sauvegarde, entrées, sons, garde-fou « aucun texte coranique »,
+  verrous et pages cachées, puis **un bot qui atteint chacune des pages avec la physique du personnage et traverse tout le monde, de la chambre au sommet** ;
+- `tests/smoke.gd` : parcours de la vraie scène principale (menu, note, cinématique, jeu, page, Mushaf, pause, retour, fin).
+
+Toute ligne « SCRIPT ERROR » dans la sortie de Godot fait échouer le test.
 
 ## Texte des pages (facultatif)
 
@@ -65,6 +68,5 @@ tools/export.sh linux|windows|web|android-apk|android-aab|all
 
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
-Voir le README : la vérification a eu lieu dans un moteur Godot 4.7 compilé en WebAssembly (build non officiel) faute d'accès aux
-téléchargements officiels ; le rendu, la logique, les menus et les tests y passent, mais l'export, l'audio réel, le tactile réel et l'affichage arabe
-(mise en forme des lettres) doivent être contrôlés sur un vrai Godot et un vrai téléphone.
+Voir le README : logique, tests et parcours complet sur Godot 4.7.2 officiel sans fenêtre ; captures d'écran dans un moteur WebAssembly.
+L'export, le son réel, le tactile réel et l'affichage arabe dans le vrai moteur sont à contrôler sur une machine et un téléphone.

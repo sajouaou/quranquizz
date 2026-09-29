@@ -112,7 +112,10 @@ func save_file() -> bool:
 func load_file() -> bool:
 	if not exists():
 		return false
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var json := JSON.new()
+	if json.parse(FileAccess.get_file_as_string(path)) != OK:  # fichier abîmé : on repart de zéro sans bruit
+		return false
+	var parsed: Variant = json.data
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return false
 	from_dict(parsed)

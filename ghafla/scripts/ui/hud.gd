@@ -77,7 +77,7 @@ func _ready() -> void:
 	_bar = ProgressBar.new()
 	_bar.custom_minimum_size = Vector2(150, 7)
 	_bar.show_percentage = false
-	_bar.max_value = 604.0
+	_bar.max_value = float(total)
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(1, 1, 1, 0.2)
 	bg.set_corner_radius_all(4)
@@ -188,6 +188,8 @@ func set_touch(on: bool) -> void:
 
 func set_total(n: int) -> void:
 	total = n
+	if _bar == null:  # avant _ready : le total sera pris en compte à la construction
+		return
 	_bar.max_value = float(n)
 	set_count(_count)
 

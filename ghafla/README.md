@@ -50,7 +50,7 @@ tools/export.sh linux         # ou windows, web, android-apk, android-aab
 | Mushaf en jeu | livre, vue d'ensemble (604 cases), liste des sourates |
 | Sauvegarde | locale, automatique |
 | Sons | 8 bruits du quotidien, **pas de musique** |
-| Tests | 61 contrôles + un bot qui atteint les 19 pages et traverse tout le monde |
+| Tests | 62 contrôles, un bot qui atteint les 19 pages et traverse le monde, 21 étapes de parcours |
 
 Nombre de pages : le Mushaf de Médine en compte **604**, pas 605 ; le jeu affiche « n / 604 ».
 
@@ -63,12 +63,14 @@ Nombre de pages : le Mushaf de Médine en compte **604**, pas 605 ; le jeu affic
 
 ## Ce qui a été vérifié
 
-Dans ce dépôt, tout a été exécuté dans un moteur **Godot 4.7 compilé en WebAssembly** (build non officiel, les téléchargements officiels étaient
-inaccessibles) avec un navigateur sans carte graphique : rendu, cinématique, menus, dialogues, Mushaf, sauvegarde, tests et bot.
+- **Godot 4.7.2 officiel (Linux, sans fenêtre)** : `tools/test.sh` passe — 62 contrôles (données, sauvegarde, entrées, sons, verrous, garde-fou
+  « aucun texte coranique », compilation de tous les scripts), un bot qui atteint les 19 pages et traverse le monde de la chambre au sommet, et un
+  parcours de fumée sur la vraie scène principale (menu → note → cinématique → jeu → page → Mushaf → pause → retour → fin) en 21 étapes, sans aucune erreur de script.
+- **Rendu** : les captures (cinématique, monde, HUD, dialogues, Mushaf, menus, tactile) ont été prises dans un moteur Godot compilé en WebAssembly
+  (build non officiel, sans carte graphique). Ce moteur affiche les lettres arabes séparées ; le vrai moteur les met en forme.
 
-**Non vérifié** (à contrôler sur un vrai Godot et un vrai appareil) : l'export Windows/Linux/Android, le son réel, le tactile réel sur téléphone, la
-mise en forme des lettres arabes (le moteur de test n'a pas le serveur de texte avancé : les lettres y apparaissent séparées), et les touches du clavier
-(le harnais ne pouvait pas en envoyer ; le déplacement est couvert par le bot qui pilote le personnage directement).
+**Non vérifié** (à contrôler sur ta machine et sur un téléphone) : l'export Windows/Linux/Android, le son réel, les touches du clavier
+(les correspondances touche → action sont testées, pas la frappe physique), le tactile réel, et l'affichage arabe dans le vrai moteur.
 Les collisions sont écrites à la main (`scripts/world/collision.gd`) plutôt que via le moteur physique, ce qui rend le comportement prévisible et testable.
 
 ## Organisation

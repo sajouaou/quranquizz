@@ -35,6 +35,7 @@ func _ready() -> void:
 	Inputs.ensure_actions()
 	add_child(Sfx.new())
 	mushaf = MushafData.get_instance()
+	_test_scripts_compile()
 	_test_data()
 	_test_mushaf()
 	_test_save()
@@ -61,6 +62,23 @@ func ok(cond: bool, label: String) -> void:
 
 func _json(path: String) -> Variant:
 	return JSON.parse_string(FileAccess.get_file_as_string(path))
+
+
+# ------------------------------------------------------------------------------- 0. compilation
+
+func _test_scripts_compile() -> void:
+	# Charge chaque script : une erreur d'analyse (signature qui masque une méthode du moteur, type non déduit...) se voit ici.
+	var files := []
+	_walk("res://scripts", files)
+	_walk("res://tests", files)
+	var bad := []
+	for path in files:
+		if not (path as String).ends_with(".gd"):
+			continue
+		var script: Variant = load(path)
+		if script == null or not (script is GDScript):
+			bad.append(path)
+	ok(bad.is_empty(), "tous les scripts se compilent %s" % str(bad.slice(0, 3)))
 
 
 # ------------------------------------------------------------------------------------------- 1. données

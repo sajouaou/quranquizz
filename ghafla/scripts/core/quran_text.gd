@@ -26,10 +26,10 @@ func _ready() -> void:
 static func get_text(page: int) -> String:
 	if inst == null:
 		return ""
-	return inst._get(page)
+	return inst._lookup(page)
 
 
-func _get(page: int) -> String:
+func _lookup(page: int) -> String:
 	if _texts.has(page):
 		return _texts[page]
 	var verses := _read_local(page)
