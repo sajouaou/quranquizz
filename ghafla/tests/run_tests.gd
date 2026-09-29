@@ -256,6 +256,8 @@ func _test_save() -> void:
 # ------------------------------------------------------------------------------------------------ 4. sons
 
 func _test_sounds() -> void:
+	ok(Assets.font_arabic().data.size() > 10000 and Assets.font_book().data.size() > 10000, "polices Amiri chargées (arabe et latin)")
+	ok(Assets.font_book().has_char(0x00E9) and Assets.font_book().get_supported_chars().length() > 100, "la police du livre couvre le français")
 	for n in ["step", "page", "unlock", "door", "wind", "heart", "air", "drip"]:
 		var st := Assets.sound(n)
 		ok(st != null and st.data.size() > 2000 and st.format == AudioStreamWAV.FORMAT_16_BITS, "son « %s » chargé (16 bits)" % n)

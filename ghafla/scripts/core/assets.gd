@@ -1,6 +1,6 @@
 extends RefCounted
 ## Ressources chargées sans passer par l'import de l'éditeur : polices et sons sont lus comme
-## des fichiers bruts (extensions .font et .sfx, exportés via include_filter).
+## des fichiers bruts (extensions .fontbin et .sfx, exportés via include_filter).
 ## Ainsi le jeu démarre tel quel depuis un simple clone du dépôt.
 
 static var _fonts: Dictionary = {}
@@ -8,12 +8,12 @@ static var _sounds: Dictionary = {}
 
 
 static func font_arabic() -> FontFile:
-	return _font("ar", "res://assets/fonts/Amiri-arabic.font", [])
+	return _font("ar", "res://assets/fonts/Amiri-arabic.fontbin", [])
 
 
 ## Police « livre » : latin Amiri avec repli sur l'arabe pour les noms de sourates et le texte.
 static func font_book() -> FontFile:
-	return _font("book", "res://assets/fonts/Amiri-latin.font", [font_arabic(), _font("ext", "res://assets/fonts/Amiri-latin-ext.font", [])])
+	return _font("book", "res://assets/fonts/Amiri-latin.fontbin", [font_arabic(), _font("ext", "res://assets/fonts/Amiri-latin-ext.fontbin", [])])
 
 
 static func _font(key: String, path: String, fallbacks: Array) -> FontFile:

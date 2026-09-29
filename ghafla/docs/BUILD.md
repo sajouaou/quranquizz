@@ -2,7 +2,7 @@
 
 Prérequis : **Godot 4.4 ou plus récent** (version « Standard », pas .NET) — https://godotengine.org/download.
 Aucune ressource n'a besoin d'être importée : polices et sons sont lus comme des fichiers bruts
-(extensions `.font` et `.sfx`), donc le projet démarre tel quel depuis un simple clone.
+(extensions `.fontbin` et `.sfx`), donc le projet démarre tel quel depuis un simple clone.
 
 ## Lancer
 
@@ -58,7 +58,7 @@ tools/export.sh linux|windows|web|android-apk|android-aab|all
 ```
 
 - Installer les modèles d'export : Éditeur > Projet > Gérer les modèles d'export.
-- `export_presets.cfg` déclare `include_filter="*.json,*.sfx,*.font"` pour que les données, polices et sons brutes soient
+- `export_presets.cfg` déclare `include_filter="*.json,*.sfx,*.fontbin"` pour que les données, polices et sons brutes soient
   bien embarquées, et exclut `tests/`, `tools/` et `docs/`.
 - **Android** : installer le SDK Android et OpenJDK 17, régler leurs chemins dans les Paramètres de l'éditeur. L'AAB utilise
   la compilation Gradle (Projet > Installer le modèle de compilation Android). La clé de signature se fournit par variables d'environnement :
