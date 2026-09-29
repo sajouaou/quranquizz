@@ -1,0 +1,49 @@
+name: Ghafla web
+
+# Construit la version web de Ghafla et la publie sur GitHub Pages.
+# À activer une fois : Settings > Pages > Source : « GitHub Actions ». Lancement manuel : onglet Actions > Ghafla web > Run workflow.
+# (Non essayé dans l'environnement de développement : à vérifier au premier lancement.)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["ghafla/**", ".github/workflows/ghafla-web.yml"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ghafla-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Tests
+        run: GODOT="$(which godot)" ghafla/tools/test.sh
+      - name: Export web
+        run: |
+          mkdir -p ghafla/export/web
+          godot --headless --path ghafla --export-release "Web" export/web/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ghafla/export/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
