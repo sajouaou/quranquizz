@@ -16,6 +16,8 @@ var flags: Dictionary = {}  # repères d'histoire déjà vus
 var intro_seen: bool = false
 var note_seen: bool = false  # la note « histoire fictive » a été lue
 var finished: bool = false
+var chapter: int = 1  # chapitre en cours (1 ou 2)
+var positions: Dictionary = {}  # position mise de côté de l'autre chapitre : "2" -> [x, y]
 var download_text: bool = true  # télécharger le texte de tout le Mushaf pendant la cinématique
 var player_x: float = -1.0
 var player_y: float = -1.0
@@ -111,6 +113,8 @@ func to_dict() -> Dictionary:
 		"note_seen": note_seen,
 		"finished": finished,
 		"download": download_text,
+		"chapter": chapter,
+		"positions": positions,
 		"player": [player_x, player_y],
 		"volume": volume,
 		"touch": touch_controls,
@@ -140,6 +144,8 @@ func from_dict(d: Dictionary) -> void:
 	note_seen = bool(d.get("note_seen", false))
 	finished = bool(d.get("finished", false))
 	download_text = bool(d.get("download", true))
+	chapter = clampi(int(d.get("chapter", 1)), 1, 2)
+	positions = d.get("positions", {}) if typeof(d.get("positions", {})) == TYPE_DICTIONARY else {}
 	var pos: Array = d.get("player", [-1.0, -1.0])
 	player_x = float(pos[0]) if pos.size() > 0 else -1.0
 	player_y = float(pos[1]) if pos.size() > 1 else -1.0
@@ -169,6 +175,17 @@ func load_file() -> bool:
 	return true
 
 
+## Change de chapitre : la position du chapitre quitté est mise de côté, celle de l'autre est reprise (ou -1 : début).
+func switch_chapter(n: int) -> void:
+	if n == chapter:
+		return
+	positions[str(chapter)] = [player_x, player_y]
+	chapter = n
+	var pos: Variant = positions.get(str(n), [-1.0, -1.0])
+	player_x = float(pos[0]) if typeof(pos) == TYPE_ARRAY and pos.size() > 1 else -1.0
+	player_y = float(pos[1]) if typeof(pos) == TYPE_ARRAY and pos.size() > 1 else -1.0
+
+
 ## Nouvelle partie : on garde les réglages, pas la progression.
 func reset_progress() -> void:
 	collected.clear()
@@ -180,4 +197,6 @@ func reset_progress() -> void:
 	player_y = -1.0
 	intro_seen = false
 	finished = false
+	chapter = 1
+	positions.clear()
 	save_file()

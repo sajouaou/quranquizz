@@ -14,6 +14,7 @@ const PagePickup := preload("res://scripts/world/page_pickup.gd")
 const Interactable := preload("res://scripts/world/interactable.gd")
 const Prop := preload("res://scripts/world/prop.gd")
 const Fx := preload("res://scripts/world/fx.gd")
+const Chapter2 := preload("res://scripts/world/chapter2.gd")
 const ZoneHouse := preload("res://scripts/world/zones/zone_house.gd")
 const ZoneStreet := preload("res://scripts/world/zones/zone_street.gd")
 const ZoneMarket := preload("res://scripts/world/zones/zone_market.gd")
@@ -50,6 +51,10 @@ const GROUND_STOPS := [
 	[15600.0, Color("3a3560"), Color("141230"), Color("f0c88a"), 0.18],
 ]
 
+var chapter: int = 1  # 1 : le premier rêve ; 2 : le second
+var world_w: float = WORLD_W
+var zones_def: Array = ZONES
+var ground_stops: Array = GROUND_STOPS
 var save: RefCounted
 var mushaf: RefCounted
 var player: Node2D
@@ -77,9 +82,14 @@ var _built: bool = false
 var frozen_by_story: bool = false
 
 
-func start(save_data: RefCounted, mushaf_data: RefCounted, spawn: Vector2 = Vector2(-1, -1)) -> void:
+func start(save_data: RefCounted, mushaf_data: RefCounted, spawn: Vector2 = Vector2(-1, -1), chapter_number: int = 1) -> void:
 	save = save_data
 	mushaf = mushaf_data
+	chapter = chapter_number
+	if chapter == 2:
+		world_w = Chapter2.WORLD_W
+		zones_def = Chapter2.ZONES
+		ground_stops = Chapter2.GROUND_STOPS
 	_load_data()
 	_build()
 	var pos := spawn
@@ -90,7 +100,8 @@ func start(save_data: RefCounted, mushaf_data: RefCounted, spawn: Vector2 = Vect
 
 
 func _load_data() -> void:
-	var text := FileAccess.get_file_as_string("res://data/world_pages.json")
+	var suffix := "" if chapter == 1 else "_%d" % chapter
+	var text := FileAccess.get_file_as_string("res://data/world_pages%s.json" % suffix)
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) == TYPE_DICTIONARY:
 		placed_pages.clear()
@@ -99,7 +110,7 @@ func _load_data() -> void:
 			for pg in pages_of_def(d):
 				if not placed_pages.has(pg):
 					placed_pages.append(pg)
-	var dlg: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue.json"))
+	var dlg: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue%s.json" % suffix))
 	if typeof(dlg) == TYPE_DICTIONARY:
 		story = dlg.get("triggers", [])
 
@@ -115,17 +126,22 @@ static func def_id(d: Dictionary) -> String:
 	return str(int(d["page"]))
 
 
-## Pages touchées par une entrée : sa page, ou toutes les pages de la sourate offerte en entier.
+## Pages touchées par une entrée : sa page, toutes les pages de la sourate offerte en entier, ou la liste « pages » d'une part.
 func pages_of_def(d: Dictionary) -> Array:
 	if d.has("grant_surah"):
 		return mushaf.surah_pages(int(d["grant_surah"]))
+	if d.has("pages"):
+		return d["pages"]
 	return [int(d["page"])]
 
 
 ## Tout ce que porte cette entrée est-il déjà dans le Mushaf ?
 func owned(d: Dictionary) -> bool:
 	if d.has("part"):
-		return save.has_part(int(d["page"]), int(d["part"]))
+		for pg in pages_of_def(d):
+			if not save.has_part(int(pg), int(d["part"])):
+				return false
+		return true
 	if d.has("grant_surah"):
 		var sid := int(d["grant_surah"])
 		for pg in mushaf.surah_pages(sid):
@@ -137,6 +153,8 @@ func owned(d: Dictionary) -> bool:
 
 func _build() -> void:
 	backdrop = Backdrop.new()
+	backdrop.chapter = chapter
+	backdrop.world_w = world_w
 	var sky_layer := CanvasLayer.new()
 	sky_layer.layer = -10
 	sky_layer.name = "SkyLayer"
@@ -158,7 +176,7 @@ func _build() -> void:
 	add_child(player)
 	backdrop.camera = player.camera
 	player.camera.limit_left = 0
-	player.camera.limit_right = int(WORLD_W)
+	player.camera.limit_right = int(world_w)
 	player.camera.limit_top = -900
 	player.camera.limit_bottom = 900
 	player.footstep.connect(func() -> void: Sfx.play("step", -12.0, randf_range(0.9, 1.1)))
@@ -173,9 +191,12 @@ func _build() -> void:
 
 	# Murs invisibles aux extrémités du monde
 	add_static_rect(Rect2(-80.0, -1200.0, 130.0, 3000.0))
-	add_static_rect(Rect2(WORLD_W - 50.0, -1200.0, 130.0, 3000.0))
+	add_static_rect(Rect2(world_w - 50.0, -1200.0, 130.0, 3000.0))
 
-	zones = [ZoneHouse.new(), ZoneStreet.new(), ZoneMarket.new(), ZoneCave.new(), ZonePeak.new()]
+	if chapter == 2:
+		zones = Chapter2.make_zones()
+	else:
+		zones = [ZoneHouse.new(), ZoneStreet.new(), ZoneMarket.new(), ZoneCave.new(), ZonePeak.new()]
 	for z in zones:
 		z.build(self)
 	_build_pages()
@@ -216,7 +237,7 @@ func add_ground(line: PackedVector2Array, detail_seed: int = 3) -> void:
 	collision.add_line(line)
 	var art := GroundArt.new()
 	art.points = line
-	art.stops = GROUND_STOPS
+	art.stops = ground_stops
 	art.detail_seed = detail_seed
 	ground_root.add_child(art)
 
@@ -298,7 +319,7 @@ func _build_pages() -> void:
 	# une page qui attendait un événement déjà survenu (souk traversé) est visible d'emblée
 	for pk in pickups.values():
 		var rv: Dictionary = pk.data.get("reveal", {})
-		if pk.hidden_state and str(rv.get("type", "")) == "event" and save.flag("ev_" + str(rv.get("event", ""))):
+		if pk.hidden_state and str(rv.get("type", "")) == "event" and save.flag(ckey("ev_" + str(rv.get("event", "")))):
 			pk.reveal()
 	for it in zones:
 		if it.has_method("after_pages"):
@@ -310,7 +331,8 @@ func collect_page(pk: Node) -> void:
 		return
 	var d: Dictionary = pk.data
 	if d.has("part"):
-		save.add_part(int(d["page"]), int(d["part"]))
+		for pg in pages_of_def(d):
+			save.add_part(int(pg), int(d["part"]))
 	elif d.has("grant_surah"):
 		var sid := int(d["grant_surah"])
 		for pg in mushaf.surah_pages(sid):
@@ -369,7 +391,7 @@ func trigger_event(id: String) -> void:
 	if events.has(id):
 		return
 	events[id] = true
-	save.set_flag("ev_" + id)
+	save.set_flag(ckey("ev_" + id))
 	for z in zones:
 		if z.has_method("on_event"):
 			z.on_event(self, id)
@@ -422,13 +444,20 @@ func _process(_delta: float) -> void:
 
 
 func zone_at(x: float) -> String:
-	for z in ZONES:
+	for z in zones_def:
 		if x >= z[1] and x < z[2]:
 			return z[0]
-	return "peak"
+	return str(zones_def[zones_def.size() - 1][0])
+
+
+## Nom d'un repère de sauvegarde, propre au chapitre (le chapitre 1 garde ses noms d'origine).
+func ckey(name: String) -> String:
+	return name if chapter == 1 else "c%d_%s" % [chapter, name]
 
 
 func cave_factor() -> float:
+	if chapter != 1:
+		return 0.0
 	var x := player.global_position.x
 	return smoothstep(9100.0, 9300.0, x) * (1.0 - smoothstep(12000.0, 12200.0, x))
 

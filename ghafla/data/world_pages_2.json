@@ -1,0 +1,135 @@
+{
+ "_comment": "Chapitre 2. Mêmes règles que world_pages.json ; « pages » avec « part » : la part de cette sourate sur plusieurs pages.",
+ "pages": [
+  {
+   "page": 411,
+   "grant_surah": 31,
+   "x": 2030,
+   "lift": 78,
+   "kind": "visible",
+   "reaction": "luqman",
+   "first": true
+  },
+  {
+   "page": 285,
+   "grant_surah": 17,
+   "x": 3350,
+   "lift": 70,
+   "kind": "visible",
+   "reaction": "isra"
+  },
+  {
+   "page": 353,
+   "grant_surah": 24,
+   "x": 5200,
+   "lift": 66,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.4,
+    "radius": 120
+   },
+   "reaction": "nur",
+   "hint": "Une table pour deux, une bougie… Reste immobile un instant."
+  },
+  {
+   "page": 394,
+   "part": 28,
+   "pages": [
+    394,
+    395,
+    396
+   ],
+   "x": 9050,
+   "lift": 72,
+   "kind": "hidden",
+   "reveal": {
+    "type": "event",
+    "event": "qarun_fell"
+   },
+   "reaction": "qarun"
+  },
+  {
+   "page": 34,
+   "x": 10200,
+   "lift": 70,
+   "kind": "visible",
+   "reaction": "khamr1"
+  },
+  {
+   "page": 85,
+   "x": 11000,
+   "lift": 90,
+   "kind": "locked",
+   "lock": {
+    "type": "pages",
+    "pages": [
+     34
+    ],
+    "visual": "seal"
+   },
+   "reaction": "khamr2",
+   "hint": "Un sceau : la première parole doit d'abord être lue."
+  },
+  {
+   "page": 123,
+   "x": 11800,
+   "lift": 90,
+   "kind": "locked",
+   "lock": {
+    "type": "pages",
+    "pages": [
+     34,
+     85
+    ],
+    "visual": "seal"
+   },
+   "reaction": "khamr3",
+   "hint": "Un sceau : les deux premières étapes doivent d'abord être lues."
+  },
+  {
+   "page": 267,
+   "part": 15,
+   "x": 13300,
+   "lift": 66,
+   "kind": "visible",
+   "reaction": "hijr"
+  },
+  {
+   "page": 575,
+   "grant_surah": 74,
+   "x": 14400,
+   "lift": 66,
+   "kind": "hidden",
+   "reveal": {
+    "type": "wait",
+    "seconds": 2.4,
+    "radius": 120
+   },
+   "reaction": "muddathir",
+   "hint": "Un tertre, une dalle nue… Reste immobile près d'eux."
+  },
+  {
+   "page": 577,
+   "grant_surah": 75,
+   "x": 15500,
+   "lift": 70,
+   "kind": "visible",
+   "reaction": "qiyamah"
+  },
+  {
+   "page": 582,
+   "grant_surah": 78,
+   "x": 16700,
+   "lift": 140,
+   "kind": "locked",
+   "lock": {
+    "type": "others",
+    "visual": "seal"
+   },
+   "reaction": "naba",
+   "final": true,
+   "hint": "Le sceau de l'aube ne s'ouvrira que lorsque toutes les autres pages seront revenues."
+  }
+ ]
+}

@@ -58,13 +58,13 @@ func build(w: Node2D) -> void:
 	w.glow_layer.add_child(_beam)
 
 	var door := Interactable.new()
-	door.id = "door"
+	door.id = "door" if w.chapter == 1 else "door2"
 	door.prompt = "Ouvrir la porte"
 	door.position = Vector2(DOOR_X - 60.0, GROUND - 80.0)
 	door.used.connect(func(_id: String) -> void: open_door())
 	door.remember_in(w.save)
 	w.pages_root.add_child(door)
-	if w.save.flag("door_open"):
+	if w.save.flag(w.ckey("door_open")):
 		door_open = 1.0
 		door_block["on"] = false
 
@@ -75,7 +75,7 @@ func build(w: Node2D) -> void:
 func open_door() -> void:
 	if door_open > 0.0:
 		return
-	_world.save.set_flag("door_open")
+	_world.save.set_flag(_world.ckey("door_open"))
 	Sfx.play("door", -2.0, 1.0)
 	door_block["on"] = false
 	var tw := _world.create_tween()
@@ -94,7 +94,7 @@ func process(_w: Node2D, delta: float) -> void:
 
 func draw_house(c: Node2D) -> void:
 	var outline := Color("1c1530")
-	var sky := P.sky_at(0.0)
+	var sky := P.sky_at(0.0, _world.chapter if _world != null else 1)
 	# herbe et sol à l'extérieur, à gauche de la maison
 	c.draw_rect(Rect2(-600, GROUND, 700, 900), Color("3b2f5c"))
 	c.draw_line(Vector2(-600, GROUND), Vector2(LEFT, GROUND), Color("8f7cb8"), 4.0, true)

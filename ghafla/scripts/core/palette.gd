@@ -29,8 +29,24 @@ const SKY_STOPS := [
 ]
 
 
-static func sky_at(x: float) -> Dictionary:
-	var stops: Array = SKY_STOPS
+# Ciel du second rêve : crépuscule à la maison, soir rose en ville, or sur l'avenue, nuit violette, nuit profonde, puis l'aube.
+const SKY_STOPS_2 := [
+	[0.0, Color("2b2a5e"), Color("a4546e"), Color("f2a06f"), 0.20, 0.70],
+	[1900.0, Color("2b2a5e"), Color("a4546e"), Color("f2a06f"), 0.20, 0.70],
+	[2600.0, Color("3a1f5c"), Color("c94f79"), Color("ffb08a"), 0.30, 0.90],
+	[6200.0, Color("3a1f5c"), Color("c94f79"), Color("ffb08a"), 0.30, 0.90],
+	[7000.0, Color("6b4a8a"), Color("e8a35a"), Color("ffe19a"), 0.05, 1.00],
+	[9200.0, Color("6b4a8a"), Color("e8a35a"), Color("ffe19a"), 0.05, 1.00],
+	[9900.0, Color("0b0822"), Color("3a1450"), Color("8a2f6a"), 0.60, 0.10],
+	[12100.0, Color("0b0822"), Color("3a1450"), Color("8a2f6a"), 0.60, 0.10],
+	[12800.0, Color("030512"), Color("0b1533"), Color("1d2a55"), 1.00, 0.05],
+	[16400.0, Color("030512"), Color("0b1533"), Color("1d2a55"), 1.00, 0.05],
+	[17300.0, Color("1a1748"), Color("6a4a8e"), Color("f5c07f"), 0.30, 1.00],
+]
+
+
+static func sky_at(x: float, chapter: int = 1) -> Dictionary:
+	var stops: Array = SKY_STOPS if chapter == 1 else SKY_STOPS_2
 	if x <= stops[0][0]:
 		return _stop(stops[0])
 	for i in range(stops.size() - 1):

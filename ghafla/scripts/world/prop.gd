@@ -1,6 +1,6 @@
 extends Node2D
 ## Décor dessiné en code. Chaque « kind » est un élément du monde : lampadaire, arbre, façade, étal, cristal…
-## Règle de contenu : aucune statue, aucun personnage, aucune figure. Bâtiments, tissus, roches, ciel.
+## Règle de contenu : aucune statue, aucune idole, aucune figure. Bâtiments, tissus, roches, ciel. (Les rares silhouettes sans visage du chapitre 2 sont dessinées par les zones concernées.)
 ## L'origine du nœud est au sol ; les dessins montent vers -y.
 
 const P := preload("res://scripts/core/palette.gd")
@@ -19,12 +19,16 @@ func _ready() -> void:
 	_rng = RandomNumberGenerator.new()
 	_rng.seed = int(params.get("seed", int(position.x) * 31 + 7))
 	_phase = _rng.randf() * TAU
-	_animated = kind in ["cloud_sea", "garment_line", "coin", "awning_flags", "tree", "grass_tufts", "number_tag"]
+	_animated = kind in ["cloud_sea", "garment_line", "coin", "awning_flags", "tree", "grass_tufts", "number_tag", "heart_garland", "heart_balloon", "candle_table", "bench_pair", "neon_tube", "mist", "bar_table"]
 	set_process(_animated)
 	match kind:
 		"lamp_post":
 			var h: float = params.get("h", 190.0)
 			world.add_glow(global_position + Vector2(0, -h), 140.0, Color(1.0, 0.8, 0.5, 0.42), 0.06)
+		"candle_table":
+			world.add_glow(global_position + Vector2(0, -74), 120.0, Color(1.0, 0.75, 0.4, 0.34), 0.1)
+		"neon_tube":
+			world.add_glow(global_position + Vector2(float(params.get("w", 200.0)) * 0.5, -float(params.get("y", 200.0))), 200.0, params.get("color", Color(1.0, 0.3, 0.7, 0.25)), 0.08)
 		"crystal":
 			add_to_group("cave_light")
 			set_meta("radius", float(params.get("light", 110.0)))
@@ -86,6 +90,28 @@ func _draw() -> void:
 			_cave_ceiling()
 		"post":
 			_post()
+		"heart_garland":
+			_heart_garland()
+		"rose_bush":
+			_rose_bush()
+		"bench_pair":
+			_bench_pair()
+		"candle_table":
+			_candle_table()
+		"heart_balloon":
+			_heart_balloon()
+		"bar_table":
+			_bar_table()
+		"bottle_shelf":
+			_bottle_shelf()
+		"neon_tube":
+			_neon_tube()
+		"grave_stone":
+			_grave_stone()
+		"mist":
+			_mist()
+		"dead_tree":
+			_dead_tree()
 
 
 # ----------------------------------------------------------------------------------------------- rue
@@ -494,3 +520,177 @@ func _cave_ceiling() -> void:
 		x += 36.0
 	DrawUtil.fill_to(self, line, -700.0, Color("1d1832"))
 	draw_polyline(line, Color("3d345f"), 3.0, true)
+
+
+# ------------------------------------------------------------------------ second rêve : la ville des amoureux
+# Aucune personne : des décors de fête (guirlandes, roses, tables pour deux) ; c'est leur vide qui parle.
+
+func _heart(c: Vector2, sz: float, col: Color) -> void:
+	draw_circle(c + Vector2(-sz * 0.5, -sz * 0.25), sz * 0.55, col)
+	draw_circle(c + Vector2(sz * 0.5, -sz * 0.25), sz * 0.55, col)
+	draw_colored_polygon(PackedVector2Array([c + Vector2(-sz * 1.02, -sz * 0.02), c + Vector2(sz * 1.02, -sz * 0.02), c + Vector2(0, sz * 1.15)]), col)
+
+
+func _heart_garland() -> void:
+	# deux poteaux et une guirlande de cœurs qui ondule
+	var w: float = params.get("w", 520.0)
+	var h: float = params.get("h", 250.0)
+	var n: int = params.get("n", 9)
+	var col := Color("2c2340")
+	draw_line(Vector2(0, 0), Vector2(0, -h), col, 6.0, true)
+	draw_line(Vector2(w, 0), Vector2(w, -h), col, 6.0, true)
+	var pts := PackedVector2Array()
+	for i in range(21):
+		var u := float(i) / 20.0
+		pts.append(Vector2(u * w, -h + sin(u * PI) * 46.0 + sin(t * 1.4 + u * 6.0) * 3.0))
+	draw_polyline(pts, Color(0.95, 0.75, 0.8, 0.9), 2.0, true)
+	for i in range(n):
+		var u := (float(i) + 0.5) / float(n)
+		var p := Vector2(u * w, -h + sin(u * PI) * 46.0 + sin(t * 1.4 + u * 6.0) * 3.0 + 16.0)
+		var pulse := 1.0 + 0.08 * sin(t * 2.2 + float(i))
+		_heart(p, 11.0 * pulse, Color.from_hsv(0.96 + float(i % 3) * 0.015, 0.75, 0.95))
+
+
+func _rose_bush() -> void:
+	var w: float = params.get("w", 110.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(params.get("seed", 4))
+	draw_colored_polygon(DrawUtil.ellipse(Vector2(0, -22), w * 0.5, 26.0, 20), Color("2f5a3f"))
+	draw_colored_polygon(DrawUtil.ellipse(Vector2(-w * 0.12, -30), w * 0.34, 22.0, 20), Color("3b7050"))
+	for i in range(9):
+		var p := Vector2(rng.randf_range(-w * 0.42, w * 0.42), rng.randf_range(-46.0, -14.0))
+		draw_circle(p, 6.5, Color("c72a4a"))
+		draw_circle(p + Vector2(-1, -1), 3.2, Color("e5506e"))
+
+
+func _cup(p: Vector2, steam: bool = true) -> void:
+	draw_rect(Rect2(p.x - 7, p.y - 12, 14, 12), Color("efe6d4"))
+	draw_arc(Vector2(p.x + 8, p.y - 7), 5.0, -PI / 2.0, PI / 2.0, 8, Color("efe6d4"), 2.0, true)
+	if steam:
+		for k in range(2):
+			var sx := p.x - 3.0 + float(k) * 6.0
+			var off := sin(t * 2.0 + float(k) * 2.0) * 3.0
+			draw_line(Vector2(sx, p.y - 15), Vector2(sx + off, p.y - 27), Color(1, 1, 1, 0.32), 2.0, true)
+
+
+func _bench_pair() -> void:
+	_bench()
+	var w: float = params.get("w", 130.0)
+	_cup(Vector2(-w * 0.2, -44))
+	_cup(Vector2(w * 0.2, -44))
+
+
+func _candle_table() -> void:
+	# une table ronde pour deux, deux tasses, une bougie ; les chaises sont vides
+	var wood := Color("5a3a28")
+	draw_rect(Rect2(-3, -70, 6, 70), wood)
+	draw_colored_polygon(DrawUtil.ellipse(Vector2(0, -72), 46.0, 8.0, 22), wood.lightened(0.1))
+	for sx in [-1.0, 1.0]:
+		draw_rect(Rect2(sx * 70.0 - 16.0, -44, 32, 5), wood)
+		draw_rect(Rect2(sx * 70.0 + (14.0 if sx > 0.0 else -18.0), -84, 4, 84), wood)
+		draw_rect(Rect2(sx * 70.0 - 14.0, -39, 4, 39), wood)
+		draw_rect(Rect2(sx * 70.0 + 10.0, -39, 4, 39), wood)
+	_cup(Vector2(-22, -80), false)
+	_cup(Vector2(22, -80), false)
+	draw_rect(Rect2(-3, -100, 6, 20), Color("f3ead6"))
+	var fl := 1.0 + 0.12 * sin(t * 9.0 + _phase)
+	draw_colored_polygon(DrawUtil.ellipse(Vector2(0, -106), 4.0 * fl, 8.0 * fl, 10), Color(1.0, 0.82, 0.4))
+
+
+func _heart_balloon() -> void:
+	var len_s: float = params.get("len", 150.0)
+	var bob := sin(t * 1.2 + _phase) * 8.0
+	var top := Vector2(sin(t * 0.8 + _phase) * 6.0, -len_s + bob)
+	draw_line(Vector2.ZERO, top + Vector2(0, 24), Color(1, 1, 1, 0.35), 1.5, true)
+	_heart(top, 16.0, Color.from_hsv(0.97, 0.7, 0.95, 0.92))
+
+
+# ------------------------------------------------------------------------------ second rêve : lieux de l'ivresse
+
+func _bar_table() -> void:
+	var wood := Color("2e1a2c")
+	draw_rect(Rect2(-60, -72, 120, 10), wood.lightened(0.15))
+	draw_rect(Rect2(-52, -62, 8, 62), wood)
+	draw_rect(Rect2(44, -62, 8, 62), wood)
+	var sway := sin(t * 1.6 + _phase)
+	# bouteilles et verres : des formes de verre, sans rien d'autre
+	for i in range(3):
+		var bx := -34.0 + float(i) * 34.0
+		var col := Color(0.35 + 0.2 * float(i % 2), 0.75, 0.55, 0.85) if i != 1 else Color(0.85, 0.5, 0.25, 0.85)
+		draw_rect(Rect2(bx - 7, -108, 14, 36), col)
+		draw_rect(Rect2(bx - 3, -122, 6, 16), col)
+		draw_rect(Rect2(bx - 5, -124, 10, 4), Color("d9c9a0"))
+	for gx in [-52.0, 50.0]:
+		draw_colored_polygon(PackedVector2Array([Vector2(gx - 8, -96), Vector2(gx + 8, -96), Vector2(gx + 3, -80), Vector2(gx - 3, -80)]), Color(1.0, 0.8, 0.55, 0.7))
+		draw_line(Vector2(gx, -80), Vector2(gx, -73), Color(1, 1, 1, 0.5), 2.0)
+	DrawUtil.glow(self, Vector2(0, -90), 90.0 + sway * 6.0, Color(1.0, 0.55, 0.85, 0.22))
+
+
+func _bottle_shelf() -> void:
+	var w: float = params.get("w", 220.0)
+	var h: float = params.get("h", 300.0)
+	var wood := Color("2a1730")
+	draw_rect(Rect2(-w / 2.0, -h, w, h), wood)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(params.get("seed", 3))
+	var rows := int(h / 80.0)
+	for r in range(rows):
+		var y := -h + 20.0 + float(r) * 80.0
+		draw_rect(Rect2(-w / 2.0 + 6.0, y + 52.0, w - 12.0, 6.0), wood.lightened(0.2))
+		var x := -w / 2.0 + 16.0
+		while x < w / 2.0 - 16.0:
+			var bh := rng.randf_range(28.0, 46.0)
+			var col := Color.from_hsv(rng.randf_range(0.0, 1.0), 0.45, 0.85, 0.75)
+			draw_rect(Rect2(x, y + 52.0 - bh, 12, bh), col)
+			draw_rect(Rect2(x + 4, y + 52.0 - bh - 9, 4, 9), col)
+			x += rng.randf_range(20.0, 28.0)
+
+
+func _neon_tube() -> void:
+	var w: float = params.get("w", 200.0)
+	var y: float = params.get("y", 200.0)
+	var col: Color = params.get("color", Color(1.0, 0.3, 0.7))
+	var flick := 0.85 + 0.15 * sin(t * 7.0 + _phase) * sin(t * 2.3)
+	var pts := PackedVector2Array()
+	for i in range(25):
+		var u := float(i) / 24.0
+		pts.append(Vector2(u * w, -y + sin(u * TAU * 1.5) * 16.0))
+	draw_polyline(pts, Color(col.r, col.g, col.b, 0.25 * flick), 12.0, true)
+	draw_polyline(pts, Color(col.r, col.g, col.b, 0.95 * flick), 4.0, true)
+	draw_polyline(pts, Color(1, 1, 1, 0.7 * flick), 1.5, true)
+
+
+# ---------------------------------------------------------------------------------- second rêve : les tombes
+# Des tertres de terre et de simples dalles, sans inscription ni ornement.
+
+func _grave_stone() -> void:
+	var w: float = params.get("w", 34.0)
+	var h: float = params.get("h", 60.0)
+	var lean: float = params.get("lean", 0.0)
+	var col: Color = params.get("color", Color("4a4f72"))
+	draw_set_transform(Vector2.ZERO, lean, Vector2.ONE)
+	draw_rect(Rect2(-w / 2.0, -h, w, h), col)
+	draw_rect(Rect2(-w / 2.0, -h, w, 5.0), col.lightened(0.18))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	draw_colored_polygon(DrawUtil.ellipse(Vector2(0, 2), w * 1.8, 9.0, 18), Color("2b2a45"))
+
+
+func _mist() -> void:
+	var w: float = params.get("w", 900.0)
+	for i in range(5):
+		var x := fposmod(float(i) * w * 0.22 + t * (8.0 + float(i) * 3.0), w) - w * 0.1
+		draw_colored_polygon(DrawUtil.ellipse(Vector2(x, -12.0 - float(i % 3) * 10.0), 190.0, 26.0, 20), Color(0.7, 0.75, 1.0, 0.07))
+
+
+func _dead_tree() -> void:
+	var h: float = params.get("h", 160.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(params.get("seed", 5))
+	var col := Color("1c1a30")
+	draw_line(Vector2(0, 0), Vector2(0, -h), col, 8.0, true)
+	for i in range(6):
+		var y := -h * (0.35 + float(i) * 0.11)
+		var dir := -1.0 if i % 2 == 0 else 1.0
+		var end := Vector2(dir * rng.randf_range(30.0, 70.0), y - rng.randf_range(20.0, 50.0))
+		draw_line(Vector2(0, y), end, col, 4.0, true)
+		draw_line(end, end + Vector2(dir * 14.0, -18.0), col, 2.5, true)

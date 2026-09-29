@@ -30,3 +30,19 @@ Pour ne pas répéter ce dernier texte, le jeu commence par un murmure différen
 - Le second n'est pas montré comme méprisable : il hésite, il est fatigué. Le texte est à la première personne, c'est lui qui se reprend.
 - Le mot « Astaghfirullah » est une formule de repentir courante ; il n'est pas cité d'un texte sacré.
 - Les pages qui blanchissent sont montrées visuellement (l'encre s'envole, le papier s'éclaircit), comme demandé.
+
+# Cinématique du chapitre 2 (`cinematic2.gd`)
+
+Durée : environ 1 minute 30, passable de la même façon. Toujours des silhouettes sans visage ; l'adulte est là en spectateur (transparent).
+
+| # | Plan | Ce qu'on voit | Texte |
+|---|---|---|---|
+| 1 | Carton | Fond noir | « Un autre soir. » |
+| 2 | Chambre, soir | Un enfant (la même silhouette, plus petite) empile des cubes de bois sur le tapis. | « Il y a très longtemps… » |
+| 3 | | L'adulte apparaît près de la table, transparent. | « Je me souviens de ce soir. » |
+| 4 | | Le père entre : « Mon fils, viens. C'est l'heure de la prière. » L'enfant fait comme s'il n'entendait pas. | « Encore un peu… » |
+| 5 | | La mère (silhouette voilée) entre : « Mon fils, aide-moi un instant. » Il continue. Ils repartent doucement, sans un mot de reproche. | |
+| 6 | | Le rêve se défait : cubes et enfant s'effacent, la lumière baisse. | « C'était moi. » |
+| 7 | Page | La page de Luqman apparaît, entourée de lumière. | « Une page… ces conseils que j'avais entendus. » |
+
+Choix : les parents sont doux, l'enfant n'est pas moqué (c'est un enfant) ; c'est l'adulte qui se regarde et qui se reprend, jamais un tiers qui le juge.

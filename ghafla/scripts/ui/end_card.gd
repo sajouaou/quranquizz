@@ -7,19 +7,22 @@ const Assets := preload("res://scripts/core/assets.gd")
 
 signal keep_exploring
 signal to_title
+signal next_chapter
 
 var count: int = 0
 var total: int = 604
 var placed: int = 0
+var chapter: int = 1
 var _t: float = 0.0
 var _box: VBoxContainer
 var _buttons: HBoxContainer
 
 
-func setup(collected: int, total_pages: int, placed_pages: int) -> void:
+func setup(collected: int, total_pages: int, placed_pages: int, chapter_number: int = 1) -> void:
 	count = collected
 	total = total_pages
 	placed = placed_pages
+	chapter = chapter_number
 
 
 func _ready() -> void:
@@ -41,14 +44,23 @@ func _ready() -> void:
 	ar.add_theme_font_size_override("font_size", 78)
 	ar.add_theme_color_override("font_color", Color("6b4a10"))
 	_box.add_child(ar)
-	_line("Le jour se lève. Cette fois, tu es déjà debout.", 34, Color("3a2a10"))
-	_line("%d pages sur %d ont été retrouvées. Dans ce prototype, %d pages seulement sont cachées dans le rêve ; le reste du chemin est à construire." % [count, total, placed], 21, Color("4a3a20"))
+	if chapter == 1:
+		_line("Le jour se lève. Cette fois, tu es déjà debout.", 34, Color("3a2a10"))
+		_line("%d pages sur %d ont été retrouvées. Dans ce prototype, %d pages seulement sont cachées dans le rêve ; le reste du chemin est à construire." % [count, total, placed], 21, Color("4a3a20"))
+	else:
+		_line("Ces leçons, il n'est jamais trop tard pour les suivre.", 34, Color("3a2a10"))
+		_line("Chapitre 2 terminé : %d pages sur %d sont dans le Mushaf. Le rêve n'est pas fini : il reste tout le reste à retrouver." % [count, total], 21, Color("4a3a20"))
 	_line("Ghafla est une histoire imaginée. Elle ne remplace ni la lecture du Coran, ni l'enseignement de gens de science.", 18, Color("6a5a40"))
 
 	_buttons = HBoxContainer.new()
 	_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	_buttons.add_theme_constant_override("separation", 16)
 	_box.add_child(_buttons)
+	if chapter == 1:
+		var bn := Button.new()
+		bn.text = "Chapitre 2 : les leçons oubliées"
+		bn.pressed.connect(func() -> void: next_chapter.emit())
+		_buttons.add_child(bn)
 	var b1 := Button.new()
 	b1.text = "Continuer à explorer"
 	b1.pressed.connect(func() -> void: keep_exploring.emit())

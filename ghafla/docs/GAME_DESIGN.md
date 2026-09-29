@@ -75,6 +75,18 @@ Contenu : cinématique complète, une maison, une rue, un pont, un souk, une gro
 Volontairement absent : les 585 autres pages, plusieurs modes de récupération à inventer, d'autres lieux (montagne enneigée, mer, désert de
 nuit, jardins…), plus de dialogues, une traduction en arabe ou en anglais, des succès.
 
+## 6 bis. Chapitre 2 : les leçons oubliées
+
+Un second rêve (menu : « Chapitre 2 », ou à la fin du chapitre 1). Même mécanique, autre monde :
+cinématique de l'enfance (Luqman), ville en fête (Al-Isra, An-Nur), avenue d'or et cortège englouti (fin d'Al-Qasas), rue de l'ivresse en trois étapes (2:219, 4:43, 5:91),
+tombes (Al-Hijr, Al-Muddaththir, Al-Qiyamah, An-Naba'). Détails : [PAGES.md](PAGES.md) et [CINEMATIC.md](CINEMATIC.md).
+
+Règles de respect propres à ce chapitre :
+- **Des sujets délicats, traités sans moquerie ni jugement** : le personnage se regarde lui-même ; on ne montre aucune scène intime, aucune personne dans la ville des amoureux (seulement des décors vides), aucun buveur (seulement des verres et des bouteilles).
+- **Silhouettes sans visage** seulement quand l'histoire l'exige : la famille dans la cinématique, l'homme riche sur son char. Aucune statue, aucune idole, aucune image d'un prophète.
+- **Les tombes** sont de simples tertres et de petites dalles nues : sans ornement, sans inscription.
+- Les « sens approximatifs » de `data/dialogue_2.json` doivent être relus par une personne compétente avant publication.
+
 ## 7. Pistes pour la suite
 
 - **Nouveaux lieux liés aux sourates** : une mer calme pour Yunus et Musa, un jardin pour Ar-Rahman, un puits pour Yusuf, une montagne

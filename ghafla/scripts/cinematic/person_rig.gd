@@ -29,6 +29,8 @@ var book: float = 0.0  # 0 rien, 1 livre fermé, 2 livre ouvert
 var shade: float = 0.0  # 0 normal, 1 silhouette à contre-jour
 var shade_color: Color = Color(0.03, 0.03, 0.08)
 var thobe_color: Color = P.THOBE
+var veil: bool = false  # voile (silhouette d'une mère) : capuche unie, toujours sans visage
+var veil_color: Color = Color("e6d5ef")
 var facing: int = 1:
 	set(v):
 		facing = 1 if v >= 0 else -1
@@ -213,7 +215,12 @@ func _draw() -> void:
 	var cap_world := PackedVector2Array()
 	for v in cap:
 		cap_world.append(hc + v.rotated(ang))
-	draw_colored_polygon(cap_world, _col(Color("f2eee4")))
+	if veil:
+		var vc := _col(veil_color)
+		draw_circle(hc, HEAD_R + 4.0, vc)
+		draw_colored_polygon(PackedVector2Array([hc + Vector2(-HEAD_R - 3.0, 4.0).rotated(ang), hc + Vector2(HEAD_R + 3.0, 4.0).rotated(ang), sh + Vector2(17, 16).rotated(body_rot), sh + Vector2(-17, 16).rotated(body_rot)]), vc)
+	else:
+		draw_colored_polygon(cap_world, _col(Color("f2eee4")))
 
 	# 6. livre entre les mains
 	if book > 0.0:

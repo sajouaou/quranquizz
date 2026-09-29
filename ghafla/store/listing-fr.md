@@ -24,7 +24,7 @@ Aucune image de personne, aucun visage : des silhouettes, de la lumière, des li
 
 Les citations en français sont un « sens approximatif » ; le texte des pages du Mushaf est affiché à partir de quran.com.
 
-Cette version est un prototype : une vingtaine de pages sont cachées dans le rêve, et le reste du chemin sera construit avec vos retours.
+Deux chapitres : « Le rêve du Mushaf » et « Les leçons oubliées » (un souvenir d'enfance, une ville en fête, une avenue d'or, une rue de l'ivresse, les tombes). Cette version est un prototype : le reste du chemin sera construit avec vos retours.
 
 **Notes de version 0.1.0** :
 Première version : cinématique d'ouverture, monde jouable, Mushaf en jeu, sauvegarde automatique.

@@ -10,6 +10,7 @@ const Assets := preload("res://scripts/core/assets.gd")
 const Inputs := preload("res://scripts/core/inputs.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
 const World := preload("res://scripts/world/world.gd")
+const Chapter2 := preload("res://scripts/world/chapter2.gd")
 const TouchControls := preload("res://scripts/ui/touch_controls.gd")
 
 const TMP_SAVE := "user://ghafla_test_save.json"
@@ -37,6 +38,7 @@ func _ready() -> void:
 	mushaf = MushafData.get_instance()
 	_test_scripts_compile()
 	_test_data()
+	_test_data(2)
 	_test_mushaf()
 	_test_save()
 	_test_sounds()
@@ -45,6 +47,9 @@ func _ready() -> void:
 	await _test_world()
 	await _test_reachability()
 	await _test_traversal()
+	await _test_world2()
+	await _test_reachability(2)
+	await _test_traversal(2)
 	print("[test] ---------------------------------")
 	print("[test] %d réussis, %d échoués" % [passed, failed])
 	if DisplayServer.get_name() == "headless":
@@ -83,32 +88,37 @@ func _test_scripts_compile() -> void:
 
 # ------------------------------------------------------------------------------------------- 1. données
 
-func _test_data() -> void:
-	var wp: Dictionary = _json("res://data/world_pages.json")
-	dialogue = _json("res://data/dialogue.json")
-	pages_def = wp.get("pages", [])
-	ok(pages_def.size() >= 10, "world_pages : au moins 10 pages placées (%d)" % pages_def.size())
+func _test_data(chap: int = 1) -> void:
+	var suffix := "" if chap == 1 else "_%d" % chap
+	var tag := "" if chap == 1 else " [chapitre %d]" % chap
+	var wp: Dictionary = _json("res://data/world_pages%s.json" % suffix)
+	var dlg: Dictionary = _json("res://data/dialogue%s.json" % suffix)
+	var defs: Array = wp.get("pages", [])
+	if chap == 1:
+		dialogue = dlg
+		pages_def = defs
+	ok(defs.size() >= 10, "world_pages : au moins 10 pages placées (%d)" % defs.size())
 	var seen := {}
 	var in_range := true
 	var firsts := 0
 	var finals := 0
-	for d in pages_def:
+	for d in defs:
 		var p := int(d["page"])
 		if p < 1 or p > 604:
 			in_range = false
 		seen[World.def_id(d)] = true
 		firsts += 1 if bool(d.get("first", false)) else 0
 		finals += 1 if bool(d.get("final", false)) else 0
-	ok(in_range, "pages placées entre 1 et 604")
-	ok(seen.size() == pages_def.size(), "pas de page (ni de partie de page) placée en double")
-	ok(firsts == 1 and finals == 1, "une seule première page et une seule dernière")
+	ok(in_range, "pages placées entre 1 et 604" + tag)
+	ok(seen.size() == defs.size(), "pas de page (ni de partie de page) placée en double" + tag)
+	ok(firsts == 1 and finals == 1, "une seule première page et une seule dernière" + tag)
 
-	var reactions: Dictionary = dialogue.get("reactions", {})
+	var reactions: Dictionary = dlg.get("reactions", {})
 	var missing := []
 	var kinds_ok := true
 	var locks_ok := true
 	var reveal_ok := true
-	for d in pages_def:
+	for d in defs:
 		var r := str(d.get("reaction", ""))
 		if r != "" and not reactions.has(r):
 			missing.append(r)
@@ -129,22 +139,22 @@ func _test_data() -> void:
 			if not ["wait", "event", "vein"].has(str(rv.get("type", ""))):
 				reveal_ok = false
 	ok(missing.is_empty(), "toutes les réactions existent %s" % str(missing))
-	ok(kinds_ok, "types de pages valides (visible, hidden, locked)")
-	ok(locks_ok, "verrous valides (les pages exigées existent, « others » seulement sur la dernière)")
-	ok(reveal_ok, "révélations valides (wait, event, vein)")
+	ok(kinds_ok, "types de pages valides (visible, hidden, locked)" + tag)
+	ok(locks_ok, "verrous valides (les pages exigées existent, « others » seulement sur la dernière)" + tag)
+	ok(reveal_ok, "révélations valides (wait, event, vein)" + tag)
 	var parts_ok := true
-	for d in pages_def:
+	for d in defs:
 		if d.has("part") and not mushaf.surah_ids_on_page(int(d["page"])).has(int(d["part"])):
 			parts_ok = false
 			print("[test]   la sourate ", d["part"], " n'est pas sur la page ", d["page"])
 		if d.has("grant_surah") and not mushaf.surah_pages(int(d["grant_surah"])).has(int(d["page"])):
 			parts_ok = false
-	ok(parts_ok, "chaque partie de page et chaque sourate offerte existe sur sa page")
+	ok(parts_ok, "chaque partie de page et chaque sourate offerte existe sur sa page" + tag)
 
 	# Dialogues : chaque déclencheur et chaque réaction a du texte, les références « sens approximatif » sont bien formées
 	var lines_ok := true
 	var refs_ok := true
-	for t in dialogue.get("triggers", []):
+	for t in dlg.get("triggers", []):
 		if (t.get("lines", []) as Array).is_empty():
 			lines_ok = false
 	for k in reactions.keys():
@@ -156,26 +166,26 @@ func _test_data() -> void:
 			if not _ref_valid(ref) or str(r["meaning"].get("text", "")) == "":
 				refs_ok = false
 				print("[test]   référence invalide : ", k, " ", ref)
-	ok(lines_ok, "chaque déclencheur et chaque réaction contient du texte")
-	ok(refs_ok, "références « sens approximatif » valides (sourate:verset ou sourate:début-fin)")
+	ok(lines_ok, "chaque déclencheur et chaque réaction contient du texte" + tag)
+	ok(refs_ok, "références « sens approximatif » valides (sourate:verset ou sourate:début-fin)" + tag)
 
 	# Le sens cité correspond bien à la sourate de la page
 	var match_ok := true
-	for d in pages_def:
+	for d in defs:
 		var r: Dictionary = reactions.get(str(d.get("reaction", "")), {})
 		if r.has("meaning"):
 			var sid := int(str(r["meaning"]["ref"]).split(":")[0])
 			if not mushaf.surah_pages(sid).has(int(d["page"])):
 				match_ok = false
 				print("[test]   la page ", d["page"], " n'est pas dans la sourate ", sid)
-	ok(match_ok, "le « sens approximatif » cité correspond à la sourate de la page")
+	ok(match_ok, "le « sens approximatif » cité correspond à la sourate de la page" + tag)
 
 	# Ordre des déclencheurs d'histoire
 	var xs_ok := true
-	for t in dialogue.get("triggers", []):
-		if float(t["x"]) < 0.0 or float(t["x"]) > World.WORLD_W:
+	for t in dlg.get("triggers", []):
+		if float(t["x"]) < 0.0 or float(t["x"]) > (World.WORLD_W if chap == 1 else Chapter2.WORLD_W):
 			xs_ok = false
-	ok(xs_ok, "déclencheurs d'histoire dans les limites du monde")
+	ok(xs_ok, "déclencheurs d'histoire dans les limites du monde" + tag)
 
 
 ## « 21:1 » ou « 103:1-3 » : la sourate existe et les versets sont dans ses limites.
@@ -343,7 +353,7 @@ func _walk(dir_path: String, out: Array) -> void:
 
 # ------------------------------------------------------------------------------------------- 6. monde
 
-func _make_world() -> void:
+func _make_world(chap: int = 1) -> void:
 	if world != null:
 		world.queue_free()
 		await get_tree().process_frame
@@ -352,7 +362,7 @@ func _make_world() -> void:
 	world = World.new()
 	world.name = "World"
 	add_child(world)
-	world.start(save, mushaf)
+	world.start(save, mushaf, Vector2(-1, -1), chap)
 	world.player.use_scripted_input = true
 	await get_tree().physics_frame
 
@@ -406,7 +416,8 @@ func _test_world() -> void:
 
 func _own_def(d: Dictionary) -> void:
 	if d.has("part"):
-		save.add_part(int(d["page"]), int(d["part"]))
+		for pg in world.pages_of_def(d):
+			save.add_part(int(pg), int(d["part"]))
 	elif d.has("grant_surah"):
 		for pg in mushaf.surah_pages(int(d["grant_surah"])):
 			save.add_part(pg, int(d["grant_surah"]))
@@ -448,6 +459,39 @@ func _test_persistence() -> void:
 			usable += 1
 	ok(usable == 0, "le portant, la veine de lumière et la porte utilisés ne se réactivent pas")
 	ok(save2.has_item("key_chest"), "la clé trouvée est gardée")
+
+
+## Chapitre 2 : le monde se construit, les verrous en chaîne (alcool), Qarun caché jusqu'à l'événement, les sourates offertes.
+func _test_world2() -> void:
+	await _make_world(2)
+	ok(world.chapter == 2 and world.world_w == Chapter2.WORLD_W, "le monde du chapitre 2 se construit")
+	ok(world.pickups.size() == world.page_defs().size(), "une page dans le monde par entrée du chapitre 2")
+	var m2: Node = world.pickups["85"]
+	var m3: Node = world.pickups["123"]
+	ok(m2.locked and not m2.lock_satisfied() and m3.locked and not m3.lock_satisfied(), "les deuxième et troisième paroles sur le vin sont scellées")
+	world.collect_page(world.pickups["34"])
+	ok(m2.lock_satisfied() and not m3.lock_satisfied(), "lire la première ouvre la deuxième, pas la troisième")
+	save.add_page(85)
+	ok(m3.lock_satisfied(), "puis la troisième")
+	var qarun: Node = world.pickups["394:28"]
+	ok(qarun.hidden_state, "la page de Qarun est cachée")
+	world.trigger_event("qarun_fell")
+	ok(not qarun.hidden_state, "elle se révèle quand la terre l'a englouti")
+	world.collect_page(qarun)
+	ok(save.has_page(394) and save.has_page(395) and save.has_part(396, 28) and not save.has_page(396), "la fin d'Al-Qasas (pages 394 à 396) est prise ; la page 396 garde le début d'Al-'Ankabut à part")
+	world.collect_page(world.pickups["411"])
+	ok(save.has_page(411) and save.has_page(412) and save.has_page(413) and save.has_page(414), "Luqman offerte en entier (pages 411 à 414)")
+	world.collect_page(world.pickups["285"])
+	ok(save.has_part(282, 17) and save.has_part(293, 17) and save.has_page(283), "Al-Isra offerte en entier (pages 282 à 293)")
+	world.collect_page(world.pickups["353"])
+	ok(save.has_part(350, 24) and save.has_part(359, 24) and save.has_page(355), "An-Nur offerte en entière (pages 350 à 359)")
+	var last: Node = world.pickups["582"]
+	ok(last.locked and not last.lock_satisfied(), "le sceau final d'An-Naba' est fermé")
+	for d in world.page_defs():
+		if World.def_id(d) != "582":
+			_own_def(d)
+	ok(last.lock_satisfied(), "il s'ouvre quand tout le reste est revenu")
+	DirAccess.remove_absolute(TMP_SAVE)
 
 
 ## Parties de page (une page peut porter plusieurs sourates) et sourates offertes en entier.
@@ -542,10 +586,12 @@ func _bot_go(goal: Vector2, max_ticks: int, stop_when: Callable) -> bool:
 	return false
 
 
-func _test_reachability() -> void:
-	await _make_world()
+func _test_reachability(chap: int = 1) -> void:
+	await _make_world(chap)
+	var tag := "" if chap == 1 else " [chapitre %d]" % chap
+	var defs: Array = pages_def if chap == 1 else world.page_defs()
 	var unreachable := []
-	for d in pages_def:
+	for d in defs:
 		var page := int(d["page"])
 		var pk: Node2D = world.pickups[World.def_id(d)]
 		# on rend la page prenable, sans toucher aux règles : on veut seulement savoir si le corps du joueur l'atteint
@@ -553,7 +599,7 @@ func _test_reachability() -> void:
 		pk._appear = 1.0
 		if pk.locked and pk.lock_satisfied() == false:
 			pk.locked = false
-		var start_x := clampf(pk.global_position.x - 420.0, 2100.0, World.WORLD_W)
+		var start_x := clampf(pk.global_position.x - 420.0, 2100.0, world.world_w)
 		var gy: float = world.ground_at(start_x)
 		world.player.teleport(Vector2(start_x, gy - 2.0))
 		await get_tree().physics_frame
@@ -562,24 +608,21 @@ func _test_reachability() -> void:
 		if not reached:
 			unreachable.append(page)
 			print("[test]   page ", page, " non atteinte : joueur ", world.player.global_position, " page ", goal)
-	ok(unreachable.is_empty(), "le bot atteint chaque page (%d / %d) %s" % [pages_def.size() - unreachable.size(), pages_def.size(), str(unreachable)])
+	ok(unreachable.is_empty(), "le bot atteint chaque page (%d / %d) %s%s" % [defs.size() - unreachable.size(), defs.size(), str(unreachable), tag])
 
 
 # --------------------------------------------------------------------------- 8. traversée complète
 
-func _test_traversal() -> void:
-	await _make_world()
+func _test_traversal(chap: int = 1) -> void:
+	await _make_world(chap)
 	var p: Node2D = world.player
 	# La porte d'entrée est verrouillée par un objet à activer : le bot fait comme le joueur (il agit quand on lui propose).
-	var goals := [
-		Vector2(1990.0, 99999.0),
-		Vector2(4200.0, 99999.0),
-		Vector2(5300.0, 99999.0),
-		Vector2(8200.0, 99999.0),
-		Vector2(9300.0, 99999.0),
-		Vector2(12300.0, 99999.0),
-		Vector2(14800.0, 99999.0),
-	]
+	var xs := [1990.0, 4200.0, 5300.0, 8200.0, 9300.0, 12300.0, 14800.0]
+	if chap == 2:
+		xs = [1990.0, 3300.0, 5200.0, 7900.0, 9300.0, 11000.0, 12600.0, 15000.0, 16600.0]
+	var goals := []
+	for gx in xs:
+		goals.append(Vector2(gx, 99999.0))
 	var stuck_at := -1.0
 	var elapsed := 0.0
 	for g in goals:
@@ -600,7 +643,8 @@ func _test_traversal() -> void:
 		if not reached:
 			stuck_at = p.global_position.x
 			break
-	ok(stuck_at < 0.0, "le bot traverse tout le monde, de la chambre au sommet (bloqué en x=%.0f)" % stuck_at)
+	var tag := "" if chap == 1 else " [chapitre %d]" % chap
+	ok(stuck_at < 0.0, "le bot traverse tout le monde, de la chambre au bout du chemin (bloqué en x=%.0f)%s" % [stuck_at, tag])
 	if stuck_at < 0.0:
-		ok(world.zone_at(p.global_position.x) == "peak", "il arrive dans la zone du sommet")
+		ok(world.zone_at(p.global_position.x) == ("peak" if chap == 1 else "graves"), "il arrive dans la dernière zone%s" % tag)
 	DirAccess.remove_absolute(TMP_SAVE)

@@ -9,6 +9,7 @@ const MushafData := preload("res://scripts/core/mushaf_data.gd")
 const QuranText := preload("res://scripts/core/quran_text.gd")
 const World := preload("res://scripts/world/world.gd")
 const Cinematic := preload("res://scripts/cinematic/cinematic.gd")
+const Cinematic2 := preload("res://scripts/cinematic/cinematic2.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Hud := preload("res://scripts/ui/hud.gd")
 const Dialogue := preload("res://scripts/ui/dialogue.gd")
@@ -45,6 +46,8 @@ var reactions: Dictionary = {}
 var triggers: Dictionary = {}
 var first_page: int = 0
 var final_page: int = 0
+var final_reaction: String = "final"
+var chapter: int = 1
 var paused_menu: bool = false
 
 var _scene_queue: Array = []
@@ -71,24 +74,37 @@ func _ready() -> void:
 	save = SaveData.get_instance()
 	mushaf = MushafData.get_instance()
 	Sfx.set_master(save.volume)
-	_load_data()
+	chapter = save.chapter
+	_load_data(chapter)
 	_build_ui()
 	show_title()
 
 
-func _load_data() -> void:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue.json"))
+func _load_data(chap: int = 1) -> void:
+	var suffix := "" if chap == 1 else "_%d" % chap
+	reactions = {}
+	triggers = {}
+	first_page = 0
+	final_page = 0
+	final_reaction = "final"
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue%s.json" % suffix))
 	if typeof(parsed) == TYPE_DICTIONARY:
 		reactions = parsed.get("reactions", {})
 		for t in parsed.get("triggers", []):
 			triggers[str(t["id"])] = t
-	var pages: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_pages.json"))
+	var pages: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_pages%s.json" % suffix))
 	if typeof(pages) == TYPE_DICTIONARY:
 		for d in pages.get("pages", []):
 			if bool(d.get("first", false)):
 				first_page = int(d["page"])
 			if bool(d.get("final", false)):
 				final_page = int(d["page"])
+				final_reaction = str(d.get("reaction", "final"))
+
+
+func _set_chapter(n: int) -> void:
+	chapter = n
+	_load_data(n)
 
 
 func _build_ui() -> void:
@@ -191,6 +207,8 @@ func show_title() -> void:
 	title.setup(save, not OS.has_feature("web") and not OS.has_feature("mobile"))
 	title.new_game.connect(_on_new_game)
 	title.continue_game.connect(_on_continue)
+	title.chapter1.connect(_on_chapter1)
+	title.chapter2.connect(_on_chapter2)
 	title.quit_game.connect(func() -> void: get_tree().quit())
 	title.touch_changed.connect(_apply_touch_setting)
 	add_child(title)
@@ -218,10 +236,24 @@ func _clear_run() -> void:
 
 func _on_new_game() -> void:
 	save.reset_progress()
+	_set_chapter(1)
 	_after_title_choice(true)
 
 
 func _on_continue() -> void:
+	_set_chapter(save.chapter)
+	_after_title_choice(false)
+
+
+func _on_chapter1() -> void:
+	save.switch_chapter(1)
+	_set_chapter(1)
+	_after_title_choice(false)
+
+
+func _on_chapter2() -> void:
+	save.switch_chapter(2)
+	_set_chapter(2)
 	_after_title_choice(false)
 
 
@@ -240,7 +272,8 @@ func _after_title_choice(is_new: bool) -> void:
 
 
 func _route_after_note(is_new: bool) -> void:
-	if is_new or not save.intro_seen:
+	var seen: bool = save.intro_seen if chapter == 1 else save.flag("c2_intro")
+	if is_new or not seen:
 		_play_cinematic()
 	else:
 		_start_world(true)
@@ -291,7 +324,7 @@ func _play_cinematic() -> void:
 	state = State.CINEMATIC
 	_set_play_ui(false)
 	_start_text_download()
-	cinematic = Cinematic.new()
+	cinematic = Cinematic.new() if chapter == 1 else Cinematic2.new()
 	cinematic.name = "Cinematic"
 	cinematic.finished.connect(_on_cinematic_finished)
 	add_child(cinematic)
@@ -304,7 +337,10 @@ func _on_cinematic_finished() -> void:
 	if cinematic != null:
 		cinematic.queue_free()
 		cinematic = null
-	save.intro_seen = true
+	if chapter == 1:
+		save.intro_seen = true
+	else:
+		save.set_flag("c2_intro")
 	save.save_file()
 	# On laisse une image passer avant la construction (le fondu est déjà à l'écran).
 	await get_tree().process_frame
@@ -331,7 +367,7 @@ func _start_world(from_save: bool) -> void:
 	var spawn := Vector2(-1, -1)
 	if from_save and save.player_x >= 0.0:
 		spawn = Vector2(save.player_x, save.player_y)
-	world.start(save, mushaf, spawn)
+	world.start(save, mushaf, spawn, chapter)
 	book.setup(save, mushaf, world.placed_pages)
 	_set_play_ui(true)
 	if from_save:
@@ -349,6 +385,10 @@ func _start_world(from_save: bool) -> void:
 
 
 func _objective_for_progress() -> String:
+	if chapter == 2:
+		if final_page > 0 and save.has_page(final_page):
+			return "Tu peux continuer à explorer le rêve."
+		return "Suis la lumière et retrouve les pages, encore."
 	if first_page > 0 and not save.has_page(first_page):
 		return "Une page t'attend devant la porte."
 	if final_page > 0 and save.has_page(final_page):
@@ -379,7 +419,7 @@ func _save_position() -> void:
 func _on_zone_entered(zone_id: String) -> void:
 	# Ambiances : de l'air dehors, des gouttes dans la grotte. Aucune musique.
 	match zone_id:
-		"house":
+		"house", "home":
 			Sfx.stop_all_loops()
 		"cave":
 			Sfx.fade_loop("air", -60.0, 2.0)
@@ -461,7 +501,7 @@ func _run_finale() -> void:
 	if state != State.PLAY or world == null:
 		return
 	# quelques mots avant la carte de fin
-	var reaction: Dictionary = reactions.get("final", {})
+	var reaction: Dictionary = reactions.get(final_reaction, {})
 	var done := func() -> void: _show_end_card()
 	if reaction.is_empty():
 		done.call()
@@ -474,11 +514,29 @@ func _show_end_card() -> void:
 	_fade_to(Color(1.0, 0.94, 0.78, 1.0), 1.6).finished.connect(func() -> void:
 		end_card = EndCard.new()
 		end_card.name = "EndCard"
-		end_card.setup(save.count(), mushaf.total_pages, world.placed_pages.size())
+		end_card.setup(save.count(), mushaf.total_pages, world.placed_pages.size(), chapter)
 		end_card.keep_exploring.connect(_end_keep_exploring)
+		end_card.next_chapter.connect(_end_next_chapter)
 		end_card.to_title.connect(_back_to_title)
 		ui_root.add_child(end_card)
 		_fade_to(Color(1.0, 0.94, 0.78, 0.0), 0.8))
+
+
+func _end_next_chapter() -> void:
+	if end_card != null:
+		end_card.queue_free()
+		end_card = null
+	_scene_queue.clear()
+	if world != null:
+		world.queue_free()
+		world = null
+	Sfx.stop_all_loops()
+	_finale_done = false
+	save.switch_chapter(2)
+	_set_chapter(2)
+	fade.color = Color(0, 0, 0, 1)
+	_route_after_note(false)
+	_fade_to(Color(0, 0, 0, 0), 1.0)
 
 
 func _end_keep_exploring() -> void:
@@ -599,6 +657,17 @@ func debug_children(path: String) -> void:
 
 func debug_skip(section: String) -> void:
 	world.backdrop.skip[section] = true
+
+
+func debug_chapter(n: int) -> void:
+	QuranText.inst.allow_network = false  # pas de réseau pendant les essais
+	if title != null:
+		title.queue_free()
+		title = null
+	save.note_seen = true
+	save.switch_chapter(n)
+	_set_chapter(n)
+	_route_after_note(false)
 
 
 func debug_state() -> void:

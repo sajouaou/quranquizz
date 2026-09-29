@@ -1,0 +1,189 @@
+{
+  "_comment": "Chapitre 2. Les « sens approximatifs » sont des résumés à faire relire ; aucun texte coranique n'est écrit ici.",
+  "triggers": [
+    {
+      "id": "c2_home",
+      "x": 0,
+      "style": "whisper",
+      "lines": [
+        "Ma chambre… Elle est comme avant. Mais quelque chose cloche."
+      ],
+      "objective": "Sors de la chambre : une lumière t'attend derrière la porte."
+    },
+    {
+      "id": "c2_love_enter",
+      "x": 2500,
+      "lines": [
+        "Des cœurs, des guirlandes, des roses… C'est la fête des amoureux.",
+        "Mais où sont les gens ? Il ne reste que des tables pour deux, et leurs bougies allumées."
+      ],
+      "objective": "Explore la ville en fête."
+    },
+    {
+      "id": "c2_love_mid",
+      "x": 4300,
+      "style": "whisper",
+      "lines": [
+        "Ce que le rêve me montre, ce n'est pas l'amour : c'est son décor."
+      ]
+    },
+    {
+      "id": "c2_parade_enter",
+      "x": 6600,
+      "style": "whisper",
+      "lines": [
+        "Une fanfare, des bannières dorées… tout l'or du monde semble avancer."
+      ]
+    },
+    {
+      "id": "c2_parade_after",
+      "x": 9250,
+      "style": "whisper",
+      "lines": [
+        "Tout ce qu'il avait, la terre l'a repris. Et moi qui, un instant, l'enviais…"
+      ]
+    },
+    {
+      "id": "c2_spirits_enter",
+      "x": 9700,
+      "lines": [
+        "La nuit, des bouteilles, des néons.",
+        "Ce que j'ai appris sur cela est venu en trois étapes. Suivons-les dans l'ordre."
+      ],
+      "objective": "Retrouve les trois paroles, dans l'ordre."
+    },
+    {
+      "id": "c2_graves_enter",
+      "x": 12500,
+      "lines": [
+        "Le silence. Des tertres de terre, des dalles nues.",
+        "Ici, tout le monde arrive, un jour. Moi aussi."
+      ],
+      "objective": "Avance parmi les tombes."
+    },
+    {
+      "id": "c2_end",
+      "x": 16000,
+      "style": "whisper",
+      "lines": [
+        "Là-bas, le jour se lève. Il reste du temps, tant que je respire."
+      ]
+    }
+  ],
+  "reactions": {
+    "luqman": {
+      "meaning": {
+        "text": "Nous avons recommandé à l'homme la bienfaisance envers ses parents : sa mère l'a porté dans la peine sur la peine.",
+        "ref": "31:14"
+      },
+      "lines": [
+        "Ces conseils… je les avais entendus. Petit, je faisais semblant de ne pas les entendre.",
+        "Mes parents m'appelaient, et moi je continuais à jouer.",
+        "Luqman disait à son fils : prie, fais le bien, sois patient. Ce n'était pas trop tard pour l'écouter, et ça ne l'est toujours pas."
+      ],
+      "objective": "Retrouve les pages du Mushaf, encore : le rêve continue."
+    },
+    "isra": {
+      "meaning": {
+        "text": "N'approchez pas de la fornication : c'est une turpitude, et quel mauvais chemin !",
+        "ref": "17:32"
+      },
+      "lines": [
+        "Il ne dit pas seulement « ne le fais pas » : il dit « n'approche pas ». Il protège avant la chute.",
+        "Cette ville vend l'apparence de l'amour, sans lendemain. Le chemin permis, lui, a un engagement et une maison.",
+        "Je ne juge personne ici : je regarde d'abord mes propres pas."
+      ]
+    },
+    "nur": {
+      "meaning": {
+        "text": "Dis aux croyants de baisser leurs regards et de préserver leur chasteté : c'est plus pur pour eux.",
+        "ref": "24:30"
+      },
+      "lines": [
+        "Baisser le regard, ce n'est pas se cacher du monde : c'est garder son cœur.",
+        "Une sourate entière, faite pour protéger la vie de famille et l'honneur de chacun."
+      ]
+    },
+    "qarun": {
+      "meaning": {
+        "text": "Nous fîmes engloutir par la terre lui et sa demeure ; il n'eut aucun groupe pour le secourir contre Allah.",
+        "ref": "28:81"
+      },
+      "lines": [
+        "Il disait : « Ce que j'ai, c'est grâce à mon savoir. » Comme si la richesse venait de lui.",
+        "Ceux qui l'enviaient, la veille, se sont réveillés en disant : « Quelle grâce que Dieu ne nous ait pas engloutis ! »",
+        "Tout ce qu'il possédait ne l'a pas protégé. Et moi, à quoi ai-je attaché mon cœur ?"
+      ]
+    },
+    "khamr1": {
+      "meaning": {
+        "text": "Ils t'interrogent sur le vin et les jeux de hasard. Dis : dans les deux il y a un grand péché et des avantages pour les gens, mais leur péché est plus grand que leur utilité.",
+        "ref": "2:219"
+      },
+      "lines": [
+        "Première parole : on montre où penche la balance, avant d'aller plus loin.",
+        "Le sceau de la table suivante s'ouvre quand celle-ci est lue."
+      ]
+    },
+    "khamr2": {
+      "meaning": {
+        "text": "Ô vous qui croyez, n'approchez pas la prière alors que vous êtes ivres, jusqu'à ce que vous sachiez ce que vous dites.",
+        "ref": "4:43"
+      },
+      "lines": [
+        "Deuxième étape : la prière exige un esprit présent.",
+        "Ma prière du matin, je l'ai manquée, et sans avoir rien bu. Ce qui endort le cœur n'a pas besoin d'une bouteille."
+      ]
+    },
+    "khamr3": {
+      "meaning": {
+        "text": "Satan veut seulement semer entre vous l'inimitié et la haine par le vin et les jeux de hasard, et vous détourner du rappel d'Allah et de la prière. Allez-vous y mettre fin ?",
+        "ref": "5:91"
+      },
+      "lines": [
+        "Troisième étape : le mot final. Il ne reste plus qu'à s'en écarter.",
+        "Ce que l'on apprend en trois temps, on peut le vivre en un seul : se relever."
+      ]
+    },
+    "hijr": {
+      "meaning": {
+        "text": "Et adore ton Seigneur jusqu'à ce que te vienne la certitude.",
+        "ref": "15:99"
+      },
+      "lines": [
+        "La certitude, c'est la mort : elle vient pour tout le monde.",
+        "Je l'ai repoussée comme une chose lointaine. Ici, elle est là, calme, tout près."
+      ]
+    },
+    "muddathir": {
+      "meaning": {
+        "text": "Toute âme est l'otage de ce qu'elle a acquis.",
+        "ref": "74:38"
+      },
+      "lines": [
+        "Ce que j'ai acquis, je le porte.",
+        "Je ne pourrai plus dire « plus tard » : c'est maintenant qu'on peut encore choisir."
+      ]
+    },
+    "qiyamah": {
+      "meaning": {
+        "text": "L'homme pense-t-il qu'on le laissera sans but ?",
+        "ref": "75:36"
+      },
+      "lines": [
+        "Non : rien n'est laissé sans compte, ni sans sens.",
+        "La résurrection est une réalité. Et je vivais comme si elle ne l'était pas."
+      ]
+    },
+    "naba": {
+      "meaning": {
+        "text": "Le jour où l'homme verra ce que ses mains ont avancé, et où celui qui n'a pas cru dira : Hélas ! Que ne suis-je poussière !",
+        "ref": "78:40"
+      },
+      "lines": [
+        "Le regret de ce jour-là est immense. Celui d'aujourd'hui est encore utile.",
+        "Tant que je respire, il est encore temps."
+      ]
+    }
+  }
+}

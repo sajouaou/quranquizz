@@ -10,6 +10,8 @@ const NotePanel := preload("res://scripts/ui/note_panel.gd")
 signal new_game
 signal continue_game
 signal quit_game
+signal chapter1
+signal chapter2
 signal touch_changed
 
 var save: RefCounted
@@ -91,13 +93,19 @@ func _ready() -> void:
 	gap.custom_minimum_size = Vector2(0, 18)
 	_menu.add_child(gap)
 
-	if save != null and save.intro_seen and save.exists():
+	if save != null and (save.intro_seen or save.flag("c2_intro")) and save.exists():
 		var n: int = save.count()
-		_first = _button("Continuer  (%d / 604 pages)" % n, func() -> void: continue_game.emit())
+		_first = _button("Continuer  (chapitre %d, %d / 604 pages)" % [save.chapter, n], func() -> void: continue_game.emit())
 	var new_label := "Nouvelle partie" if _first != null else "Commencer"
 	var nb := _button(new_label, func() -> void: new_game.emit())
 	if _first == null:
 		_first = nb
+	if save != null and save.intro_seen and save.chapter == 2:
+		_button("Reprendre le chapitre 1", func() -> void: chapter1.emit())
+	if save != null and save.chapter == 2 and save.flag("c2_intro"):
+		pass  # « Continuer » reprend déjà le chapitre 2
+	else:
+		_button("Chapitre 2 : les leçons oubliées", func() -> void: chapter2.emit())
 	_button("Réglages", _show_options)
 	_button("À propos de l'histoire", _show_note)
 	if can_quit:

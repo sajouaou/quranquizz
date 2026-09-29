@@ -67,3 +67,31 @@ Le prototype place **23 objets à prendre**, qui touchent **23 pages sur 604, en
    et un bot vérifie que la page est atteignable avec les sauts du personnage.
 
 Aucun texte coranique n'est écrit dans ces fichiers ; un test le vérifie.
+
+# Chapitre 2 : les leçons oubliées
+
+Un second rêve, dans le même monde d'images : la maison, une ville de fête, l'avenue d'un homme riche, la rue de l'ivresse, les tombes.
+Il compte **11 objets à prendre** (`data/world_pages_2.json`, textes dans `data/dialogue_2.json`) qui touchent près de 40 pages, la plupart par sourate entière
+(`grant_surah`) puisque ces sourates sont courtes ou se lisent d'un trait.
+
+| Page(s) | Ce qu'on prend | Zone | Type | Comment l'obtenir | Réaction |
+|---|---|---|---|---|---|
+| 411–414 | Luqman en entier | ville en fête | visible | visible | `luqman` |
+| 282–293 | Al-Isra en entier | ville en fête | visible | visible | `isra` |
+| 350–359 | An-Nur en entier | ville en fête | hidden | reste immobile 2.4 s : elle apparaît | `nur` |
+| 394–396 | Al-Qasas (partie des pages) | avenue d'or | hidden | regarde le cortège : elle apparaît quand la terre l'a englouti | `qarun` |
+| 34 | Al-Baqarah | rue de l'ivresse | visible | visible | `khamr1` |
+| 85 | An-Nisa | rue de l'ivresse | locked | sceau : il faut d'abord lire la ou les paroles précédentes | `khamr2` |
+| 123 | Al-Ma'idah | rue de l'ivresse | locked | sceau : il faut d'abord lire la ou les paroles précédentes | `khamr3` |
+| 267 | Al-Hijr (partie des pages) | tombes | visible | visible | `hijr` |
+| 575–577 | Al-Muddaththir en entier | tombes | hidden | reste immobile 2.4 s : elle apparaît | `muddathir` |
+| 577–578 | Al-Qiyamah en entier | tombes | visible | visible | `qiyamah` |
+| 582–583 | An-Naba en entier | tombes | locked | sceau de l'aube : tout le reste doit être revenu | `naba` |
+
+## Les lieux et leur lien avec les pages
+
+- **La chambre d'enfance (cinématique)** : l'homme se voit petit, absorbé par ses jeux, tandis que ses parents l'appellent, à la prière puis pour un petit service ; il continue à jouer. À la fin, la page de **Luqman** apparaît : il avait entendu ces conseils sans les suivre.
+- **La ville en fête (Al-Isra 17:32, An-Nur)** : guirlandes de cœurs, roses, tables pour deux, bougies allumées, **et personne** : le rêve montre le décor de l'amour sans lendemain. Les paroles sur « ne vous approchez pas de la fornication » (Al-Isra) et sur le regard baissé et la chasteté (An-Nur) sont présentées avec douceur, en insistant sur ce qui protège avant la chute, sans jugement sur qui que ce soit.
+- **L'avenue d'or (fin d'Al-Qasas, pages 394 à 396)** : un cortège somptueux (bannières, chariots de coffres, un char doré où se tient une silhouette sans visage) avance, puis la terre s'ouvre et l'engloutit (Al-Qasas 28:76-82). La page se révèle alors. Le joueur est immobilisé quelques secondes pour regarder.
+- **La rue de l'ivresse (2:219, 4:43, 5:91)** : trois tables, trois étapes, **dans l'ordre de la révélation**. Chaque page scellée s'ouvre quand la précédente est lue. Décor : bouteilles et néons, aucune personne.
+- **Les tombes (Al-Hijr 15:99, Al-Muddaththir, Al-Qiyamah, An-Naba')** : des tertres de terre et de simples dalles nues, sans inscription ni ornement. Regret, certitude de la mort, résurrection comme réalité ; la dernière page (An-Naba') est scellée jusqu'à ce que tout le reste soit revenu, et le chapitre se termine sur « tant que je respire, il est encore temps ».

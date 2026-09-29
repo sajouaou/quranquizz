@@ -9,6 +9,8 @@ const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const WORLD_W := 15600.0
 
 var camera: Camera2D
+var chapter: int = 1
+var world_w: float = WORLD_W
 var t: float = 0.0
 var _stars: Array = []
 var _far: PackedVector2Array
@@ -26,12 +28,12 @@ func _ready() -> void:
 	rng.seed = 424242
 	for i in range(220):
 		_stars.append(Vector3(rng.randf(), rng.randf() * 0.72, rng.randf() * TAU))
-	_far = DrawUtil.hills(rng, -200.0, WORLD_W + 400.0, 0.0, 120.0, 60.0)
-	_near = DrawUtil.hills(rng, -200.0, WORLD_W + 400.0, 0.0, 70.0, 50.0)
-	_rock_far = DrawUtil.hills(rng, -200.0, WORLD_W + 400.0, 0.0, 200.0, 45.0)
-	_rock_near = DrawUtil.hills(rng, -200.0, WORLD_W + 400.0, 0.0, 120.0, 35.0)
+	_far = DrawUtil.hills(rng, -200.0, world_w + 400.0, 0.0, 120.0, 60.0)
+	_near = DrawUtil.hills(rng, -200.0, world_w + 400.0, 0.0, 70.0, 50.0)
+	_rock_far = DrawUtil.hills(rng, -200.0, world_w + 400.0, 0.0, 200.0, 45.0)
+	_rock_near = DrawUtil.hills(rng, -200.0, world_w + 400.0, 0.0, 120.0, 35.0)
 	var x := -100.0
-	while x < WORLD_W + 300.0:
+	while x < world_w + 300.0:
 		var w := rng.randf_range(80.0, 190.0)
 		var kind := "block"
 		var r := rng.randf()
@@ -53,17 +55,21 @@ func _process(delta: float) -> void:
 
 
 func _weights(x: float) -> Dictionary:
+	if chapter == 2:
+		# ville puis collines : pas de grotte, pas de sommet
+		return {"city": 1.0 - smoothstep(9300.0, 9900.0, x), "cave": 0.0, "peak": 0.0, "hills": 1.0}
 	return {
 		"city": 1.0 - smoothstep(8500.0, 9100.0, x),
 		"cave": smoothstep(8900.0, 9400.0, x) * (1.0 - smoothstep(12000.0, 12500.0, x)),
 		"peak": smoothstep(12300.0, 12900.0, x),
+		"hills": 0.0,
 	}
 
 
 func _draw() -> void:
 	var vp := get_viewport_rect().size
 	var cam := camera.get_screen_center_position() if camera != null else Vector2(640, 420)
-	var sky := P.sky_at(cam.x)
+	var sky := P.sky_at(cam.x, chapter)
 	var w := _weights(cam.x)
 	var horizon := vp.y * 0.66 + (420.0 - cam.y) * 0.16
 
@@ -83,11 +89,11 @@ func _draw() -> void:
 	# Silhouettes lointaines
 	var far_col := (sky["bottom"] as Color).lerp(sky["mid"], 0.55).darkened(0.25)
 	var near_col := (sky["bottom"] as Color).lerp(P.NIGHT, 0.55)
-	if (w["peak"] > 0.01 or w["city"] > 0.01) and not skip.has("far"):
+	if (w["peak"] > 0.01 or w["city"] > 0.01 or w["hills"] > 0.01) and not skip.has("far"):
 		_draw_hills(_far, cam, 0.12, vp, horizon + 6.0, DrawUtil.with_alpha(far_col, 1.0 - w["cave"]))
 	if w["city"] > 0.01 and not skip.has("city"):
 		_draw_city(cam, vp, horizon + 46.0, (sky["bottom"] as Color).lerp(P.NIGHT, 0.5), w["city"])
-	if (w["peak"] > 0.01 or w["city"] > 0.01) and not skip.has("near"):
+	if (w["peak"] > 0.01 or w["city"] > 0.01 or w["hills"] > 0.01) and not skip.has("near"):
 		_draw_hills(_near, cam, 0.5, vp, horizon + 150.0, DrawUtil.with_alpha(near_col, 1.0 - w["cave"]))
 	if w["cave"] > 0.01:
 		_draw_cave(vp, cam, w["cave"])
