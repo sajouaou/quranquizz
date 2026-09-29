@@ -35,6 +35,9 @@ Dans `export_presets.cfg` (preset « Android AAB », et « Android APK » pour r
 - `gradle_build/target_sdk=""` : vide = valeur par défaut de Godot. Vérifie dans la Play Console (« Politique > Exigences de niveau d'API cible ») que le niveau exigé est atteint ; sinon mets-le ici.
 - `permissions/internet=true` : nécessaire uniquement pour télécharger le texte des pages depuis quran.com. Si tu embarques le texte (voir `tools/fetch_mushaf_text.py`), tu peux le retirer et écrire « aucune donnée » dans la déclaration de sécurité.
 
+> **« Le modèle de compilation Android n'est pas installé dans le projet »** : lance `tools/android-release.sh setup` (ou `build`, qui le fait tout seul), ou dans l'éditeur : *Projet > Installer le modèle de compilation Android*.
+> Le message `cannot connect to daemon at tcp:5037` qui suit vient d'`adb` (aucun téléphone connecté) : il est sans importance pour un export.
+
 ## 3. La clé de signature
 
 Google Play utilise la **signature d'application par Google** (Play App Signing) : tu signes ton bundle avec une **clé d'importation** (upload key), et Google le re-signe avec la clé finale qu'il garde.

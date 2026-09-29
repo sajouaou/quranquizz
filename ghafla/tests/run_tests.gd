@@ -418,7 +418,7 @@ func _own_def(d: Dictionary) -> void:
 func _test_persistence() -> void:
 	await _make_world()
 	world.collect_page(world.pickups["322"])
-	world.collect_page(world.pickups["600:100"])
+	world.collect_page(world.pickups["600"])
 	world.trigger_event("coins_gone")
 	for n in world.pages_root.get_children():
 		if n.get("id") == "rack" or n.get("id") == "vein_300" or n.get("id") == "door":
@@ -434,7 +434,7 @@ func _test_persistence() -> void:
 	add_child(world)
 	world.start(save2, mushaf)
 	await get_tree().physics_frame
-	ok(not world.pickups.has("322") and not world.pickups.has("600:100"), "les pages déjà prises ne réapparaissent pas au rechargement")
+	ok(not world.pickups.has("322") and not world.pickups.has("600"), "les pages déjà prises ne réapparaissent pas au rechargement")
 	ok(world.pickups.has("600:101") and world.pickups.has("600:102"), "… mais celles qui restent à trouver sont là")
 	ok(not world.pickups["600:102"].hidden_state, "la partie révélée par les pièces reste révélée")
 	var market: Variant = null
@@ -459,8 +459,9 @@ func _test_parts() -> void:
 	world.collect_page(world.pickups["600:102"])
 	ok(save.has_part(600, 102) and not save.has_part(600, 101) and not save.has_page(600), "At-Takathur seule : la page 600 n'est pas complète")
 	ok(save.page_progress(600) == Vector2i(1, 3) and save.count() == 0, "progression de la page 600 : 1 partie sur 3, aucune page complète")
-	world.collect_page(world.pickups["600:100"])
+	world.collect_page(world.pickups["600"])
 	world.collect_page(world.pickups["600:101"])
+	ok(save.has_part(599, 100) and not save.has_page(599), "Al-'Adiyat est prise en entier (son début est sur la page 599, qui reste à moitié)")
 	ok(save.has_page(600) and save.count() == 1, "les trois parties réunies complètent la page 600")
 	world.collect_page(world.pickups["601:103"])
 	ok(save.page_progress(601) == Vector2i(1, 3) and not save.has_page(601), "Al-'Asr est prise à part de Al-Humazah et Al-Fil")

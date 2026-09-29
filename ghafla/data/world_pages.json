@@ -67,11 +67,11 @@
   },
   {
    "page": 600,
-   "part": 100,
    "x": 5600,
    "lift": 80,
    "kind": "visible",
-   "reaction": "adiyat"
+   "reaction": "adiyat",
+   "grant_surah": 100
   },
   {
    "page": 600,

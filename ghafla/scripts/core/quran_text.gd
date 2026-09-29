@@ -8,6 +8,7 @@ extends Node
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 
 signal loaded(page: int)
+signal progress(done: int, total: int)  # téléchargement complet du Mushaf (voir prefetch_all)
 
 static var inst: Node
 
@@ -16,7 +17,12 @@ var _texts: Dictionary = {}  # page -> texte prêt à afficher
 var _segs: Dictionary = {}  # page -> [{surah, first, text}] : le texte découpé par sourate
 var _failed: Dictionary = {}  # page -> instant de l'échec (nouvel essai après 45 s)
 var _queue: Array = []
-var _busy: bool = false
+var _active: int = 0  # requêtes en cours
+var _prefetch_total: int = 0
+var _prefetch_left: int = 0
+var base_url: String = "https://api.quran.com/api/v4/quran/verses/uthmani?page_number="
+const MAX_PARALLEL := 4
+var total_pages: int = 604
 
 
 func _ready() -> void:
@@ -97,26 +103,67 @@ static func compose(verses: Array) -> String:
 	return " ".join(parts)
 
 
-func _pump() -> void:
-	if _busy or _queue.is_empty():
+## Télécharge le texte de toutes les pages qu'on n'a pas encore (en tâche de fond, quelques requêtes à la fois).
+## Appelé pendant la cinématique d'ouverture ; sans réseau, les pages en échec seront redemandées à la demande.
+func prefetch_all() -> void:
+	if not allow_network:
 		return
-	_busy = true
-	var page: int = _queue.pop_front()
-	var req := HTTPRequest.new()
-	req.timeout = 12.0
-	add_child(req)
-	req.request_completed.connect(func(result: int, code: int, _h: PackedStringArray, body: PackedByteArray) -> void:
-		_on_done(page, result, code, body)
-		req.queue_free())
-	var err := req.request("https://api.quran.com/api/v4/quran/verses/uthmani?page_number=%d" % page)
-	if err != OK:
-		_failed[page] = Time.get_ticks_msec()
-		_busy = false
-		req.queue_free()
+	var missing := 0
+	for p in range(1, total_pages + 1):
+		if not _cached(p) and not _queue.has(p):
+			_queue.append(p)
+			missing += 1
+	_prefetch_total = missing
+	_prefetch_left = missing
+	progress.emit(0, missing)
+	_pump()
+
+
+func is_complete() -> bool:
+	for p in range(1, total_pages + 1):
+		if not _cached(p):
+			return false
+	return true
+
+
+func missing_count() -> int:
+	var n := 0
+	for p in range(1, total_pages + 1):
+		if not _cached(p):
+			n += 1
+	return n
+
+
+func _cached(page: int) -> bool:
+	return _texts.has(page) or FileAccess.file_exists("res://data/mushaf_text/page_%03d.json" % page) or FileAccess.file_exists("user://mushaf_text/page_%03d.json" % page)
+
+
+func _pump() -> void:
+	while _active < MAX_PARALLEL and not _queue.is_empty():
+		var page: int = _queue.pop_front()
+		var req := HTTPRequest.new()
+		req.timeout = 12.0
+		add_child(req)
+		_active += 1
+		req.request_completed.connect(func(result: int, code: int, _h: PackedStringArray, body: PackedByteArray) -> void:
+			_on_done(page, result, code, body)
+			req.queue_free())
+		var err := req.request(base_url + str(page))
+		if err != OK:
+			_active -= 1
+			_failed[page] = Time.get_ticks_msec()
+			_count_done()
+			req.queue_free()
+
+
+func _count_done() -> void:
+	if _prefetch_left > 0:
+		_prefetch_left -= 1
+		progress.emit(_prefetch_total - _prefetch_left, _prefetch_total)
 
 
 func _on_done(page: int, result: int, code: int, body: PackedByteArray) -> void:
-	_busy = false
+	_active = maxi(_active - 1, 0)
 	var ok := false
 	if result == HTTPRequest.RESULT_SUCCESS and code == 200:
 		var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
@@ -134,4 +181,5 @@ func _on_done(page: int, result: int, code: int, body: PackedByteArray) -> void:
 				loaded.emit(page)
 	if not ok:
 		_failed[page] = Time.get_ticks_msec()
+	_count_done()
 	_pump()

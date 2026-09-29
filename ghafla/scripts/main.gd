@@ -53,6 +53,7 @@ var _autosave: float = 0.0
 var _pool_index: Dictionary = {}
 var _finale_done: bool = false
 var _leaving: bool = false
+var _dl_label: Label
 
 
 func _ready() -> void:
@@ -139,6 +140,17 @@ func _build_ui() -> void:
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade_layer.add_child(fade)
+	_dl_label = Label.new()
+	_dl_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_dl_label.offset_left = 20
+	_dl_label.offset_top = -40
+	_dl_label.offset_right = 520
+	_dl_label.add_theme_font_size_override("font_size", 15)
+	_dl_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+	_dl_label.visible = false
+	fade_layer.add_child(_dl_label)
+	if QuranText.inst != null:
+		QuranText.inst.progress.connect(_on_dl_progress)
 	_set_play_ui(false)
 
 
@@ -218,8 +230,9 @@ func _after_title_choice(is_new: bool) -> void:
 		title.queue_free()
 		title = null
 	if not save.note_seen:
-		_show_note(func() -> void:
+		_show_note(func(download: bool) -> void:
 			save.note_seen = true
+			save.download_text = download
 			save.save_file()
 			_route_after_note(is_new))
 	else:
@@ -237,10 +250,12 @@ func _show_note(on_done: Callable) -> void:
 	state = State.NOTE
 	note = NotePanel.new()
 	note.name = "Note"
+	note.offer_download = true  # première partie : on prévient du téléchargement du texte et on demande
 	note.accepted.connect(func() -> void:
+		var download: bool = note.download
 		note.queue_free()
 		note = null
-		on_done.call())
+		on_done.call(download))
 	ui_root.add_child(note)
 
 
@@ -253,11 +268,29 @@ func _open_note_from_pause() -> void:
 	ui_root.add_child(n)
 
 
+# ------------------------------------------------------------------------------------ texte du Mushaf
+
+## Télécharge le texte de tout le Mushaf en tâche de fond (annoncé avant, sur l'écran de note).
+func _start_text_download() -> void:
+	if not save.download_text or QuranText.inst == null or QuranText.inst.is_complete():
+		return
+	QuranText.inst.prefetch_all()
+
+
+func _on_dl_progress(done: int, total: int) -> void:
+	var busy := total > 0 and done < total
+	_dl_label.visible = busy and state != State.PLAY and state != State.END
+	_dl_label.text = "Téléchargement du texte du Mushaf : %d / %d" % [done, total]
+	if total > 0 and done >= total and state == State.PLAY:
+		hud.toast("Le texte du Mushaf est téléchargé.")
+
+
 # ------------------------------------------------------------------------------------------- cinématique
 
 func _play_cinematic() -> void:
 	state = State.CINEMATIC
 	_set_play_ui(false)
+	_start_text_download()
 	cinematic = Cinematic.new()
 	cinematic.name = "Cinematic"
 	cinematic.finished.connect(_on_cinematic_finished)
@@ -301,6 +334,8 @@ func _start_world(from_save: bool) -> void:
 	world.start(save, mushaf, spawn)
 	book.setup(save, mushaf, world.placed_pages)
 	_set_play_ui(true)
+	if from_save:
+		_start_text_download()
 	hud.set_touch(_touch_wanted())
 	hud.set_count(save.count())
 	hud.set_key(save.has_item("key_chest"))

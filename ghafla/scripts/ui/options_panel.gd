@@ -4,6 +4,7 @@ extends PanelContainer
 const P := preload("res://scripts/core/palette.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
+const QuranText := preload("res://scripts/core/quran_text.gd")
 
 signal closed
 signal touch_changed
@@ -14,6 +15,7 @@ var save: RefCounted
 var _slider: HSlider
 var _touch_button: Button
 var _back: Button
+var _dl_button: Button
 
 
 func setup(save_data: RefCounted) -> void:
@@ -57,6 +59,13 @@ func _ready() -> void:
 	_touch_button.pressed.connect(_cycle_touch)
 	box.add_child(_touch_button)
 	_refresh_touch()
+
+	_dl_button = Button.new()
+	_dl_button.pressed.connect(_download_text)
+	box.add_child(_dl_button)
+	_refresh_dl()
+	if QuranText.inst != null:
+		QuranText.inst.progress.connect(func(_d: int, _t: int) -> void: _refresh_dl())
 
 	_back = Button.new()
 	_back.text = "Retour"
@@ -103,3 +112,24 @@ func _refresh_touch() -> void:
 			0:
 				idx = 2
 	_touch_button.text = TOUCH_LABELS[idx]
+
+
+func _download_text() -> void:
+	if QuranText.inst == null:
+		return
+	if save != null:
+		save.download_text = true
+		save.save_file()
+	QuranText.inst.prefetch_all()
+	_refresh_dl()
+
+
+func _refresh_dl() -> void:
+	if _dl_button == null or not is_instance_valid(_dl_button):
+		return
+	if QuranText.inst == null:
+		_dl_button.visible = false
+		return
+	var missing: int = QuranText.inst.missing_count()
+	_dl_button.text = "Texte du Mushaf : complet" if missing == 0 else "Texte du Mushaf : %d pages à télécharger — télécharger" % missing
+	_dl_button.disabled = missing == 0

@@ -19,6 +19,7 @@ func _ready() -> void:
 	var scene: PackedScene = load("res://scenes/main.tscn")
 	main = scene.instantiate()
 	add_child(main)
+	main.get_node("QuranText").allow_network = false  # pas de réseau dans les tests
 	await _run()
 	DirAccess.remove_absolute("user://ghafla_smoke_save.json")
 	print("[smoke] ---------------------------------")

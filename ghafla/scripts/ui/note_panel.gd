@@ -14,7 +14,10 @@ const PARAGRAPHS := [
 	"Le texte du Coran n'est jamais écrit à la main dans le jeu : les pages sont affichées à partir d'une source de texte reconnue, ou seulement suggérées par des traits si le texte n'est pas disponible. Les citations en français sont marquées « sens approximatif » : ce sont des résumés, pas une traduction du Coran.",
 	"Volontairement, il n'y a ni visage, ni statue, ni image de personne, et pas de musique.",
 ]
+const DOWNLOAD_TEXT := "Téléchargement : pendant la cinématique d'ouverture, le jeu peut télécharger le texte de tout le Mushaf (604 pages, environ 2 Mo, une seule fois, connexion Internet nécessaire). Il est gardé sur l'appareil ; sans lui, les pages du livre affichent seulement des traits."
 
+var offer_download: bool = false  # première partie : on prévient du téléchargement du texte du Mushaf et on demande
+var download: bool = true
 var _button: Button
 
 
@@ -45,12 +48,36 @@ func _ready() -> void:
 		var l := Label.new()
 		l.text = text
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.add_theme_font_size_override("font_size", 21)
+		l.add_theme_font_size_override("font_size", 19 if offer_download else 21)
 		box.add_child(l)
-	_button = Button.new()
-	_button.text = "J'ai compris"
-	_button.custom_minimum_size = Vector2(260, 0)
-	_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_button.pressed.connect(func() -> void: accepted.emit())
-	box.add_child(_button)
+	if offer_download:
+		var d := Label.new()
+		d.text = DOWNLOAD_TEXT
+		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		d.add_theme_font_size_override("font_size", 19)
+		d.add_theme_color_override("font_color", Color(1.0, 0.93, 0.72))
+		box.add_child(d)
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 16)
+		box.add_child(row)
+		_button = _choice(row, "Télécharger (recommandé)", true)
+		_choice(row, "Plus tard, je joue hors ligne", false)
+	else:
+		_button = Button.new()
+		_button.text = "J'ai compris"
+		_button.custom_minimum_size = Vector2(260, 0)
+		_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		_button.pressed.connect(func() -> void: accepted.emit())
+		box.add_child(_button)
 	_button.grab_focus()
+
+
+func _choice(row: Control, label: String, value: bool) -> Button:
+	var b := Button.new()
+	b.text = label
+	b.pressed.connect(func() -> void:
+		download = value
+		accepted.emit())
+	row.add_child(b)
+	return b

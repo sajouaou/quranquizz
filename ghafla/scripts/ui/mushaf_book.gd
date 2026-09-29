@@ -297,7 +297,10 @@ func _draw_parts(c: Control, font: Font, body: Rect2, p: int) -> void:
 	var text_of := {}
 	for sg in segs:
 		text_of[int(sg["surah"])] = str(sg["text"])
-	var all_text := text_of.size() >= parts.size()
+	var all_text := true  # le texte couvre-t-il toutes les sourates de la page ? (sinon : traits abstraits)
+	for pt in parts:
+		if not text_of.has(int(pt[0])):
+			all_text = false
 	# poids de chaque zone : longueur du texte si on l'a, sinon nombre de versets
 	var weights := []
 	var total := 0.0
@@ -341,7 +344,7 @@ func _draw_parts(c: Control, font: Font, body: Rect2, p: int) -> void:
 			c.draw_rect(text_rect, Color("fbfaf6"))
 			c.draw_rect(text_rect, Color(0, 0, 0, 0.08), false, 1.0)
 			c.draw_string(font, Vector2(text_rect.position.x, text_rect.get_center().y + 6.0), "%s : à retrouver" % str(mushaf.surah(sid).get("name_fr", "")), HORIZONTAL_ALIGNMENT_CENTER, text_rect.size.x, 17, Color(0.62, 0.6, 0.6, 0.9))
-		elif text_of.has(sid):
+		elif all_text and text_of.has(sid):
 			_draw_text_fit(c, font, str(text_of[sid]), text_rect, size_cap)
 		else:
 			_draw_script_lines(c, text_rect, p * 31 + sid)

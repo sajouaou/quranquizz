@@ -200,8 +200,12 @@ bump_version() {
 preflight() {
   require_godot
   [ -d "$(templates_dir)" ] || die "modèles d'export absents : tools/android-release.sh templates"
-  [ -f android/build/build.gradle ] || die "modèle de compilation absent : tools/android-release.sh setup"
-  sh="$(sdk_home)" || die "SDK Android introuvable"
+  sh="$(sdk_home)" || die "SDK Android introuvable (définis ANDROID_HOME)"
+  # « Le modèle de compilation Android n'est pas installé dans le projet » : on l'installe nous-mêmes
+  if [ ! -f android/build/build.gradle ] || [ "$(cat android/.build_version 2>/dev/null)" != "$(godot_version)" ]; then
+    say "Modèle de compilation Android absent ou d'une autre version : installation"
+    cmd_setup
+  fi
   export ANDROID_HOME="$sh" ANDROID_SDK_ROOT="$sh"
   export JAVA_HOME="$(java_home)"
 }

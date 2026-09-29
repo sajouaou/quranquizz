@@ -7,7 +7,7 @@ Le prototype place **23 objets à prendre**, qui touchent **23 pages sur 604, en
 |---:|---|---|---|---|---|
 | 322 | Al-Anbya | rue | visible | visible | `anbiya` |
 | 1 | Al-Fatihah | rue | hidden | reste immobile 2.4 s près de l'endroit : elle apparaît | `fatiha` |
-| 600 | Al-'Adiyat (partie de la page) | souk | visible | visible | `adiyat` |
+| 600 | Al-'Adiyat en entier (pages 599 à 600) | souk | visible | visible | `adiyat` |
 | 600 | Al-Qari'ah (partie de la page) | souk | visible | visible | `qariah` |
 | 601 | Al-'Asr (partie de la page) | souk | visible | visible | `asr` |
 | 601 | Al-Humazah (partie de la page) | souk | locked | coffre : la clé est cachée dans les étoffes du souk | `humazah` |

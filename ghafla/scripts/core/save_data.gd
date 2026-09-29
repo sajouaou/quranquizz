@@ -16,6 +16,7 @@ var flags: Dictionary = {}  # repères d'histoire déjà vus
 var intro_seen: bool = false
 var note_seen: bool = false  # la note « histoire fictive » a été lue
 var finished: bool = false
+var download_text: bool = true  # télécharger le texte de tout le Mushaf pendant la cinématique
 var player_x: float = -1.0
 var player_y: float = -1.0
 var volume: float = 0.8
@@ -109,6 +110,7 @@ func to_dict() -> Dictionary:
 		"intro_seen": intro_seen,
 		"note_seen": note_seen,
 		"finished": finished,
+		"download": download_text,
 		"player": [player_x, player_y],
 		"volume": volume,
 		"touch": touch_controls,
@@ -137,6 +139,7 @@ func from_dict(d: Dictionary) -> void:
 	intro_seen = bool(d.get("intro_seen", false))
 	note_seen = bool(d.get("note_seen", false))
 	finished = bool(d.get("finished", false))
+	download_text = bool(d.get("download", true))
 	var pos: Array = d.get("player", [-1.0, -1.0])
 	player_x = float(pos[0]) if pos.size() > 0 else -1.0
 	player_y = float(pos[1]) if pos.size() > 1 else -1.0
