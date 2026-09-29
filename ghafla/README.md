@@ -18,7 +18,7 @@ Il comprend sa négligence et décide de tout retrouver.
 - Chaque page est liée à son lieu : Al-Kahf entière dans une grotte, At-Takathur et Al-Humazah dans un souk, et le personnage réagit
   à chacune (par exemple le regret d'avoir délaissé Al-Kahf le vendredi).
 
-Détails : [docs/PLAY_STORE.md](docs/PLAY_STORE.md) · [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) · [docs/PAGES.md](docs/PAGES.md) · [docs/CINEMATIC.md](docs/CINEMATIC.md) · [docs/BUILD.md](docs/BUILD.md)
+Détails : [docs/PLAY_STORE.md](docs/PLAY_STORE.md) · [docs/APPLE_STORE.md](docs/APPLE_STORE.md) · [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) · [docs/PAGES.md](docs/PAGES.md) · [docs/CINEMATIC.md](docs/CINEMATIC.md) · [docs/BUILD.md](docs/BUILD.md)
 
 ## Lancer
 
@@ -38,7 +38,9 @@ Touches : flèches ou Q/D pour marcher, Espace pour sauter, E pour agir, M pour 
 ```bash
 tools/test.sh                 # données, sauvegarde, verrous, bot qui traverse le monde
 tools/export.sh linux         # ou windows, web, android-apk, android-aab
+tools/android-keygen.sh                 # crée la clé de signature Android (.ps1 sous Windows)
 tools/android-release.sh build --bump   # bundle signé pour le Play Store (voir docs/PLAY_STORE.md)
+tools/apple-release.sh mac | ios        # macOS et iOS (voir docs/APPLE_STORE.md)
 ```
 
 ## État du prototype

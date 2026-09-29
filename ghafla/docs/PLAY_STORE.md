@@ -43,7 +43,9 @@ Dans `export_presets.cfg` (preset « Android AAB », et « Android APK » pour r
 Google Play utilise la **signature d'application par Google** (Play App Signing) : tu signes ton bundle avec une **clé d'importation** (upload key), et Google le re-signe avec la clé finale qu'il garde.
 
 ```bash
-tools/android-release.sh keygen
+tools/android-keygen.sh            # Linux, macOS, Git Bash (options : --name, --org, --country, --alias, --dir, --yes)
+.\tools\android-keygen.ps1         # Windows PowerShell
+# (tools/android-release.sh keygen fait la même chose)
 ```
 
 Crée dans `~/.ghafla-keys/` (jamais dans le dépôt) :

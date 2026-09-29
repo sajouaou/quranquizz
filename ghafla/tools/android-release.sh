@@ -5,7 +5,7 @@
 #   tools/android-release.sh templates        télécharge et installe les modèles d'export de Godot
 #   tools/android-release.sh sdk              installe les composants du SDK Android (si sdkmanager est présent)
 #   tools/android-release.sh setup            installe le modèle de compilation Android dans le projet et règle Godot
-#   tools/android-release.sh keygen           crée la clé d'importation (upload key) + son certificat, hors du dépôt
+#   tools/android-release.sh keygen           crée la clé d'importation (upload key) : voir tools/android-keygen.sh (.ps1 sous Windows)
 #   tools/android-release.sh build [--bump]   construit export/ghafla.aab (--bump : version/code + 1)
 #   tools/android-release.sh apk              construit export/ghafla.apk (test sur téléphone, sans le Play Store)
 #   tools/android-release.sh verify           affiche la signature du .aab
@@ -149,36 +149,8 @@ cmd_setup() {
 }
 
 cmd_keygen() {
-  local jh
-  jh="$(java_home)" || die "JDK introuvable (keytool)"
-  [ -f "$KEYSTORE" ] && die "$KEYSTORE existe déjà : je ne l'écrase pas"
-  mkdir -p "$KEYS_DIR"; chmod 700 "$KEYS_DIR"
-  local pass="${GHAFLA_KEY_PASSWORD:-}"
-  if [ -z "$pass" ]; then
-    read -r -s -p "Mot de passe de la clé (8 caractères minimum) : " pass; echo
-    read -r -s -p "Confirme : " pass2; echo
-    [ "$pass" = "$pass2" ] || die "les mots de passe diffèrent"
-  fi
-  [ "${#pass}" -ge 8 ] || die "mot de passe trop court"
-  local dname="${GHAFLA_DNAME:-CN=Ghafla, OU=Jeux, O=Ghafla, L=Ville, C=FR}"
-  "$jh/bin/keytool" -genkeypair -v -keystore "$KEYSTORE" -alias "$KEY_ALIAS" -keyalg RSA -keysize 4096 -validity 10000 \
-    -storepass "$pass" -keypass "$pass" -dname "$dname"
-  cat > "$ENV_FILE" <<ENV
-export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$KEYSTORE"
-export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$KEY_ALIAS"
-export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$pass"
-ENV
-  chmod 600 "$ENV_FILE" "$KEYSTORE"
-  "$jh/bin/keytool" -export -rfc -keystore "$KEYSTORE" -alias "$KEY_ALIAS" -storepass "$pass" -file "$KEYS_DIR/upload_certificate.pem"
-  cat <<MSG
-
-Clé créée dans $KEYS_DIR :
-  ghafla-upload.jks        la clé d'importation (à sauvegarder AILLEURS, et à ne jamais publier)
-  keystore.env             les variables lues par ce script
-  upload_certificate.pem   le certificat public (à donner à Google si on te le demande)
-
-Sauvegarde le .jks et le mot de passe dans un gestionnaire de mots de passe : sans eux, plus de mise à jour possible avec cette clé.
-MSG
+  shift || true
+  tools/android-keygen.sh "$@"
 }
 
 load_key() {
@@ -251,7 +223,7 @@ case "${1:-}" in
   templates) cmd_templates ;;
   sdk) cmd_sdk ;;
   setup) cmd_setup ;;
-  keygen) cmd_keygen ;;
+  keygen) cmd_keygen "$@" ;;
   build) shift; cmd_build "${1:-}" ;;
   apk) cmd_apk ;;
   verify) cmd_verify ;;
