@@ -1,0 +1,151 @@
+{
+ "_comment": "Chapter 1 scene texts. Quoted verses come from verses.json (a published translation), not from this file.",
+ "triggers": {
+  "house_start": {
+   "lines": [
+    "I don't understand what's happening to me. But I have to get out."
+   ],
+   "objective": "Open the front door."
+  },
+  "street_first": {
+   "lines": [
+    "This street… this sky… This isn't the neighbourhood I know.",
+    "Everything is still. And there's no one here."
+   ],
+   "objective": "Explore this dream."
+  },
+  "bridge_enter": {
+   "lines": [
+    "The path goes on above the clouds. From stone to stone…"
+   ]
+  },
+  "market_enter": {
+   "lines": [
+    "The souk… but no one. That noon light that never moves.",
+    "Time has stopped here."
+   ]
+  },
+  "market_coins": {
+   "lines": [
+    "Gold, everywhere… Would I only have to follow it?"
+   ]
+  },
+  "cave_enter": {
+   "lines": [
+    "It's dark. But the pages shine."
+   ]
+  },
+  "cave_exit": {
+   "lines": [
+    "Outside… the sky has changed again."
+   ]
+  },
+  "peak_climb": {
+   "lines": [
+    "The higher I climb, the closer the sky."
+   ]
+  },
+  "summit": {
+   "lines": [
+    "Up there, a door of light. Like a dawn that is waiting."
+   ]
+  }
+ },
+ "reactions": {
+  "anbiya": {
+   "lines": [
+    "Heedless… turned away.",
+    "That's me. That is what ghafla is.",
+    "Last night the Mushaf was right there, on the shelf. And I didn't even open it.",
+    "I can't stay like this. I will find every page."
+   ],
+   "objective": "Find the pages of the Mushaf. Some of them hide."
+  },
+  "fatiha": {
+   "lines": [
+    "Al-Fatiha… Seventeen times a day, in my obligatory prayers.",
+    "How many times did I truly mean it?"
+   ]
+  },
+  "takathur": {
+   "lines": [
+    "All that time spent chasing money…",
+    "It ran away from me, and I kept following it. It slipped through my fingers.",
+    "I counted my gains. I never counted my days."
+   ]
+  },
+  "kahf_first": {
+   "lines": [
+    "Al-Kahf… On Fridays.",
+    "I used to read it every week. Then one Friday missed, then another…",
+    "I regret those empty Fridays so much."
+   ]
+  },
+  "kahf_mid": {
+   "pool": [
+    "One more page. It lights up the cave.",
+    "Young men taking refuge with their Lord… and I took refuge in sleep.",
+    "Every Friday I read it. Until I stopped.",
+    "I recognise these words. They come back to me, page after page.",
+    "Here, time doesn't count. That is exactly the problem.",
+    "It glows as if it were waiting for me."
+   ]
+  },
+  "kahf_last": {
+   "lines": [
+    "The last page of the cave.",
+    "Hoping to meet my Lord… and I slept right beside His word."
+   ]
+  },
+  "sajdah": {
+   "lines": [
+    "As-Sajdah… It went with Al-Mulk, every evening before sleep.",
+    "How many evenings did I miss that appointment?"
+   ]
+  },
+  "mulk": {
+   "lines": [
+    "Al-Mulk… I used to read it every evening before sleeping.",
+    "Last night I went to bed without it."
+   ]
+  },
+  "final": {
+   "lines": [
+    "The last three… The ones for the morning, for the evening, for before sleep.",
+    "The sun is already up. But the door back is not closed.",
+    "I must get up, make my ablutions, and pray."
+   ]
+  },
+  "adiyat": {
+   "lines": [
+    "Horses charging at full gallop… and what was I charging after?",
+    "I was ungrateful without even noticing."
+   ]
+  },
+  "qariah": {
+   "lines": [
+    "On that day there will be no more time to waste.",
+    "And I have wasted so much, on trifles."
+   ]
+  },
+  "asr": {
+   "lines": [
+    "Time… I let it slip away.",
+    "I counted my riches, never my days.",
+    "But it is not too late to begin again."
+   ]
+  },
+  "humazah": {
+   "lines": [
+    "The time I wasted chasing money, no one will give back to me.",
+    "I believed that hoarding would protect me."
+   ]
+  },
+  "fil": {
+   "lines": [
+    "All their strength was powerless against what He had decided.",
+    "And I relied on my own means."
+   ]
+  }
+ }
+}

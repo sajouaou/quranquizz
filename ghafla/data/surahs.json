@@ -1,0 +1,836 @@
+{
+ "_comment": "Structure of the Madani mushaf (King Fahd Complex, 15 lines, Hafs 'an 'Asim). start_page = page where the surah begins; several short surahs can begin on the same page. Names are surah titles (not Qur'anic text).",
+ "total_pages": 604,
+ "juz_start_pages": [
+  1,
+  22,
+  42,
+  62,
+  82,
+  102,
+  122,
+  142,
+  162,
+  182,
+  202,
+  222,
+  242,
+  262,
+  282,
+  302,
+  322,
+  342,
+  362,
+  382,
+  402,
+  422,
+  442,
+  462,
+  482,
+  502,
+  522,
+  542,
+  562,
+  582
+ ],
+ "surahs": [
+  {
+   "id": 1,
+   "name_fr": "Al-Fatihah",
+   "name_ar": "الفاتحة",
+   "start_page": 1,
+   "verses": 7
+  },
+  {
+   "id": 2,
+   "name_fr": "Al-Baqarah",
+   "name_ar": "البقرة",
+   "start_page": 2,
+   "verses": 286
+  },
+  {
+   "id": 3,
+   "name_fr": "Ali 'Imran",
+   "name_ar": "آل عمران",
+   "start_page": 50,
+   "verses": 200
+  },
+  {
+   "id": 4,
+   "name_fr": "An-Nisa",
+   "name_ar": "النساء",
+   "start_page": 77,
+   "verses": 176
+  },
+  {
+   "id": 5,
+   "name_fr": "Al-Ma'idah",
+   "name_ar": "المائدة",
+   "start_page": 106,
+   "verses": 120
+  },
+  {
+   "id": 6,
+   "name_fr": "Al-An'am",
+   "name_ar": "الأنعام",
+   "start_page": 128,
+   "verses": 165
+  },
+  {
+   "id": 7,
+   "name_fr": "Al-A'raf",
+   "name_ar": "الأعراف",
+   "start_page": 151,
+   "verses": 206
+  },
+  {
+   "id": 8,
+   "name_fr": "Al-Anfal",
+   "name_ar": "الأنفال",
+   "start_page": 177,
+   "verses": 75
+  },
+  {
+   "id": 9,
+   "name_fr": "At-Tawbah",
+   "name_ar": "التوبة",
+   "start_page": 187,
+   "verses": 129
+  },
+  {
+   "id": 10,
+   "name_fr": "Yunus",
+   "name_ar": "يونس",
+   "start_page": 208,
+   "verses": 109
+  },
+  {
+   "id": 11,
+   "name_fr": "Hud",
+   "name_ar": "هود",
+   "start_page": 221,
+   "verses": 123
+  },
+  {
+   "id": 12,
+   "name_fr": "Yusuf",
+   "name_ar": "يوسف",
+   "start_page": 235,
+   "verses": 111
+  },
+  {
+   "id": 13,
+   "name_fr": "Ar-Ra'd",
+   "name_ar": "الرعد",
+   "start_page": 249,
+   "verses": 43
+  },
+  {
+   "id": 14,
+   "name_fr": "Ibrahim",
+   "name_ar": "إبراهيم",
+   "start_page": 255,
+   "verses": 52
+  },
+  {
+   "id": 15,
+   "name_fr": "Al-Hijr",
+   "name_ar": "الحجر",
+   "start_page": 262,
+   "verses": 99
+  },
+  {
+   "id": 16,
+   "name_fr": "An-Nahl",
+   "name_ar": "النحل",
+   "start_page": 267,
+   "verses": 128
+  },
+  {
+   "id": 17,
+   "name_fr": "Al-Isra",
+   "name_ar": "الإسراء",
+   "start_page": 282,
+   "verses": 111
+  },
+  {
+   "id": 18,
+   "name_fr": "Al-Kahf",
+   "name_ar": "الكهف",
+   "start_page": 293,
+   "verses": 110
+  },
+  {
+   "id": 19,
+   "name_fr": "Maryam",
+   "name_ar": "مريم",
+   "start_page": 305,
+   "verses": 98
+  },
+  {
+   "id": 20,
+   "name_fr": "Taha",
+   "name_ar": "طه",
+   "start_page": 312,
+   "verses": 135
+  },
+  {
+   "id": 21,
+   "name_fr": "Al-Anbya",
+   "name_ar": "الأنبياء",
+   "start_page": 322,
+   "verses": 112
+  },
+  {
+   "id": 22,
+   "name_fr": "Al-Hajj",
+   "name_ar": "الحج",
+   "start_page": 332,
+   "verses": 78
+  },
+  {
+   "id": 23,
+   "name_fr": "Al-Mu'minun",
+   "name_ar": "المؤمنون",
+   "start_page": 342,
+   "verses": 118
+  },
+  {
+   "id": 24,
+   "name_fr": "An-Nur",
+   "name_ar": "النور",
+   "start_page": 350,
+   "verses": 64
+  },
+  {
+   "id": 25,
+   "name_fr": "Al-Furqan",
+   "name_ar": "الفرقان",
+   "start_page": 359,
+   "verses": 77
+  },
+  {
+   "id": 26,
+   "name_fr": "Ash-Shu'ara",
+   "name_ar": "الشعراء",
+   "start_page": 367,
+   "verses": 227
+  },
+  {
+   "id": 27,
+   "name_fr": "An-Naml",
+   "name_ar": "النمل",
+   "start_page": 377,
+   "verses": 93
+  },
+  {
+   "id": 28,
+   "name_fr": "Al-Qasas",
+   "name_ar": "القصص",
+   "start_page": 385,
+   "verses": 88
+  },
+  {
+   "id": 29,
+   "name_fr": "Al-'Ankabut",
+   "name_ar": "العنكبوت",
+   "start_page": 396,
+   "verses": 69
+  },
+  {
+   "id": 30,
+   "name_fr": "Ar-Rum",
+   "name_ar": "الروم",
+   "start_page": 404,
+   "verses": 60
+  },
+  {
+   "id": 31,
+   "name_fr": "Luqman",
+   "name_ar": "لقمان",
+   "start_page": 411,
+   "verses": 34
+  },
+  {
+   "id": 32,
+   "name_fr": "As-Sajdah",
+   "name_ar": "السجدة",
+   "start_page": 415,
+   "verses": 30
+  },
+  {
+   "id": 33,
+   "name_fr": "Al-Ahzab",
+   "name_ar": "الأحزاب",
+   "start_page": 418,
+   "verses": 73
+  },
+  {
+   "id": 34,
+   "name_fr": "Saba",
+   "name_ar": "سبأ",
+   "start_page": 428,
+   "verses": 54
+  },
+  {
+   "id": 35,
+   "name_fr": "Fatir",
+   "name_ar": "فاطر",
+   "start_page": 434,
+   "verses": 45
+  },
+  {
+   "id": 36,
+   "name_fr": "Ya-Sin",
+   "name_ar": "يس",
+   "start_page": 440,
+   "verses": 83
+  },
+  {
+   "id": 37,
+   "name_fr": "As-Saffat",
+   "name_ar": "الصافات",
+   "start_page": 446,
+   "verses": 182
+  },
+  {
+   "id": 38,
+   "name_fr": "Sad",
+   "name_ar": "ص",
+   "start_page": 453,
+   "verses": 88
+  },
+  {
+   "id": 39,
+   "name_fr": "Az-Zumar",
+   "name_ar": "الزمر",
+   "start_page": 458,
+   "verses": 75
+  },
+  {
+   "id": 40,
+   "name_fr": "Ghafir",
+   "name_ar": "غافر",
+   "start_page": 467,
+   "verses": 85
+  },
+  {
+   "id": 41,
+   "name_fr": "Fussilat",
+   "name_ar": "فصلت",
+   "start_page": 477,
+   "verses": 54
+  },
+  {
+   "id": 42,
+   "name_fr": "Ash-Shuraa",
+   "name_ar": "الشورى",
+   "start_page": 483,
+   "verses": 53
+  },
+  {
+   "id": 43,
+   "name_fr": "Az-Zukhruf",
+   "name_ar": "الزخرف",
+   "start_page": 489,
+   "verses": 89
+  },
+  {
+   "id": 44,
+   "name_fr": "Ad-Dukhan",
+   "name_ar": "الدخان",
+   "start_page": 496,
+   "verses": 59
+  },
+  {
+   "id": 45,
+   "name_fr": "Al-Jathiyah",
+   "name_ar": "الجاثية",
+   "start_page": 499,
+   "verses": 37
+  },
+  {
+   "id": 46,
+   "name_fr": "Al-Ahqaf",
+   "name_ar": "الأحقاف",
+   "start_page": 502,
+   "verses": 35
+  },
+  {
+   "id": 47,
+   "name_fr": "Muhammad",
+   "name_ar": "محمد",
+   "start_page": 507,
+   "verses": 38
+  },
+  {
+   "id": 48,
+   "name_fr": "Al-Fath",
+   "name_ar": "الفتح",
+   "start_page": 511,
+   "verses": 29
+  },
+  {
+   "id": 49,
+   "name_fr": "Al-Hujurat",
+   "name_ar": "الحجرات",
+   "start_page": 515,
+   "verses": 18
+  },
+  {
+   "id": 50,
+   "name_fr": "Qaf",
+   "name_ar": "ق",
+   "start_page": 518,
+   "verses": 45
+  },
+  {
+   "id": 51,
+   "name_fr": "Adh-Dhariyat",
+   "name_ar": "الذاريات",
+   "start_page": 520,
+   "verses": 60
+  },
+  {
+   "id": 52,
+   "name_fr": "At-Tur",
+   "name_ar": "الطور",
+   "start_page": 523,
+   "verses": 49
+  },
+  {
+   "id": 53,
+   "name_fr": "An-Najm",
+   "name_ar": "النجم",
+   "start_page": 526,
+   "verses": 62
+  },
+  {
+   "id": 54,
+   "name_fr": "Al-Qamar",
+   "name_ar": "القمر",
+   "start_page": 528,
+   "verses": 55
+  },
+  {
+   "id": 55,
+   "name_fr": "Ar-Rahman",
+   "name_ar": "الرحمن",
+   "start_page": 531,
+   "verses": 78
+  },
+  {
+   "id": 56,
+   "name_fr": "Al-Waqi'ah",
+   "name_ar": "الواقعة",
+   "start_page": 534,
+   "verses": 96
+  },
+  {
+   "id": 57,
+   "name_fr": "Al-Hadid",
+   "name_ar": "الحديد",
+   "start_page": 537,
+   "verses": 29
+  },
+  {
+   "id": 58,
+   "name_fr": "Al-Mujadila",
+   "name_ar": "المجادلة",
+   "start_page": 542,
+   "verses": 22
+  },
+  {
+   "id": 59,
+   "name_fr": "Al-Hashr",
+   "name_ar": "الحشر",
+   "start_page": 545,
+   "verses": 24
+  },
+  {
+   "id": 60,
+   "name_fr": "Al-Mumtahanah",
+   "name_ar": "الممتحنة",
+   "start_page": 549,
+   "verses": 13
+  },
+  {
+   "id": 61,
+   "name_fr": "As-Saf",
+   "name_ar": "الصف",
+   "start_page": 551,
+   "verses": 14
+  },
+  {
+   "id": 62,
+   "name_fr": "Al-Jumu'ah",
+   "name_ar": "الجمعة",
+   "start_page": 553,
+   "verses": 11
+  },
+  {
+   "id": 63,
+   "name_fr": "Al-Munafiqun",
+   "name_ar": "المنافقون",
+   "start_page": 554,
+   "verses": 11
+  },
+  {
+   "id": 64,
+   "name_fr": "At-Taghabun",
+   "name_ar": "التغابن",
+   "start_page": 556,
+   "verses": 18
+  },
+  {
+   "id": 65,
+   "name_fr": "At-Talaq",
+   "name_ar": "الطلاق",
+   "start_page": 558,
+   "verses": 12
+  },
+  {
+   "id": 66,
+   "name_fr": "At-Tahrim",
+   "name_ar": "التحريم",
+   "start_page": 560,
+   "verses": 12
+  },
+  {
+   "id": 67,
+   "name_fr": "Al-Mulk",
+   "name_ar": "الملك",
+   "start_page": 562,
+   "verses": 30
+  },
+  {
+   "id": 68,
+   "name_fr": "Al-Qalam",
+   "name_ar": "القلم",
+   "start_page": 564,
+   "verses": 52
+  },
+  {
+   "id": 69,
+   "name_fr": "Al-Haqqah",
+   "name_ar": "الحاقة",
+   "start_page": 566,
+   "verses": 52
+  },
+  {
+   "id": 70,
+   "name_fr": "Al-Ma'arij",
+   "name_ar": "المعارج",
+   "start_page": 568,
+   "verses": 44
+  },
+  {
+   "id": 71,
+   "name_fr": "Nuh",
+   "name_ar": "نوح",
+   "start_page": 570,
+   "verses": 28
+  },
+  {
+   "id": 72,
+   "name_fr": "Al-Jinn",
+   "name_ar": "الجن",
+   "start_page": 572,
+   "verses": 28
+  },
+  {
+   "id": 73,
+   "name_fr": "Al-Muzzammil",
+   "name_ar": "المزمل",
+   "start_page": 574,
+   "verses": 20
+  },
+  {
+   "id": 74,
+   "name_fr": "Al-Muddaththir",
+   "name_ar": "المدثر",
+   "start_page": 575,
+   "verses": 56
+  },
+  {
+   "id": 75,
+   "name_fr": "Al-Qiyamah",
+   "name_ar": "القيامة",
+   "start_page": 577,
+   "verses": 40
+  },
+  {
+   "id": 76,
+   "name_fr": "Al-Insan",
+   "name_ar": "الإنسان",
+   "start_page": 578,
+   "verses": 31
+  },
+  {
+   "id": 77,
+   "name_fr": "Al-Mursalat",
+   "name_ar": "المرسلات",
+   "start_page": 580,
+   "verses": 50
+  },
+  {
+   "id": 78,
+   "name_fr": "An-Naba",
+   "name_ar": "النبأ",
+   "start_page": 582,
+   "verses": 40
+  },
+  {
+   "id": 79,
+   "name_fr": "An-Nazi'at",
+   "name_ar": "النازعات",
+   "start_page": 583,
+   "verses": 46
+  },
+  {
+   "id": 80,
+   "name_fr": "'Abasa",
+   "name_ar": "عبس",
+   "start_page": 585,
+   "verses": 42
+  },
+  {
+   "id": 81,
+   "name_fr": "At-Takwir",
+   "name_ar": "التكوير",
+   "start_page": 586,
+   "verses": 29
+  },
+  {
+   "id": 82,
+   "name_fr": "Al-Infitar",
+   "name_ar": "الانفطار",
+   "start_page": 587,
+   "verses": 19
+  },
+  {
+   "id": 83,
+   "name_fr": "Al-Mutaffifin",
+   "name_ar": "المطففين",
+   "start_page": 587,
+   "verses": 36
+  },
+  {
+   "id": 84,
+   "name_fr": "Al-Inshiqaq",
+   "name_ar": "الانشقاق",
+   "start_page": 589,
+   "verses": 25
+  },
+  {
+   "id": 85,
+   "name_fr": "Al-Buruj",
+   "name_ar": "البروج",
+   "start_page": 590,
+   "verses": 22
+  },
+  {
+   "id": 86,
+   "name_fr": "At-Tariq",
+   "name_ar": "الطارق",
+   "start_page": 591,
+   "verses": 17
+  },
+  {
+   "id": 87,
+   "name_fr": "Al-A'la",
+   "name_ar": "الأعلى",
+   "start_page": 591,
+   "verses": 19
+  },
+  {
+   "id": 88,
+   "name_fr": "Al-Ghashiyah",
+   "name_ar": "الغاشية",
+   "start_page": 592,
+   "verses": 26
+  },
+  {
+   "id": 89,
+   "name_fr": "Al-Fajr",
+   "name_ar": "الفجر",
+   "start_page": 593,
+   "verses": 30
+  },
+  {
+   "id": 90,
+   "name_fr": "Al-Balad",
+   "name_ar": "البلد",
+   "start_page": 594,
+   "verses": 20
+  },
+  {
+   "id": 91,
+   "name_fr": "Ash-Shams",
+   "name_ar": "الشمس",
+   "start_page": 595,
+   "verses": 15
+  },
+  {
+   "id": 92,
+   "name_fr": "Al-Layl",
+   "name_ar": "الليل",
+   "start_page": 595,
+   "verses": 21
+  },
+  {
+   "id": 93,
+   "name_fr": "Ad-Duhaa",
+   "name_ar": "الضحى",
+   "start_page": 596,
+   "verses": 11
+  },
+  {
+   "id": 94,
+   "name_fr": "Ash-Sharh",
+   "name_ar": "الشرح",
+   "start_page": 596,
+   "verses": 8
+  },
+  {
+   "id": 95,
+   "name_fr": "At-Tin",
+   "name_ar": "التين",
+   "start_page": 597,
+   "verses": 8
+  },
+  {
+   "id": 96,
+   "name_fr": "Al-'Alaq",
+   "name_ar": "العلق",
+   "start_page": 597,
+   "verses": 19
+  },
+  {
+   "id": 97,
+   "name_fr": "Al-Qadr",
+   "name_ar": "القدر",
+   "start_page": 598,
+   "verses": 5
+  },
+  {
+   "id": 98,
+   "name_fr": "Al-Bayyinah",
+   "name_ar": "البينة",
+   "start_page": 598,
+   "verses": 8
+  },
+  {
+   "id": 99,
+   "name_fr": "Az-Zalzalah",
+   "name_ar": "الزلزلة",
+   "start_page": 599,
+   "verses": 8
+  },
+  {
+   "id": 100,
+   "name_fr": "Al-'Adiyat",
+   "name_ar": "العاديات",
+   "start_page": 599,
+   "verses": 11
+  },
+  {
+   "id": 101,
+   "name_fr": "Al-Qari'ah",
+   "name_ar": "القارعة",
+   "start_page": 600,
+   "verses": 11
+  },
+  {
+   "id": 102,
+   "name_fr": "At-Takathur",
+   "name_ar": "التكاثر",
+   "start_page": 600,
+   "verses": 8
+  },
+  {
+   "id": 103,
+   "name_fr": "Al-'Asr",
+   "name_ar": "العصر",
+   "start_page": 601,
+   "verses": 3
+  },
+  {
+   "id": 104,
+   "name_fr": "Al-Humazah",
+   "name_ar": "الهمزة",
+   "start_page": 601,
+   "verses": 9
+  },
+  {
+   "id": 105,
+   "name_fr": "Al-Fil",
+   "name_ar": "الفيل",
+   "start_page": 601,
+   "verses": 5
+  },
+  {
+   "id": 106,
+   "name_fr": "Quraysh",
+   "name_ar": "قريش",
+   "start_page": 602,
+   "verses": 4
+  },
+  {
+   "id": 107,
+   "name_fr": "Al-Ma'un",
+   "name_ar": "الماعون",
+   "start_page": 602,
+   "verses": 7
+  },
+  {
+   "id": 108,
+   "name_fr": "Al-Kawthar",
+   "name_ar": "الكوثر",
+   "start_page": 602,
+   "verses": 3
+  },
+  {
+   "id": 109,
+   "name_fr": "Al-Kafirun",
+   "name_ar": "الكافرون",
+   "start_page": 603,
+   "verses": 6
+  },
+  {
+   "id": 110,
+   "name_fr": "An-Nasr",
+   "name_ar": "النصر",
+   "start_page": 603,
+   "verses": 3
+  },
+  {
+   "id": 111,
+   "name_fr": "Al-Masad",
+   "name_ar": "المسد",
+   "start_page": 603,
+   "verses": 5
+  },
+  {
+   "id": 112,
+   "name_fr": "Al-Ikhlas",
+   "name_ar": "الإخلاص",
+   "start_page": 604,
+   "verses": 4
+  },
+  {
+   "id": 113,
+   "name_fr": "Al-Falaq",
+   "name_ar": "الفلق",
+   "start_page": 604,
+   "verses": 5
+  },
+  {
+   "id": 114,
+   "name_fr": "An-Nas",
+   "name_ar": "الناس",
+   "start_page": 604,
+   "verses": 6
+  }
+ ]
+}

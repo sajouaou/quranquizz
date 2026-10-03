@@ -1,0 +1,124 @@
+{
+ "_comment": "Chapter 2 scene texts. Quoted verses come from verses.json (a published translation), not from this file.",
+ "triggers": {
+  "c2_home": {
+   "lines": [
+    "My room… It's just as it was. But something is wrong."
+   ],
+   "objective": "Leave the room: a light is waiting behind the door."
+  },
+  "c2_love_enter": {
+   "lines": [
+    "Hearts, garlands, roses… It's the festival of lovers.",
+    "But where are the people? All that's left are tables for two, and their candles burning."
+   ],
+   "objective": "Explore the city in celebration."
+  },
+  "c2_love_mid": {
+   "lines": [
+    "What the dream shows me isn't love: it's the scenery of love."
+   ]
+  },
+  "c2_parade_enter": {
+   "lines": [
+    "A brass band, golden banners… all the gold in the world seems to be marching."
+   ]
+  },
+  "c2_parade_after": {
+   "lines": [
+    "Everything he had, the earth took back. And I, who for a moment envied him…"
+   ]
+  },
+  "c2_spirits_enter": {
+   "lines": [
+    "Night, bottles, neon lights.",
+    "What I learned about this came in three stages. Let's follow them in order."
+   ],
+   "objective": "Find the three sayings, in order."
+  },
+  "c2_graves_enter": {
+   "lines": [
+    "Silence. A path, a low wall… and far off, on the hillside, mounds of earth and bare slabs.",
+    "Everyone ends up over there, one day. Me too."
+   ],
+   "objective": "Follow the path that runs alongside the cemetery."
+  },
+  "c2_end": {
+   "lines": [
+    "Over there, the day is breaking. There is still time, as long as I breathe."
+   ]
+  }
+ },
+ "reactions": {
+  "luqman": {
+   "lines": [
+    "This advice… I had heard it. As a child, I pretended not to hear it.",
+    "My parents called me, and I kept on playing.",
+    "Luqman told his son: pray, do good, be patient. It wasn't too late to listen, and it still isn't."
+   ],
+   "objective": "Find the pages of the Mushaf again: the dream goes on."
+  },
+  "isra": {
+   "lines": [
+    "It doesn't just say \"don't do it\": it says \"don't approach\". It protects before the fall.",
+    "This city sells the appearance of love, with no tomorrow. The lawful path has a commitment and a home.",
+    "I judge no one here: I look first at my own steps."
+   ]
+  },
+  "nur": {
+   "lines": [
+    "Lowering the gaze isn't hiding from the world: it's guarding the heart.",
+    "A whole surah, made to protect family life and everyone's honour."
+   ]
+  },
+  "qarun": {
+   "lines": [
+    "He said: \"What I have, I have because of my knowledge.\" As if wealth came from him.",
+    "Those who envied him the day before woke up saying: \"What a favour that God did not swallow us up too!\"",
+    "Everything he owned did not protect him. And I, what did I attach my heart to?"
+   ]
+  },
+  "khamr1": {
+   "lines": [
+    "First saying: it shows where the scale tips, before going any further.",
+    "The seal of the next table opens once this one has been read."
+   ]
+  },
+  "khamr2": {
+   "lines": [
+    "Second stage: prayer requires a present mind.",
+    "I missed my morning prayer, and without having drunk anything. What lulls the heart to sleep doesn't need a bottle."
+   ]
+  },
+  "khamr3": {
+   "lines": [
+    "Third stage: the final word. All that's left is to keep away.",
+    "What is learned in three steps can be lived in one: getting back up."
+   ]
+  },
+  "hijr": {
+   "lines": [
+    "The inevitable is death: it comes for everyone.",
+    "I pushed it away like something distant. Here, it is calm, and very close."
+   ]
+  },
+  "muddathir": {
+   "lines": [
+    "What I have earned, I carry.",
+    "I can no longer say \"later\": now is when I can still choose."
+   ]
+  },
+  "qiyamah": {
+   "lines": [
+    "No: nothing is left unaccounted for, or without meaning.",
+    "The resurrection is a reality. And I lived as if it were not."
+   ]
+  },
+  "naba": {
+   "lines": [
+    "The regret of that day is immense. The regret of today is still useful.",
+    "As long as I breathe, there is still time."
+   ]
+  }
+ }
+}

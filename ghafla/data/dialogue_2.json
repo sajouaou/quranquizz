@@ -1,0 +1,99 @@
+{
+ "_comment": "Structure des scènes (où elles se déclenchent, leur style). Les textes sont dans locales/<langue>/dialogue_2.json.",
+ "triggers": [
+  {
+   "id": "c2_home",
+   "x": 0,
+   "style": "whisper"
+  },
+  {
+   "id": "c2_love_enter",
+   "x": 2500
+  },
+  {
+   "id": "c2_love_mid",
+   "x": 4300,
+   "style": "whisper"
+  },
+  {
+   "id": "c2_parade_enter",
+   "x": 6600,
+   "style": "whisper"
+  },
+  {
+   "id": "c2_parade_after",
+   "x": 9250,
+   "style": "whisper"
+  },
+  {
+   "id": "c2_spirits_enter",
+   "x": 9700
+  },
+  {
+   "id": "c2_graves_enter",
+   "x": 12500
+  },
+  {
+   "id": "c2_end",
+   "x": 16000,
+   "style": "whisper"
+  }
+ ],
+ "reactions": {
+  "luqman": {
+   "meaning": {
+    "ref": "31:14"
+   }
+  },
+  "isra": {
+   "meaning": {
+    "ref": "17:32"
+   }
+  },
+  "nur": {
+   "meaning": {
+    "ref": "24:30"
+   }
+  },
+  "qarun": {
+   "meaning": {
+    "ref": "28:81"
+   }
+  },
+  "khamr1": {
+   "meaning": {
+    "ref": "2:219"
+   }
+  },
+  "khamr2": {
+   "meaning": {
+    "ref": "4:43"
+   }
+  },
+  "khamr3": {
+   "meaning": {
+    "ref": "5:91"
+   }
+  },
+  "hijr": {
+   "meaning": {
+    "ref": "15:99"
+   }
+  },
+  "muddathir": {
+   "meaning": {
+    "ref": "74:38"
+   }
+  },
+  "qiyamah": {
+   "meaning": {
+    "ref": "75:36"
+   }
+  },
+  "naba": {
+   "meaning": {
+    "ref": "78:40"
+   }
+  }
+ }
+}

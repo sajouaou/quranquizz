@@ -1,0 +1,15 @@
+{
+ "_comment": "Langues proposées au premier démarrage et dans les Réglages. Pour en ajouter une : copier le dossier fr/ sous un nouveau code, traduire les fichiers, ajouter une ligne ici. « choose » : la question « choisis ta langue » dans cette langue.",
+ "languages": [
+  {
+   "code": "fr",
+   "name": "Français",
+   "choose": "Choisis ta langue"
+  },
+  {
+   "code": "en",
+   "name": "English",
+   "choose": "Choose your language"
+  }
+ ]
+}

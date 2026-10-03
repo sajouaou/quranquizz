@@ -52,6 +52,13 @@ Pour utiliser un serveur local : `VITE_SERVER_URL=ws://localhost:5000 npm run de
 
 Conception, récits et architecture multijoueur : [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md).
 
+## Ghafla (prototype de jeu, dossier `ghafla/`)
+
+Un jeu de rêve en 2D pour PC et Android, fait avec Godot 4, à part de l'application : un homme se réveille après avoir manqué Fajr,
+le Mushaf a ses pages blanches, et il doit les retrouver une à une dans un monde de rêve. C'est une **fiction** ; elle ne juge personne.
+Cinématique, monde jouable (maison, rue, pont, souk, grotte, sommet), Mushaf en jeu, 23 pages touchées sur 604.
+Lancer : `ghafla/tools/run.sh` · tests : `ghafla/tools/test.sh` · détails : [ghafla/README.md](ghafla/README.md).
+
 ## Publier sur le Play Store
 
 Un script construit le bundle signé (`.aab`) :
@@ -65,6 +72,10 @@ Un script construit le bundle signé (`.aab`) :
 Prérequis : JDK 21 (celui d'Android Studio convient : `export JAVA_HOME=~/android-studio/jbr`) et le SDK
 Android (installé par Android Studio, ou `ANDROID_HOME`). La clé (`android/upload-keystore.jks`) et
 `android/keystore.properties` ne sont jamais commités : **garde-en une sauvegarde**.
+
+Les visuels et les textes de la fiche (icône, bannière, captures d'écran, descriptions) sont dans [store/](store/README.md) ;
+`node scripts/store-assets.cjs` les régénère. Le logo est `resources/logo.svg` : `./scripts/app-icons.sh` en tire les icônes
+et les écrans de démarrage Android, iOS et web.
 
 ### Clé perdue
 

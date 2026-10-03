@@ -1,0 +1,19 @@
+# Godot
+.godot/
+.import/
+*.translation
+export/
+export_credentials.cfg
+
+# Android signing (never commit)
+*.keystore
+*.jks
+android/build/
+
+# Local
+.DS_Store
+
+# Texte du Mushaf téléchargé par tools/fetch_mushaf_text.py (à ne pas redistribuer sans vérifier la licence)
+data/mushaf_text/
+manifest.json
+android/

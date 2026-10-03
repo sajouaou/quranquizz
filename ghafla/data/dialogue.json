@@ -1,0 +1,106 @@
+{
+ "_comment": "Structure des scènes (où elles se déclenchent, leur style). Les textes sont dans locales/<langue>/dialogue_1.json.",
+ "triggers": [
+  {
+   "id": "house_start",
+   "x": 0,
+   "style": "whisper"
+  },
+  {
+   "id": "street_first",
+   "x": 1990
+  },
+  {
+   "id": "bridge_enter",
+   "x": 4230,
+   "style": "whisper"
+  },
+  {
+   "id": "market_enter",
+   "x": 5010
+  },
+  {
+   "id": "market_coins",
+   "x": 5300,
+   "style": "whisper"
+  },
+  {
+   "id": "cave_enter",
+   "x": 9080,
+   "style": "whisper"
+  },
+  {
+   "id": "cave_exit",
+   "x": 12340,
+   "style": "whisper"
+  },
+  {
+   "id": "peak_climb",
+   "x": 13000,
+   "style": "whisper"
+  },
+  {
+   "id": "summit",
+   "x": 14700,
+   "style": "whisper"
+  }
+ ],
+ "reactions": {
+  "anbiya": {
+   "meaning": {
+    "ref": "21:1"
+   }
+  },
+  "fatiha": {
+   "meaning": {
+    "ref": "1:6"
+   }
+  },
+  "takathur": {
+   "meaning": {
+    "ref": "102:1-2"
+   }
+  },
+  "kahf_first": {},
+  "kahf_mid": {
+   "style": "whisper"
+  },
+  "kahf_last": {
+   "meaning": {
+    "ref": "18:110"
+   }
+  },
+  "sajdah": {},
+  "mulk": {
+   "meaning": {
+    "ref": "67:2"
+   }
+  },
+  "final": {},
+  "adiyat": {
+   "meaning": {
+    "ref": "100:6-8"
+   }
+  },
+  "qariah": {
+   "meaning": {
+    "ref": "101:4"
+   }
+  },
+  "asr": {
+   "meaning": {
+    "ref": "103:1-3"
+   }
+  },
+  "humazah": {
+   "meaning": {
+    "ref": "104:2-3"
+   }
+  },
+  "fil": {
+   "meaning": {
+    "ref": "105:1-2"
+   }
+  }
+ }
+}
