@@ -18,7 +18,7 @@ Il comprend sa négligence et décide de tout retrouver.
 - Chaque page est liée à son lieu : Al-Kahf entière dans une grotte, At-Takathur et Al-Humazah dans un souk, et le personnage réagit
   à chacune (par exemple le regret d'avoir délaissé Al-Kahf le vendredi).
 
-Détails : [docs/WEB.md](docs/WEB.md) · [docs/PLAY_STORE.md](docs/PLAY_STORE.md) · [docs/APPLE_STORE.md](docs/APPLE_STORE.md) · [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) · [docs/PAGES.md](docs/PAGES.md) · [docs/CINEMATIC.md](docs/CINEMATIC.md) · [docs/BUILD.md](docs/BUILD.md)
+Détails : [docs/WEB.md](docs/WEB.md) · [docs/PLAY_STORE.md](docs/PLAY_STORE.md) · [docs/APPLE_STORE.md](docs/APPLE_STORE.md) · [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) · [docs/PAGES.md](docs/PAGES.md) · [docs/CINEMATIC.md](docs/CINEMATIC.md) · [docs/BUILD.md](docs/BUILD.md) · [docs/TRANSLATING.md](docs/TRANSLATING.md)
 
 ## Lancer
 
@@ -50,10 +50,11 @@ tools/apple-release.sh mac | ios        # macOS et iOS (voir docs/APPLE_STORE.md
 |---|---|
 | Cinématiques | deux (~2 min et ~1 min 30, passables) |
 | Monde | chapitre 1 : maison avec escalier, rue, pont de nuages, souk, grotte, montée et sommet ; chapitre 2 : ville en fête, avenue d'or (Qarun), rue de l'ivresse, tombes |
-| Pages | chapitre 1 : 23 pages touchées ; chapitre 2 : près de 40 pages touchées (11 objets, surtout des sourates entières) ; le reste est à construire |
+| Pages | chapitre 1 : 23 objets à prendre, 22 pages complètes (24 touchées) ; chapitre 2 : 11 objets, surtout des sourates entières, 32 pages complètes (39 touchées) ; le reste est à construire. Tous les nombres affichés en jeu sont calculés depuis ces données |
 | Mushaf en jeu | livre, vue d'ensemble (604 cases), liste des sourates |
 | Sauvegarde | locale, automatique |
-| Sons | 8 bruits du quotidien, **pas de musique** |
+| Sons | 15 bruits du quotidien (pas selon le sol, grillons, linge, lampes, pages qui scintillent…), **pas de musique** ; sons positionnels et réverbération par zone |
+| Langues | choix au premier démarrage et dans les Réglages ; textes dans `locales/` (français, anglais) ; versets cités dans la traduction de Muhammad Hamidullah (français) et The Clear Quran (anglais) : voir [docs/TRANSLATING.md](docs/TRANSLATING.md) |
 | Tests | 112 contrôles, un bot qui atteint chaque objet à prendre et traverse le monde, 31 étapes de parcours |
 
 Nombre de pages : le Mushaf de Médine en compte **604**, pas 605 ; le jeu affiche « n / 604 ».
@@ -62,7 +63,7 @@ Nombre de pages : le Mushaf de Médine en compte **604**, pas 605 ; le jeu affic
 
 - Aucun texte coranique n'est écrit dans le code ni dans les données ; le texte des pages vient d'une source reconnue, téléchargé à la
   demande (ou préparé avec `tools/fetch_mushaf_text.py`). Un test le vérifie.
-- Les citations en français sont marquées « sens approximatif » ; elles doivent être relues par une personne compétente avant publication.
+- Les versets cités viennent de traductions publiées (Muhammad Hamidullah, The Clear Quran), copiées par `tools/fetch_translations.py` : droits à vérifier avant publication ; les pensées du personnage doivent être relues par une personne compétente.
 - Pas de visage, pas de statue ni d'image de personne, pas de musique, pas de hasard payant, pas de compte.
 
 ## Ce qui a été vérifié

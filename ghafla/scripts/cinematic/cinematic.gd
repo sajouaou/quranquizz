@@ -11,6 +11,7 @@ const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Rig := preload("res://scripts/cinematic/person_rig.gd")
 const Assets := preload("res://scripts/core/assets.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal finished
 
@@ -26,6 +27,7 @@ var stage: Node2D
 var rig_a: Node2D
 var rig_b: Node2D
 var blanket: Node2D
+var shadows: Node2D
 var closeup: Node2D
 var cam: Camera2D
 var _overlay: CanvasLayer
@@ -64,12 +66,24 @@ class Room:
 		var night_c := Color("2a1d24").lerp(Color("141a33"), 1.0 - warm)
 		var wall := night_c.lerp(day_c, (1.0 - night) * 0.75)
 		DrawUtil.vgrad(self, Rect2(0, 0, 1280, FLOOR_Y), wall.lightened(0.05), wall.darkened(0.12))
-		# plancher
+		# La pièce a du volume : angles et plafond dans l'ombre, comme une boîte vue de face
+		var dark := Color(0.02, 0.01, 0.05)
+		DrawUtil.hgrad(self, Rect2(0, 0, 240, FLOOR_Y), Color(dark, 0.34), Color(dark, 0.0))
+		DrawUtil.hgrad(self, Rect2(1040, 0, 240, FLOOR_Y), Color(dark, 0.0), Color(dark, 0.34))
+		DrawUtil.vgrad(self, Rect2(0, 0, 1280, 150), Color(dark, 0.36), Color(dark, 0.0))
+		# Plancher en perspective : les lames fuient vers un point placé au milieu du mur, les joints se resserrent au loin
 		var floor_c := Color("4a3324").lerp(Color("2a2434"), 1.0 - warm)
 		DrawUtil.vgrad(self, Rect2(0, FLOOR_Y, 1280, 160), floor_c.lightened(0.05 + (1.0 - night) * 0.15), floor_c.darkened(0.35))
+		for i in range(-16, 17):
+			var top_x := 640.0 + float(i) * 62.0
+			draw_line(Vector2(top_x, FLOOR_Y), Vector2(640.0 + float(i) * 62.0 * 2.5, FLOOR_Y + 160.0), Color(0, 0, 0, 0.16), 2.0, true)
+		for k in range(1, 6):
+			var y := FLOOR_Y + 160.0 * pow(float(k) / 6.0, 1.7)
+			draw_line(Vector2(0, y), Vector2(1280, y), Color(0, 0, 0, 0.08), 1.5)
+		# Plinthe, et l'ombre du mur au pied
 		draw_rect(Rect2(0, FLOOR_Y - 16.0, 1280, 16.0), wall.darkened(0.3))
-		for i in range(9):
-			draw_line(Vector2(0, FLOOR_Y + 18.0 + float(i) * 16.0), Vector2(1280, FLOOR_Y + 18.0 + float(i) * 16.0), Color(0, 0, 0, 0.12), 2.0)
+		draw_line(Vector2(0, FLOOR_Y - 16.0), Vector2(1280, FLOOR_Y - 16.0), wall.lightened(0.08), 1.5)
+		DrawUtil.vgrad(self, Rect2(0, FLOOR_Y, 1280, 26.0), Color(dark, 0.34), Color(dark, 0.0))
 		_window()
 		_furniture()
 
@@ -95,37 +109,65 @@ class Room:
 		if dawn > 0.55:
 			var s := (dawn - 0.55) / 0.45
 			draw_circle(Vector2(win.position.x + 70.0, win.end.y - 10.0 - s * 46.0), 24.0, Color(1.0, 0.92, 0.65, 0.95))
+		# épaisseur du mur : l'embrasure, à gauche et en haut, reste dans l'ombre
+		draw_colored_polygon(PackedVector2Array([win.position, win.position + Vector2(14, 10), Vector2(win.position.x + 14.0, win.end.y), Vector2(win.position.x, win.end.y)]), Color(0, 0, 0, 0.32))
+		draw_colored_polygon(PackedVector2Array([win.position, Vector2(win.end.x, win.position.y), Vector2(win.end.x, win.position.y + 10.0), win.position + Vector2(14, 10)]), Color(0, 0, 0, 0.22))
 		# cadre, croisillons, rebord
 		draw_rect(win, Color("1c1530"), false, 8.0)
 		draw_line(win.position + Vector2(win.size.x * 0.5, 0), win.position + Vector2(win.size.x * 0.5, win.size.y), Color("1c1530"), 5.0)
 		draw_line(win.position + Vector2(0, win.size.y * 0.5), win.position + Vector2(win.size.x, win.size.y * 0.5), Color("1c1530"), 5.0)
-		draw_rect(Rect2(win.position.x - 12.0, win.end.y, win.size.x + 24.0, 10.0), Color("d9cdb5").darkened(night * 0.5))
+		var sill := Color("d9cdb5").darkened(night * 0.5)
+		draw_colored_polygon(PackedVector2Array([Vector2(win.position.x - 4.0, win.end.y), Vector2(win.end.x + 4.0, win.end.y), Vector2(win.end.x + 16.0, win.end.y + 9.0), Vector2(win.position.x - 16.0, win.end.y + 9.0)]), sill)
+		draw_rect(Rect2(win.position.x - 16.0, win.end.y + 9.0, win.size.x + 32.0, 6.0), sill.darkened(0.25))
 		# rideaux
 		var curtain := Color("8f5a7a").lerp(Color("4a4e78"), 1.0 - warm).darkened(night * 0.45)
 		draw_colored_polygon(PackedVector2Array([Vector2(900, 140), Vector2(946, 140), Vector2(936, 380), Vector2(900, 380)]), curtain)
 		draw_colored_polygon(PackedVector2Array([Vector2(1114, 140), Vector2(1160, 140), Vector2(1160, 380), Vector2(1124, 380)]), curtain)
+		for fx in [912.0, 924.0, 1132.0, 1146.0]:  # plis des rideaux
+			draw_line(Vector2(fx, 146), Vector2(fx + (4.0 if fx < 1000.0 else -4.0), 376), Color(0, 0, 0, 0.16), 3.0, true)
 		draw_line(Vector2(890, 140), Vector2(1170, 140), Color("3a2a44"), 5.0)
 
 	func _furniture() -> void:
 		var wood := Color("5b3d2a").lerp(Color("3a3448"), 1.0 - warm).darkened(night * 0.3)
 		var wood_l := wood.lightened(0.12)
-		# lit bas
+		# Chaque meuble a un dessus (vu légèrement d'en haut), une face, et une ombre posée sur le plancher
+		var shadow := Color(0, 0, 0, 0.30)
+		# lit bas : ombre, cadre, dessus du matelas, oreiller
+		draw_set_transform(Vector2(330, FLOOR_Y + 4.0), 0.0, Vector2(1.0, 0.09))
+		DrawUtil.glow(self, Vector2.ZERO, 330.0, shadow)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		draw_rect(Rect2(90, 512, 480, 48), wood)
+		draw_rect(Rect2(90, 512, 480, 6), wood_l)
+		draw_rect(Rect2(90, 548, 480, 12), wood.darkened(0.3))
 		draw_rect(Rect2(74, 462, 18, 98), wood.darkened(0.15))
-		draw_rect(Rect2(100, 490, 460, 26), Color("e6ded0").darkened(night * 0.5))
-		DrawUtil.rrect(self, Rect2(112, 470, 96, 28), Color("f2eadb").darkened(night * 0.5), 12.0)
-		# table et étagère
-		draw_rect(Rect2(640, 500, 150, 12), wood_l)
+		draw_rect(Rect2(74, 462, 18, 5), wood_l)
+		var sheet := Color("e6ded0").darkened(night * 0.5)
+		draw_rect(Rect2(100, 492, 460, 24), sheet.darkened(0.14))
+		draw_colored_polygon(PackedVector2Array([Vector2(100, 492), Vector2(560, 492), Vector2(546, 476), Vector2(112, 476)]), sheet)
+		DrawUtil.rrect(self, Rect2(114, 464, 96, 26), Color("f2eadb").darkened(night * 0.5), 12.0)
+		# table : ombre, pieds du fond, plateau, pieds de devant
+		draw_set_transform(Vector2(715, FLOOR_Y + 4.0), 0.0, Vector2(1.0, 0.1))
+		DrawUtil.glow(self, Vector2.ZERO, 120.0, shadow)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_rect(Rect2(668, 506, 8, 46), wood.darkened(0.35))
+		draw_rect(Rect2(754, 506, 8, 46), wood.darkened(0.35))
+		draw_colored_polygon(PackedVector2Array([Vector2(640, 500), Vector2(790, 500), Vector2(776, 488), Vector2(654, 488)]), wood_l.lightened(0.08))
+		draw_rect(Rect2(640, 500, 150, 12), wood_l.darkened(0.12))
 		draw_rect(Rect2(652, 512, 10, 48), wood)
 		draw_rect(Rect2(768, 512, 10, 48), wood)
+		# étagère : dessus, tranche, ombre portée sur le mur
+		DrawUtil.vgrad(self, Rect2(600, 310, 250, 22), Color(0, 0, 0, 0.26), Color(0, 0, 0, 0.0))
 		draw_rect(Rect2(600, 300, 250, 10), wood_l)
+		draw_rect(Rect2(600, 300, 250, 3), wood_l.lightened(0.15))
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 21
 		var bx := 610.0
 		while bx < 830.0:
 			var bw := rng.randf_range(10.0, 18.0)
 			var bh := rng.randf_range(34.0, 56.0)
-			draw_rect(Rect2(bx, 300.0 - bh, bw, bh), Color.from_hsv(rng.randf_range(0.5, 0.95), 0.3, rng.randf_range(0.35, 0.6)).darkened(night * 0.35))
+			var bc := Color.from_hsv(rng.randf_range(0.5, 0.95), 0.3, rng.randf_range(0.35, 0.6)).darkened(night * 0.35)
+			draw_rect(Rect2(bx, 300.0 - bh, bw, bh), bc)
+			draw_rect(Rect2(bx, 300.0 - bh, 2.5, bh), bc.lightened(0.18))  # le dos du livre accroche la lumière
 			bx += bw + 2.0
 		# support (rehal) du Mushaf, sur la table : deux planchettes croisées, sans ornement
 		var sx := TABLE_X - 10.0
@@ -138,10 +180,15 @@ class Room:
 			draw_colored_polygon(DrawUtil.star(Vector2(sx, 472), 8.0, 4.0, 8), Color("e9c46a").darkened(night * 0.3))
 		# lampe de chevet
 		var lx := 764.0
-		draw_line(Vector2(lx, 500), Vector2(lx, 450), Color("2a1f38"), 4.0)
+		draw_colored_polygon(DrawUtil.ellipse(Vector2(lx, 497), 13.0, 3.5, 16), Color("2a1f38"))
+		draw_line(Vector2(lx, 497), Vector2(lx, 450), Color("2a1f38"), 4.0)
 		draw_colored_polygon(PackedVector2Array([Vector2(lx - 26.0, 452), Vector2(lx + 26.0, 452), Vector2(lx + 16.0, 414), Vector2(lx - 16.0, 414)]), Color("f0d9a0").lerp(Color("6a6068"), 1.0 - lamp))
-		# tapis
-		DrawUtil.rrect(self, Rect2(230, 556, 420, 8), Color("8f3a52").lerp(Color("3a4a6a"), 1.0 - warm).darkened(night * 0.4), 3.0)
+		# tapis posé à plat : un trapèze, plus large vers le spectateur
+		var rug := Color("8f3a52").lerp(Color("3a4a6a"), 1.0 - warm).darkened(night * 0.4)
+		var rug_pts := PackedVector2Array([Vector2(236, 566), Vector2(644, 566), Vector2(700, 606), Vector2(180, 606)])
+		draw_colored_polygon(rug_pts, rug)
+		draw_polyline(rug_pts + PackedVector2Array([rug_pts[0]]), rug.lightened(0.25), 2.0, true)
+		draw_polyline(PackedVector2Array([Vector2(246, 572), Vector2(634, 572), Vector2(678, 600), Vector2(202, 600), Vector2(246, 572)]), Color(0.91, 0.77, 0.42, 0.35), 1.5, true)
 
 
 class BedCover:
@@ -177,6 +224,30 @@ class BedCover:
 			draw_colored_polygon(DrawUtil.star(Vector2(gx, top_y + 14.0), 8.0, 4.0, 8), Color(0.91, 0.77, 0.42, 0.55))
 
 
+class Shadows:
+	extends Node2D
+	## Ombre de contact sous chaque personnage debout ou assis par terre : il est posé sur le plancher, pas collé sur le décor.
+	const DrawUtil := preload("res://scripts/core/draw_util.gd")
+	var rigs: Array = []
+
+	func _process(_delta: float) -> void:
+		queue_redraw()
+
+	func _draw() -> void:
+		for r in rigs:
+			if r == null or not is_instance_valid(r) or not r.visible:
+				continue
+			var a: float = r.modulate.a
+			# couché sur le lit : pas d'ombre au sol (le lit a la sienne)
+			if a < 0.03 or absf(float(r.body_rot)) > 1.0 or absf(r.position.y - FLOOR_Y) > 2.0:
+				continue
+			var k: float = absf(r.scale.y)
+			var stretch: float = 1.0 + (1.0 - float(r.skirt)) * 0.9  # assis, jambes allongées : l'ombre s'étire devant lui
+			draw_set_transform(r.position + Vector2(float(r.facing) * 16.0 * (stretch - 1.0) * k, 3.0), 0.0, Vector2(stretch, 0.2))
+			DrawUtil.glow(self, Vector2.ZERO, 64.0 * k, Color(0, 0, 0, 0.42 * a))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
 class Light:
 	extends Node2D
 	var room: Node2D
@@ -192,6 +263,19 @@ class Light:
 		if lamp > 0.01:
 			DrawUtil.glow(self, Vector2(764, 434), 380.0, Color(1.0, 0.78, 0.45, 0.42 * lamp))
 			DrawUtil.glow(self, Vector2(764, 434), 120.0, Color(1.0, 0.9, 0.7, 0.35 * lamp))
+			# la lampe éclaire le plateau de la table et le plancher en dessous
+			draw_set_transform(Vector2(730, 566), 0.0, Vector2(1.0, 0.22))
+			DrawUtil.glow(self, Vector2.ZERO, 300.0, Color(1.0, 0.8, 0.5, 0.26 * lamp))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		# la fenêtre se dessine sur le plancher : un rectangle de lumière étiré par la perspective, bleu la nuit, doré à l'aube
+		var dawn_k: float = clampf(float(room.dawn), 0.0, 1.0)
+		var win_col := Color(0.55, 0.65, 1.0).lerp(Color(1.0, 0.82, 0.52), dawn_k)
+		var win_a: float = lerpf(0.10 * float(room.night), 0.20, dawn_k)
+		if win_a > 0.01:
+			for pane in range(2):
+				var x0 := 820.0 + float(pane) * 104.0
+				var quad := PackedVector2Array([Vector2(x0, 572), Vector2(x0 + 92.0, 572), Vector2(x0 + 92.0 - 130.0, 640), Vector2(x0 - 150.0, 640)])
+				draw_polygon(quad, PackedColorArray([Color(win_col, win_a), Color(win_col, win_a), Color(win_col, 0.0), Color(win_col, 0.0)]))
 		# clair de lune dans la chambre
 		var moon: float = clampf(1.0 - float(room.dawn) * 1.3, 0.0, 1.0) * float(room.night) * 0.5
 		if moon > 0.01:
@@ -310,12 +394,16 @@ func _ready() -> void:
 	stage = Node2D.new()
 	stage.name = "Stage"
 	add_child(stage)
+	shadows = Shadows.new()
+	shadows.name = "Shadows"
+	stage.add_child(shadows)
 	rig_a = Rig.new()
 	rig_a.position = Vector2(BED_END_X, FLOOR_Y)
 	stage.add_child(rig_a)
 	rig_b = Rig.new()
 	rig_b.position = Vector2(1400.0, FLOOR_Y)
 	stage.add_child(rig_b)
+	shadows.rigs = [rig_a, rig_b]
 	blanket = BedCover.new()
 	blanket.name = "BedCover"
 	stage.add_child(blanket)
@@ -375,7 +463,7 @@ func _ready() -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.add_child(_fade)
 	_skip_label = Label.new()
-	_skip_label.text = "Entrée · Échap : passer"
+	_skip_label.text = I18n.t("cinematic.skip")
 	_skip_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	_skip_label.anchor_left = 1.0
 	_skip_label.anchor_right = 1.0
@@ -487,7 +575,7 @@ func _finish() -> void:
 
 func _run_steps() -> void:
 	# ---- Ouverture : carton sur fond noir
-	_say("Une nuit ordinaire.", 2.2)
+	_say(I18n.t("c1.ordinary_night"), 2.2)
 	if not await _wait(3.2):
 		return
 
@@ -566,7 +654,7 @@ func _run_steps() -> void:
 	rig_b.pose(STAND, 0.01)
 	_zoom(1.05, 30.0)
 	_tw(_fade, "color:a", 0.0, 1.4)
-	_say("Une autre chambre.", 2.4)
+	_say(I18n.t("c1.another_room"), 2.4)
 	if not await _wait(2.6):
 		return
 
@@ -597,7 +685,7 @@ func _run_steps() -> void:
 		return
 
 	# ---- La nuit passe, l'aube arrive : le soleil entre dans la chambre
-	_say("Le temps passe…", 2.4)
+	_say(I18n.t("c1.time_passes"), 2.4)
 	_tw(room, "night", 0.35, 9.0)
 	_tw(room, "dawn", 1.0, 9.0)
 	_tw(room, "moon_t", 1.0, 9.0)
@@ -618,10 +706,10 @@ func _run_steps() -> void:
 	if not await _wait(0.5):
 		return
 	Sfx.play("heart", -8.0, 0.95)
-	_say("Astaghfirullah… le soleil ?!", 2.2)
+	_say(I18n.t("c1.sun"), 2.2)
 	if not await _wait(2.6):
 		return
-	_say("Fajr… j'ai raté Fajr.", 2.6)
+	_say(I18n.t("c1.fajr"), 2.6)
 	rig_b.pose({"head_tilt": 0.25, "hand_f": Vector2(14, 30)}, 1.2)
 	if not await _wait(3.4):
 		return
@@ -646,7 +734,7 @@ func _run_steps() -> void:
 	rig_b.pose({"hand_f": Vector2(24, 20), "hand_b": Vector2(20, 18), "body_rot": 0.06, "head_tilt": 0.25}, 1.0)
 	if not await _wait(1.4):
 		return
-	_say("Le Mushaf… Pourquoi est-il si léger ?", 2.8)
+	_say(I18n.t("c1.mushaf_light"), 2.8)
 	if not await _wait(3.2):
 		return
 
@@ -659,7 +747,7 @@ func _run_steps() -> void:
 	_tw(closeup, "ink", 0.0, 5.5, Tween.TRANS_LINEAR)
 	if not await _wait(2.2):
 		return
-	_say("Les mots… ils s'en vont.", 2.4)
+	_say(I18n.t("c1.words_leave"), 2.4)
 	if not await _wait(3.6):
 		return
 	# les pages défilent, toutes blanches
@@ -676,13 +764,13 @@ func _run_steps() -> void:
 			return
 	if not await _wait(1.2):
 		return
-	_say("Les pages… elles sont vides.", 3.0)
+	_say(I18n.t("c1.pages_empty"), 3.0)
 	if not await _wait(3.8):
 		return
 	_tw(closeup, "bg", 0.0, 1.2)
 	if not await _wait(1.4):
 		return
-	_say("Cette lumière, derrière la porte…", 2.6)
+	_say(I18n.t("c1.light_door"), 2.6)
 	if not await _wait(2.4):
 		return
 	_tw(_fade, "color", Color(1.0, 0.94, 0.78, 1.0), 1.4)

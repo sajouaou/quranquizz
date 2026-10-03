@@ -7,6 +7,8 @@ extends Node2D
 
 const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
+const Sfx := preload("res://scripts/core/sfx.gd")
 
 signal revealed_now(pickup: Node)
 signal unlocked_now(pickup: Node)
@@ -30,6 +32,7 @@ var _wait: float = 0.0
 var _glow: Node2D
 var _lines: Array = []
 var _seed: int = 0
+var _shimmer: AudioStreamPlayer2D  # frisselis positionnel : on entend la page avant de la voir
 
 
 func setup(w: Node2D, d: Dictionary) -> void:
@@ -53,6 +56,9 @@ func setup(w: Node2D, d: Dictionary) -> void:
 
 func _ready() -> void:
 	add_to_group("interactable")
+	_shimmer = Sfx.emitter(self, "shimmer", Vector2.ZERO, -80.0, 380.0)
+	if hidden_state:
+		z_index = 5  # le signe d'une page cachée passe devant le décor
 	_glow = Node2D.new()
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
@@ -72,8 +78,8 @@ func can_interact() -> bool:
 
 func prompt_text() -> String:
 	if locked:
-		return "Ouvrir avec la clé" if lock_satisfied() and str(lock.get("type", "")) == "key" else "Verrouillé"
-	return "Prendre la page"
+		return I18n.t("pickup.open_with_key" if lock_satisfied() and str(lock.get("type", "")) == "key" else "pickup.locked")
+	return I18n.t("pickup.take")
 
 
 func interact(_player: Node) -> void:
@@ -105,7 +111,8 @@ func lock_satisfied() -> bool:
 
 
 func lock_hint() -> String:
-	var h := str(data.get("hint", "Ce sceau ne s'ouvre pas encore."))
+	var hint_key := "hint.c%d.%s" % [world.chapter, world.def_id(data)]
+	var h := I18n.t(hint_key) if I18n.has_key(hint_key) else I18n.t("pickup.default_hint")
 	match str(lock.get("type", "")):
 		"pages":
 			var need: Array = lock.get("pages", [])
@@ -113,10 +120,10 @@ func lock_hint() -> String:
 			for p in need:
 				if world.save.has_page(int(p)):
 					have += 1
-			h += "  (%d / %d)" % [have, need.size()]
+			h += I18n.t("pickup.progress", {"have": have, "total": need.size()})
 		"others":
 			var c: Vector2i = world.others_progress(id)
-			h += "  (%d / %d)" % [c.x, c.y]
+			h += I18n.t("pickup.progress", {"have": c.x, "total": c.y})
 	return h
 
 
@@ -134,6 +141,7 @@ func reveal() -> void:
 	if not hidden_state:
 		return
 	hidden_state = false
+	z_index = 0
 	world.save.revealed["page_" + id] = true
 	revealed_now.emit(self)
 	var tw := create_tween()
@@ -143,8 +151,18 @@ func reveal() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	if collected:
+		if _shimmer != null:
+			_shimmer.queue_free()
+			_shimmer = null
 		return
+	if _shimmer != null:  # un frémissement très doux, seulement tout près ; une page cachée s'entend un peu mieux : c'est un indice
+		var target := -31.0 if hidden_state else (-40.0 if locked else -33.0)
+		_shimmer.volume_db = move_toward(_shimmer.volume_db, target, 40.0 * delta)
 	var p = world.player
+	# loin de l'écran : rien à animer ni à dessiner
+	var far: bool = absf(p.global_position.x - global_position.x) > 1500.0
+	if far:
+		return
 	if hidden_state:
 		var rv: Dictionary = data.get("reveal", {})
 		if str(rv.get("type", "")) == "wait":
@@ -157,10 +175,43 @@ func _process(delta: float) -> void:
 				_wait = maxf(_wait - delta * 1.5, 0.0)
 	elif locked and str(lock.get("type", "")) != "" and lock.get("auto", true):
 		# Le sceau se défait tout seul dès que la condition est remplie, sous les yeux du joueur.
-		if lock_satisfied() and absf(p.global_position.x - global_position.x) < 420.0:
+		if absf(p.global_position.x - global_position.x) < 420.0 and lock_satisfied():
 			unlock()
 	queue_redraw()
 	_glow.queue_redraw()
+
+
+## Signe d'une page cachée. Il ne doit ressembler à aucune autre particule du jeu : les poussières d'ambiance sont
+## des points ronds, flous et dorés ; ici ce sont des étoiles nettes à quatre branches, d'un vert d'eau presque blanc,
+## qui montent en spirale au-dessus d'un anneau posé sur le sol. On les voit de loin, et de mieux en mieux en s'approchant.
+const HIDDEN_TINT := Color(0.45, 1.0, 0.86)
+
+func _draw_hidden_sign() -> void:
+	var d: float = absf(world.player.global_position.x - global_position.x)
+	var g := lerpf(0.55, 1.0, clampf(1.0 - d / 700.0, 0.0, 1.0))
+	var foot := Vector2(0.0, ground_dy)
+	# anneau au sol, qui respire
+	var pulse := 0.5 + 0.5 * sin(_t * 2.2)
+	draw_set_transform(foot, 0.0, Vector2(1.0, 0.28))
+	draw_arc(Vector2.ZERO, 30.0 + 8.0 * pulse, 0.0, TAU, 40, Color(HIDDEN_TINT, g * (0.75 - 0.35 * pulse)), 3.0, true)
+	draw_arc(Vector2.ZERO, 16.0 + 4.0 * pulse, 0.0, TAU, 28, Color(1, 1, 1, g * 0.5), 2.0, true)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# étoiles à quatre branches qui montent en spirale, du sol jusqu'au-dessus de la page
+	var count := 10
+	var height := ground_dy + 90.0
+	for i in range(count):
+		var ph := fposmod(_t * 0.2 + float(i) / float(count), 1.0)
+		var swirl := ph * TAU * 1.5 + float(i) * 0.9
+		var pos := Vector2(sin(swirl) * 30.0 * (1.0 - ph * 0.45), ground_dy - ph * height)
+		var a := g * sin(PI * ph)
+		var r := 5.0 + 5.0 * sin(PI * ph) + (2.0 if i % 3 == 0 else 0.0)
+		var rot := _t * 0.9 + float(i)
+		draw_colored_polygon(DrawUtil.star(pos, r * 1.7, r * 0.45, 4, rot), Color(HIDDEN_TINT, a * 0.55))
+		draw_colored_polygon(DrawUtil.star(pos, r, r * 0.24, 4, rot), Color(1, 1, 1, a))
+	if _wait > 0.0:
+		var need := float(data.get("reveal", {}).get("seconds", 2.5))
+		draw_arc(Vector2.ZERO, 34.0, -PI / 2.0, -PI / 2.0 + TAU * clampf(_wait / need, 0.0, 1.0), 40, Color(1, 1, 1, 0.95), 4.0, true)
+		draw_arc(Vector2.ZERO, 34.0, 0.0, TAU, 40, Color(HIDDEN_TINT, 0.3), 1.5, true)
 
 
 func _bob() -> float:
@@ -176,17 +227,7 @@ func _draw() -> void:
 	if collected:
 		return
 	if hidden_state:
-		var d: float = absf(world.player.global_position.x - global_position.x)
-		var g := clampf(1.0 - d / 320.0, 0.0, 1.0)
-		if g > 0.02:
-			for i in range(6):
-				var a := _t * (0.8 + float(i) * 0.13) + float(i) * 1.7
-				var r := 12.0 + float(i) * 6.0
-				var pos := Vector2(cos(a) * r, sin(a * 1.3) * r * 0.8)
-				draw_circle(pos, 1.6, Color(1.0, 0.93, 0.7, g * (0.35 + 0.35 * sin(_t * 3.0 + float(i)))))
-		if _wait > 0.0:
-			var need := float(data.get("reveal", {}).get("seconds", 2.5))
-			draw_arc(Vector2.ZERO, 30.0, -PI / 2.0, -PI / 2.0 + TAU * clampf(_wait / need, 0.0, 1.0), 40, Color(1.0, 0.9, 0.6, 0.85), 3.0, true)
+		_draw_hidden_sign()
 		return
 
 	var y := _bob()

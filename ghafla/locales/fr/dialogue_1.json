@@ -1,0 +1,151 @@
+{
+ "_comment": "Textes des scènes du chapitre 1. Les versets cités viennent de verses.json (traduction publiée), pas de ce fichier.",
+ "triggers": {
+  "house_start": {
+   "lines": [
+    "Je ne comprends pas ce qui m'arrive. Mais je dois sortir."
+   ],
+   "objective": "Ouvre la porte d'entrée."
+  },
+  "street_first": {
+   "lines": [
+    "Cette rue… ce ciel… Ce n'est pas le quartier que je connais.",
+    "Tout est immobile. Et il n'y a personne."
+   ],
+   "objective": "Explore ce rêve."
+  },
+  "bridge_enter": {
+   "lines": [
+    "Le chemin continue au-dessus des nuages. De pierre en pierre…"
+   ]
+  },
+  "market_enter": {
+   "lines": [
+    "Le souk… mais personne. Cette lumière de midi qui ne bouge pas.",
+    "Le temps s'est arrêté ici."
+   ]
+  },
+  "market_coins": {
+   "lines": [
+    "De l'or, partout… Il suffirait de le suivre ?"
+   ]
+  },
+  "cave_enter": {
+   "lines": [
+    "Il fait sombre. Mais les pages, elles, brillent."
+   ]
+  },
+  "cave_exit": {
+   "lines": [
+    "Dehors… le ciel a encore changé."
+   ]
+  },
+  "peak_climb": {
+   "lines": [
+    "Plus je monte, plus le ciel est proche."
+   ]
+  },
+  "summit": {
+   "lines": [
+    "Là-haut, une porte de lumière. Comme une aube qui attend."
+   ]
+  }
+ },
+ "reactions": {
+  "anbiya": {
+   "lines": [
+    "Dans l'insouciance… détournés.",
+    "C'est moi. C'est cela, la ghafla.",
+    "Hier soir, le Mushaf était là, sur l'étagère. Et je ne l'ai même pas ouvert.",
+    "Je ne peux pas rester ainsi. Je vais retrouver chaque page."
+   ],
+   "objective": "Retrouve les pages du Mushaf. Certaines se cachent."
+  },
+  "fatiha": {
+   "lines": [
+    "Al-Fatiha… Dix-sept fois par jour, dans mes prières obligatoires.",
+    "Combien de fois l'ai-je vraiment pensée ?"
+   ]
+  },
+  "takathur": {
+   "lines": [
+    "Tout ce temps passé à courir après l'argent…",
+    "Il fuyait devant moi, et moi je le suivais. Il s'est défait entre mes doigts.",
+    "Je comptais mes gains. Je n'ai pas compté mes jours."
+   ]
+  },
+  "kahf_first": {
+   "lines": [
+    "Al-Kahf… Le vendredi.",
+    "Je la lisais chaque semaine. Puis un vendredi de moins, puis un autre…",
+    "Je regrette tant ces vendredis laissés vides."
+   ]
+  },
+  "kahf_mid": {
+   "pool": [
+    "Une page de plus. Elle éclaire la caverne.",
+    "Des jeunes gens qui se réfugient auprès de leur Seigneur… et moi, je me suis réfugié dans le sommeil.",
+    "Chaque vendredi, je la lisais. Jusqu'à ce que je cesse.",
+    "Je reconnais ces mots. Ils me reviennent, page après page.",
+    "Ici, le temps ne compte pas. C'est justement le problème.",
+    "Elle brille comme si elle m'attendait."
+   ]
+  },
+  "kahf_last": {
+   "lines": [
+    "La dernière page de la caverne.",
+    "Espérer rencontrer son Seigneur… et j'ai dormi à côté de Sa parole."
+   ]
+  },
+  "sajdah": {
+   "lines": [
+    "As-Sajdah… Elle allait avec Al-Mulk, chaque soir avant de dormir.",
+    "Combien de soirs ai-je manqué ce rendez-vous ?"
+   ]
+  },
+  "mulk": {
+   "lines": [
+    "Al-Mulk… Je la lisais chaque soir avant de dormir.",
+    "Hier soir, je me suis couché sans elle."
+   ]
+  },
+  "final": {
+   "lines": [
+    "Les trois dernières… Celles du matin, celles du soir, celles d'avant le sommeil.",
+    "Le soleil est déjà levé. Mais la porte du retour n'est pas fermée.",
+    "Je dois me lever, faire mes ablutions, et prier."
+   ]
+  },
+  "adiyat": {
+   "lines": [
+    "Des chevaux lancés au galop… et moi, lancé après quoi ?",
+    "J'étais ingrat sans même m'en rendre compte."
+   ]
+  },
+  "qariah": {
+   "lines": [
+    "Ce jour-là, il n'y aura plus de temps à gaspiller.",
+    "Et moi, j'en ai perdu tant, à des riens."
+   ]
+  },
+  "asr": {
+   "lines": [
+    "Le temps… je l'ai laissé filer.",
+    "J'ai compté mes richesses, jamais mes jours.",
+    "Mais il n'est pas trop tard pour recommencer."
+   ]
+  },
+  "humazah": {
+   "lines": [
+    "Le temps que j'ai gaspillé à courir après l'argent, personne ne me le rendra.",
+    "Je croyais qu'en accumuler me protégerait."
+   ]
+  },
+  "fil": {
+   "lines": [
+    "Toute leur force n'a rien pu contre ce qu'Il avait décidé.",
+    "Et moi, je comptais sur mes moyens."
+   ]
+  }
+ }
+}

@@ -7,6 +7,8 @@ extends Node
 const SaveData := preload("res://scripts/core/save_data.gd")
 const MushafData := preload("res://scripts/core/mushaf_data.gd")
 const Assets := preload("res://scripts/core/assets.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
+const Gfx := preload("res://scripts/core/gfx.gd")
 const Inputs := preload("res://scripts/core/inputs.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
 const World := preload("res://scripts/world/world.gd")
@@ -39,6 +41,7 @@ func _ready() -> void:
 	_test_scripts_compile()
 	_test_data()
 	_test_data(2)
+	_test_i18n()
 	_test_mushaf()
 	_test_save()
 	_test_sounds()
@@ -92,7 +95,7 @@ func _test_data(chap: int = 1) -> void:
 	var suffix := "" if chap == 1 else "_%d" % chap
 	var tag := "" if chap == 1 else " [chapitre %d]" % chap
 	var wp: Dictionary = _json("res://data/world_pages%s.json" % suffix)
-	var dlg: Dictionary = _json("res://data/dialogue%s.json" % suffix)
+	var dlg: Dictionary = I18n.dialogue(chap, "fr")  # structure (data/) + textes français (locales/fr/)
 	var defs: Array = wp.get("pages", [])
 	if chap == 1:
 		dialogue = dlg
@@ -112,6 +115,22 @@ func _test_data(chap: int = 1) -> void:
 	ok(in_range, "pages placées entre 1 et 604" + tag)
 	ok(seen.size() == defs.size(), "pas de page (ni de partie de page) placée en double" + tag)
 	ok(firsts == 1 and finals == 1, "une seule première page et une seule dernière" + tag)
+
+	# Nombres de pages annoncés par le jeu (menu des chapitres, carte de fin, indices) : calculés depuis ces données
+	var stats: Dictionary = mushaf.pages_of_defs(defs)
+	var tmp: RefCounted = SaveData.new()
+	for d in defs:
+		if d.has("grant_surah"):
+			for pg in mushaf.surah_pages(int(d["grant_surah"])):
+				tmp.add_part(int(pg), int(d["grant_surah"]))
+		elif d.has("part"):
+			for pg in d.get("pages", [int(d["page"])]):
+				tmp.add_part(int(pg), int(d["part"]))
+		else:
+			tmp.add_page(int(d["page"]))
+	ok(stats["complete"].size() == tmp.count() and stats["touched"].size() >= tmp.count() and tmp.count() > 0, "pages annoncées = pages réellement obtenues en prenant tout (%d complètes, %d touchées)%s" % [stats["complete"].size(), stats["touched"].size(), tag])
+	var expected := [22, 24] if chap == 1 else [32, 39]
+	ok(stats["complete"].size() == expected[0] and stats["touched"].size() == expected[1], "ces nombres sont ceux de la documentation (README, docs/PAGES.md)" + tag)
 
 	var reactions: Dictionary = dlg.get("reactions", {})
 	var missing := []
@@ -275,9 +294,36 @@ func _test_save() -> void:
 func _test_sounds() -> void:
 	ok(Assets.font_arabic().data.size() > 10000 and Assets.font_book().data.size() > 10000, "polices Amiri chargées (arabe et latin)")
 	ok(Assets.font_book().has_char(0x00E9) and Assets.font_book().get_supported_chars().length() > 100, "la police du livre couvre le français")
-	for n in ["step", "page", "unlock", "door", "wind", "heart", "air", "drip"]:
+	for n in ["step", "page", "unlock", "door", "wind", "heart", "air", "drip", "step_wood", "step_stone", "step_grass", "crickets", "cloth", "hum", "shimmer"]:
 		var st := Assets.sound(n)
 		ok(st != null and st.data.size() > 2000 and st.format == AudioStreamWAV.FORMAT_16_BITS, "son « %s » chargé (16 bits)" % n)
+
+
+	# Qualité graphique : trois niveaux, automatique par défaut, enregistrée avec les réglages
+	Gfx.apply(-1)
+	ok(Gfx.level == Gfx.HIGH or Gfx.level == Gfx.MEDIUM, "qualité graphique automatique")
+	Gfx.apply(Gfx.LOW)
+	ok(Gfx.low() and not Gfx.high() and int(Gfx.pick(1, 2, 3)) == 1, "qualité basse appliquée")
+	Gfx.apply(Gfx.HIGH)
+	ok(Gfx.high() and int(Gfx.pick(1, 2, 3)) == 3, "qualité haute appliquée")
+	var q_save: RefCounted = SaveData.new()
+	q_save.quality = Gfx.LOW
+	var q_back: RefCounted = SaveData.new()
+	q_back.from_dict(q_save.to_dict())
+	ok(q_back.quality == Gfx.LOW, "la qualité graphique est enregistrée dans la sauvegarde")
+	# Son 2.5D : bus avec réverbération, ambiances par zone, sources positionnelles
+	ok(AudioServer.get_bus_index("World") >= 0 and AudioServer.get_bus_index("Wind") >= 0, "bus « World » (réverbération) et « Wind » (vent filtré)")
+	ok(AudioServer.get_bus_effect_count(AudioServer.get_bus_index("World")) == 1 and AudioServer.get_bus_effect_count(AudioServer.get_bus_index("Wind")) == 1, "un effet par bus (pas de doublon)")
+	var holder := Node2D.new()
+	add_child(holder)
+	var em := Sfx.emitter(holder, "drip", Vector2(100, 50))
+	ok(em != null and em.bus == "World" and em.max_distance > 0.0 and em.playing, "une source positionnelle se crée et joue")
+	holder.queue_free()
+	var envs_ok := true
+	for z in ["house", "cave", "peak", "street", "market", "graves", "default"]:
+		var e: Dictionary = Sfx.ENVIRONMENTS.get(z, Sfx.ENVIRONMENTS["default"])
+		envs_ok = envs_ok and e.has_all(["room", "damp", "wet", "wind_hz"]) and float(e["wet"]) <= 0.5
+	ok(envs_ok and float(Sfx.ENVIRONMENTS["cave"]["wet"]) > float(Sfx.ENVIRONMENTS["default"]["wet"]), "ambiances par zone : la grotte résonne plus que la rue")
 
 
 func _test_inputs() -> void:
@@ -305,6 +351,102 @@ func _test_inputs() -> void:
 	ok(absf(Input.get_axis("move_left", "move_right")) < 0.01, "et revient à zéro")
 
 
+# ------------------------------------------------------------------------------------ 4 bis. textes et langues
+
+func _test_i18n() -> void:
+	var langs: Array = I18n.languages()
+	ok(langs.size() >= 1 and I18n.has_language("fr"), "langues déclarées (%d), le français est la référence" % langs.size())
+	# Toute clé de texte utilisée dans le code existe en français
+	var files := []
+	_walk("res://scripts", files)
+	var re := RegEx.new()
+	re.compile("I18n\\.t\\(\"([a-z0-9_.]+)\"")
+	var unknown := []
+	var used := 0
+	for path in files:
+		if not (path as String).ends_with(".gd"):
+			continue
+		for m in re.search_all(FileAccess.get_file_as_string(path)):
+			used += 1
+			if not I18n.has_key(m.get_string(1)):
+				unknown.append("%s : %s" % [path.get_file(), m.get_string(1)])
+	ok(unknown.is_empty() and used > 60, "toutes les clés de texte du code (%d) existent en français %s" % [used, str(unknown.slice(0, 3))])
+	# Chaque langue est complète : mêmes clés, mêmes {repères}, mêmes scènes que le français
+	var ref_keys: Array = I18n.keys_of("fr")
+	var ph := RegEx.new()
+	ph.compile("\\{[a-z_]+\\}")
+	for l in langs:
+		var code := str(l["code"])
+		if code == "fr":
+			continue
+		var missing := []
+		var bad_ph := []
+		for k in ref_keys:
+			if not I18n.has_key(k, code):
+				missing.append(k)
+				continue
+			I18n.set_language(code)
+			var a := _placeholders(ph, I18n.t(k))
+			I18n.set_language("fr")
+			if a != _placeholders(ph, I18n.t(k)):
+				bad_ph.append(k)
+		ok(missing.is_empty(), "langue %s : aucune clé manquante %s" % [code, str(missing.slice(0, 3))])
+		ok(bad_ph.is_empty(), "langue %s : les {repères} sont les mêmes qu'en français %s" % [code, str(bad_ph.slice(0, 3))])
+		for chap in [1, 2]:
+			var fr_d: Dictionary = I18n.dialogue(chap, "fr")
+			var tr_d: Dictionary = I18n.dialogue(chap, code)
+			var same := true
+			for t in fr_d["triggers"]:
+				var u: Dictionary = {}
+				for t2 in tr_d["triggers"]:
+					if t2["id"] == t["id"]:
+						u = t2
+				if (u.get("lines", []) as Array).size() != (t.get("lines", []) as Array).size() or (str(u.get("objective", "")) == "") != (str(t.get("objective", "")) == ""):
+					same = false
+			for id in fr_d["reactions"].keys():
+				var a: Dictionary = fr_d["reactions"][id]
+				var b: Dictionary = tr_d["reactions"][id]
+				if (a.get("lines", []) as Array).size() != (b.get("lines", []) as Array).size() or (a.get("pool", []) as Array).size() != (b.get("pool", []) as Array).size():
+					same = false
+				if a.has("meaning") and str(b["meaning"].get("text", "")) == "":
+					same = false
+			ok(same, "langue %s : scènes du chapitre %d complètes (même nombre de lignes)" % [code, chap])
+	# Versets cités : chaque langue a la traduction publiée de chaque référence, avec le nom du traducteur
+	for l in langs:
+		var code := str(l["code"])
+		var holes := []
+		for chap in [1, 2]:
+			var reactions: Dictionary = I18n.dialogue(chap, code)["reactions"]
+			for id in reactions.keys():
+				if reactions[id].has("meaning"):
+					var m: Dictionary = reactions[id]["meaning"]
+					if str(m.get("text", "")).length() < 10 or str(m.get("translator", "")) == "":
+						holes.append(str(m.get("ref", id)))
+		ok(holes.is_empty(), "langue %s : chaque verset cité a sa traduction publiée et son traducteur %s" % [code, str(holes.slice(0, 3))])
+	ok(str(I18n.verse("1:6", "fr")["translator"]).contains("Hamidullah") and str(I18n.verse("1:6", "en")["translator"]).contains("Khattab"), "français : Hamidullah ; anglais : The Clear Quran (Khattab)")
+	var font_ok := true
+	for l in langs:
+		for chap in [1, 2]:
+			for r in I18n.dialogue(chap, str(l["code"]))["reactions"].values():
+				if r.has("meaning"):
+					for ch in str(r["meaning"]["text"]):
+						if ch.unicode_at(0) > 127 and not Assets.font_book().has_char(ch.unicode_at(0)) and not Assets.font_book().fallbacks[1].has_char(ch.unicode_at(0)):
+							font_ok = false
+							print("[test]   caractère absent de la police : ", ch, " (", r["meaning"]["ref"], ")")
+	ok(font_ok, "la police affiche tous les caractères des versets cités")
+	I18n.set_language("fr")
+	ok(I18n.t("menu.continue", {"chapter": 2, "count": 5, "total": 604}).contains("2") and not I18n.t("menu.continue", {"chapter": 2, "count": 5, "total": 604}).contains("{"), "les {repères} sont remplacés")
+	ok(I18n.t("clé.inexistante") == "clé.inexistante", "une clé inconnue s'affiche telle quelle")
+
+
+func _placeholders(re: RegEx, text: String) -> Array:
+	var out := []
+	for m in re.search_all(text):
+		out.append(m.get_string())
+	out.sort()
+	return out
+
+
 # ----------------------------------------------------------------------------------------- 5. garde-fou
 
 func _test_adab() -> void:
@@ -313,6 +455,7 @@ func _test_adab() -> void:
 	var files := []
 	_walk("res://scripts", files)
 	_walk("res://data", files)
+	_walk("res://locales", files)
 	_walk("res://scenes", files)
 	for path in files:
 		if path.ends_with("surahs.json") or not (path.ends_with(".gd") or path.ends_with(".json") or path.ends_with(".tscn") or path.ends_with(".cfg")):

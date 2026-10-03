@@ -178,29 +178,115 @@ def air(rng):
 
 
 def drip(rng):
-    c = n(8.0)
-    rumble = [v * 0.18 for v in lowpass(noise(c, rng), 160.0)]
+    """Gouttes d'eau dans la grotte, en boucle : rares, graves et douces (un « ploc » feutré), sur un souffle presque inaudible.
+    Volontairement discret : c'est un fond, pas un signal."""
+    c = n(12.0)
+    rumble = [v * 0.10 for v in lowpass(noise(c, rng), 120.0)]
     tracks = [rumble]
-    t = 0.4
-    while t < 7.0:
-        f0 = rng.uniform(900.0, 1500.0)
-        dc = n(0.22)
+    t = 1.2
+    while t < 10.5:
+        f0 = rng.uniform(420.0, 640.0)
+        dc = n(0.3)
         tone = []
         ph = 0.0
         for i in range(dc):
-            f = f0 * (1.0 + 0.9 * (i / dc))
+            f = f0 * (1.0 + 0.35 * (i / dc))
             ph += 2.0 * math.pi * f / RATE
             tone.append(math.sin(ph))
-        tracks.append(offset([v * rng.uniform(0.25, 0.45) for v in mul(tone, env_exp(dc, 22.0, 0.001))], t))
-        t += rng.uniform(0.9, 2.3)
+        drop = lowpass(mul(tone, env_exp(dc, 16.0, 0.004)), 1400.0)
+        tracks.append(offset([v * rng.uniform(0.12, 0.24) for v in drop], t))
+        t += rng.uniform(2.4, 4.6)
     x = add(*tracks)[:c]
-    return normalize(loopable(x, 0.5), 0.5)
+    return normalize(loopable(x, 0.8), 0.32)
 
+def step_wood(rng):
+    """Pas sur un plancher : un toc sourd, une résonance de planche."""
+    c = n(0.22)
+    thud = mul(sine(c, 105.0), env_exp(c, 30.0))
+    knock = mul(bandpass(noise(c, rng), 250.0, 900.0), env_exp(c, 38.0, 0.001))
+    board = mul(sine(c, 330.0), env_exp(c, 55.0, 0.001))
+    return normalize(add([v * 0.8 for v in thud], knock, [v * 0.18 for v in board]), 0.7)
+
+
+def step_stone(rng):
+    """Pas sur la pierre : un choc mat, sans claquement aigu."""
+    c = n(0.24)
+    click = mul(bandpass(noise(c, rng), 400.0, 1800.0), env_exp(c, 48.0, 0.002))
+    body = mul(sine(c, 120.0), env_exp(c, 34.0))
+    return normalize(add([v * 0.5 for v in click], [v * 0.7 for v in body]), 0.6)
+
+def step_grass(rng):
+    """Pas sur l'herbe ou le sable : un froissement doux, presque sans choc."""
+    c = n(0.24)
+    swish = mul(bandpass(noise(c, rng), 1200.0, 6000.0), [math.sin(math.pi * (i / c)) ** 1.4 for i in range(c)])
+    soft = mul(lowpass(noise(c, rng), 300.0), env_exp(c, 30.0, 0.004))
+    return fade_edges(normalize(add(swish, [v * 0.8 for v in soft]), 0.55))
+
+
+def crickets(rng):
+    """Grillons de nuit, en boucle : rafales de petites pulsations aiguës."""
+    c = n(8.0)
+    tracks = []
+    for voice in range(4):
+        f = rng.uniform(4100.0, 5200.0)
+        t = rng.uniform(0.0, 1.5)
+        while t < 7.4:
+            burst = rng.randint(3, 6)
+            for b in range(burst):
+                pc = n(0.035)
+                tone = mul(sine(pc, f), [math.sin(math.pi * i / pc) for i in range(pc)])
+                tracks.append(offset([v * rng.uniform(0.18, 0.3) for v in tone], t + b * 0.06))
+            t += rng.uniform(1.1, 2.6)
+    x = add(*tracks)[:c]
+    x = lowpass(x, 6500.0)
+    return normalize(loopable(x, 0.5), 0.35)
+
+
+def cloth(rng):
+    """Étoffe qui claque doucement au vent (linge, fanions), en boucle."""
+    c = n(6.0)
+    base = bandpass(noise(c, rng), 400.0, 2600.0)
+    env = []
+    for i in range(c):
+        t = i / RATE
+        gust = 0.5 + 0.5 * math.sin(2.0 * math.pi * t / 6.0 * 2.0 + 0.9)
+        flap = 0.55 + 0.45 * math.sin(2.0 * math.pi * (5.0 + 2.0 * gust) * t)
+        env.append(gust * flap)
+    return normalize(loopable(mul(base, env), 0.6), 0.5)
+
+
+def hum(rng):
+    """Bourdonnement très discret d'une flamme de lampe, en boucle (100 Hz et harmoniques, pile pour boucler)."""
+    c = n(3.0)
+    x = [0.0] * c
+    for k, g in [(100.0, 1.0), (200.0, 0.5), (300.0, 0.22)]:
+        ph = rng.uniform(0.0, 6.28)
+        for i in range(c):
+            x[i] += g * math.sin(2.0 * math.pi * k * i / RATE + ph)
+    flicker = lowpass(noise(c, rng), 14.0)
+    x = [v * (0.75 + 1.8 * f) for v, f in zip(x, flicker)]
+    return normalize(loopable(x, 0.3), 0.4)
+
+
+def shimmer(rng):
+    """Frémissement d'une page de lumière, en boucle : un bruissement de papier doux et espacé, sans aigus ni mélodie."""
+    c = n(5.0)
+    tracks = []
+    t = 0.2
+    while t < 4.4:
+        gc = n(rng.uniform(0.12, 0.26))
+        grain = mul(bandpass(noise(gc, rng), 1600.0, 4800.0), [math.sin(math.pi * i / gc) ** 2 for i in range(gc)])
+        tracks.append(offset([v * rng.uniform(0.3, 0.8) for v in grain], t))
+        t += rng.uniform(0.35, 0.9)
+    x = add(*tracks)[:c]
+    return normalize(loopable(lowpass(x, 5000.0), 0.5), 0.32)
 
 def main():
     rng = random.Random(1234)
     print("Écriture dans", os.path.normpath(OUT))
-    for name, fn in [("step", step), ("page", page), ("unlock", unlock), ("door", door), ("wind", wind), ("heart", heart), ("air", air), ("drip", drip)]:
+    for name, fn in [("step", step), ("page", page), ("unlock", unlock), ("door", door), ("wind", wind), ("heart", heart), ("air", air), ("drip", drip),
+                     ("step_wood", step_wood), ("step_stone", step_stone), ("step_grass", step_grass),
+                     ("crickets", crickets), ("cloth", cloth), ("hum", hum), ("shimmer", shimmer)]:
         write(name, fn(rng))
 
 

@@ -42,8 +42,8 @@ retrouvée fait réagir le personnage, sans le juger ni le moquer.
   rester immobile près d'un endroit, toucher une veine de lumière, ou attendre qu'un événement se produise.
 - **Pages verrouillées** : un coffre (il faut la clé), un sceau qui attend d'autres pages, un sceau final.
   Un message indique toujours ce qui manque (« 7 / 11 »).
-- **Réactions** : chaque page fait réagir le personnage (scène courte ou murmure). Certaines affichent d'abord un
-  « sens approximatif » du passage, marqué comme tel, avec sa référence.
+- **Réactions** : chaque page fait réagir le personnage (scène courte ou murmure). Certaines affichent d'abord le
+  verset de la page dans une traduction publiée (Hamidullah en français, The Clear Quran en anglais), avec sa référence et le nom du traducteur.
 - **Sauvegarde** locale, automatique : pages, objets, position, réglages.
 
 ## 4. Adab (règles de respect)
@@ -69,7 +69,7 @@ l'affiche partout (« 12 / 604 »). Si l'on veut une page de plus (par exemple u
 
 ## 6. Ce que le prototype contient, et ce qu'il ne contient pas
 
-Contenu : cinématique complète, une maison, une rue, un pont, un souk, une grotte, une montée avec sommet, **23 pages touchées** (dont deux pages à plusieurs sourates prises sourate par sourate),
+Contenu : cinématique complète, une maison, une rue, un pont, un souk, une grotte, une montée avec sommet, **23 objets à prendre : 22 pages complètes, 24 touchées** (dont deux pages à plusieurs sourates prises sourate par sourate),
 9 déclencheurs d'histoire, 10 réactions, le Mushaf en jeu, sauvegarde, menus, contrôles tactiles, 8 sons, tests et bot.
 
 Volontairement absent : les 585 autres pages, plusieurs modes de récupération à inventer, d'autres lieux (montagne enneigée, mer, désert de
@@ -77,7 +77,7 @@ nuit, jardins…), plus de dialogues, une traduction en arabe ou en anglais, des
 
 ## 6 bis. Chapitre 2 : les leçons oubliées
 
-Un second rêve (menu : « Chapitre 2 », ou à la fin du chapitre 1). Même mécanique, autre monde :
+Un second rêve (menu « Chapitres », où les deux chapitres sont réunis, ou à la fin du chapitre 1). Même mécanique, autre monde :
 cinématique de l'enfance (Luqman), ville en fête (Al-Isra, An-Nur), avenue d'or et cortège englouti (fin d'Al-Qasas), rue de l'ivresse en trois étapes (2:219, 4:43, 5:91),
 tombes (Al-Hijr, Al-Muddaththir, Al-Qiyamah, An-Naba'). Détails : [PAGES.md](PAGES.md) et [CINEMATIC.md](CINEMATIC.md).
 
@@ -85,7 +85,50 @@ Règles de respect propres à ce chapitre :
 - **Des sujets délicats, traités sans moquerie ni jugement** : le personnage se regarde lui-même ; on ne montre aucune scène intime, aucune personne dans la ville des amoureux (seulement des décors vides), aucun buveur (seulement des verres et des bouteilles).
 - **Silhouettes sans visage** seulement quand l'histoire l'exige : la famille dans la cinématique, l'homme riche sur son char. Aucune statue, aucune idole, aucune image d'un prophète.
 - **Les tombes** sont de simples tertres et de petites dalles nues : sans ornement, sans inscription.
-- Les « sens approximatifs » de `data/dialogue_2.json` doivent être relus par une personne compétente avant publication.
+- Les versets cités viennent de traductions publiées (Hamidullah, The Clear Quran) ; les pensées du personnage (`locales/*/dialogue_2.json`) doivent être relues par une personne compétente avant publication.
+
+## 6 ter. Profondeur « 2.5D »
+
+Le jeu reste en 2D (rendu dessiné en code, aucune image), mais la scène est empilée en plans qui défilent à des vitesses différentes :
+
+| Plan | Fichier | Vitesse (1 = le monde) |
+|---|---|---|
+| ciel, horloges, collines lointaines | `world/backdrop.gd` | 0,01 à 0,12 |
+| ville lointaine, puis ville proche (deuxième rangée) | `backdrop.gd` | 0,28 puis 0,4 |
+| collines proches, collines intermédiaires (sommet, chapitre 2) | `backdrop.gd` | 0,5 puis 0,7 |
+| décor, sol, pages, personnage | `world.gd`, `prop.gd`, `ground_art.gd` | 1 |
+| joints du sol en perspective (ils fuient vers le centre de l'écran) | `world/ground_depth.gd` | 1 à 1,6 |
+| rayons de lumière, bokeh | `world/foreground.gd` | 0,9 et 1,8 |
+| avant-plan (herbes, roches, stalagmites, fanions, stalactites) | `foreground.gd` | 1,45 |
+
+Les bâtiments sont dessinés en volume : on voit leur mur de côté, plus ou moins large selon l'endroit d'où on les regarde (`prop.gd`, `_side_wall`) ;
+les pièces de la maison ont un plancher en perspective et des angles dans l'ombre.
+
+S'y ajoutent : une ombre portée sous le personnage et sous les objets posés, la teinte du ciel sur le personnage, un sol qui a de l'épaisseur
+(filets de profondeur et arête claire), une vignette, et une caméra qui recule en courant et s'approche doucement à l'arrêt.
+
+Son : bus `World` (réverbération différente par zone : la grotte résonne, la chambre est étouffée) et `Wind` (le vent d'extérieur est filtré
+tant que la porte de la maison est fermée) ; sources positionnelles très discrètes (flammes des lampes, linge, frémissement des pages tout près d'elles). La grotte est volontairement calme : gouttes rares et graves, peu de réverbération ;
+pas différents selon le sol (plancher, pierre, herbe). Toujours sans musique. Les sons sont synthétisés par `tools/gen_sfx.py`.
+
+`tests/dev/world_shots.tscn` enregistre des captures du menu et de chaque zone, `tests/dev/cinematic_shots.tscn` des deux cinématiques (voir l'en-tête des scripts).
+
+### Qualité graphique et fluidité
+
+Réglages > « Qualité graphique » (`scripts/core/gfx.gd`) : automatique (moyenne sur téléphone et navigateur, haute sur ordinateur), basse, moyenne ou haute. Le changement s'applique tout de suite.
+
+| Niveau | Ce qui est retiré |
+|---|---|
+| haute | rien |
+| moyenne | lueurs floues et rayons de lumière ; moins d'étoiles et de poussières |
+| basse | en plus : avant-plan, murs de côté des bâtiments, joints du sol, rangée de bâtiments intermédiaire, vignette ; fond redessiné 30 fois par seconde |
+
+À tous les niveaux, rien n'est redessiné hors de l'écran (décors animés, pages, lueurs), le fond n'est refait que si la caméra bouge, et les calculs répétés
+(pages d'une sourate, fenêtres allumées de la ville) sont faits une seule fois. `tests/dev/bench.tscn` mesure le temps d'une image dans chaque zone, personnage en marche
+(`godot --path ghafla res://tests/dev/bench.tscn -- low|medium|high`).
+
+Pages cachées : leur signe ne ressemble à aucune autre particule (étoiles nettes à quatre branches, vert d'eau, en spirale au-dessus d'un anneau au sol),
+alors que les poussières d'ambiance sont des points ronds, flous et dorés. Il se voit de loin, même dans la grotte.
 
 ## 7. Pistes pour la suite
 
@@ -95,5 +138,5 @@ Règles de respect propres à ce chapitre :
   une porte qui s'ouvre après avoir retrouvé des pages précises, un mot de passe donné par un indice de sens, un lieu que l'on ne voit qu'à l'aube.
 - **Option « faux réveil »** : à la fin, le personnage se réveille pour de bon avant Fajr : un dernier plan calme, une prière commencée.
 - **Difficulté douce** : un mode contemplatif (indices plus visibles) et un mode exploration (aucune aide).
-- **Textes** : relecture par un imam ou un enseignant ; version anglaise et arabe.
+- **Textes** : relecture par un imam ou un enseignant ; version anglaise fournie, arabe à faire (voir `docs/TRANSLATING.md`).
 - **Accessibilité** : options de contraste, taille de police, sous-titres des sons, mode à une main sur téléphone.

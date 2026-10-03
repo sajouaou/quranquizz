@@ -51,9 +51,34 @@ var _visual: Node2D
 var _look: float = 0.0
 var _idle_time: float = 0.0
 var _jump_held_prev: bool = false
+var _shadow: Node2D
+var _ambient: Color = Color.WHITE
+var _zoom: float = 1.0
+var _ground_gap: float = 0.0  # distance entre les pieds et le sol qu'ils survolent (pour l'ombre)
+
+
+## Ombre portée sous le personnage : un disque flou sur le sol, qui rétrécit et s'éclaircit quand on saute.
+class Shadow:
+	extends Node2D
+	const DrawUtil := preload("res://scripts/core/draw_util.gd")
+	var gap: float = 0.0
+	var visible_ground: bool = true
+
+	func _draw() -> void:
+		if not visible_ground:
+			return
+		var k := 1.0 / (1.0 + gap / 240.0)
+		var c := Vector2(0.0, gap)
+		draw_set_transform(c, 0.0, Vector2(1.0, 0.2))  # le halo est rond : on l'aplatit pour qu'il épouse le sol
+		DrawUtil.glow(self, Vector2.ZERO, 54.0 * k + 8.0, Color(0, 0, 0, 0.34 * k))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_colored_polygon(DrawUtil.ellipse(c, 30.0 * k, 5.5 * k, 20), Color(0.0, 0.0, 0.04, 0.34 * k))
 
 
 func _ready() -> void:
+	_shadow = Shadow.new()
+	_shadow.z_index = -1  # sous le personnage, au-dessus du sol
+	add_child(_shadow)
 	_visual = Node2D.new()
 	_visual.scale = Vector2(0.92, 0.92)
 	add_child(_visual)
@@ -168,6 +193,7 @@ func _physics_process(delta: float) -> void:
 	_was_grounded = _grounded
 
 	_animate(delta, dir, running)
+	_update_shadow()
 	_update_target()
 
 
@@ -200,12 +226,35 @@ func _animate(delta: float, dir: float, running: bool) -> void:
 	var ahead := 130.0 if absf(velocity.x) > 30.0 else 60.0
 	_look = lerpf(_look, float(facing) * ahead, 1.0 - exp(-3.0 * delta))
 	camera.offset = Vector2(_look, -105.0)
+	# Travelling : la caméra recule un peu quand on court, s'approche doucement quand on reste immobile
+	var zoom_goal := 1.0
+	if rig.running:
+		zoom_goal = 0.97
+	elif _idle_time > 3.0 and _grounded:
+		zoom_goal = 1.05
+	_zoom = lerpf(_zoom, zoom_goal, 1.0 - exp(-0.9 * delta))
+	camera.zoom = Vector2(_zoom, _zoom)
 
 	# Dernière position sûre (respawn si l'on tombe dans le vide)
 	_safe_timer += delta
 	if _safe_timer > 0.4 and _grounded and position.y < 1000.0:
 		_safe_timer = 0.0
 		last_safe = position
+
+
+func _update_shadow() -> void:
+	var sy: float = collision.surface_between(position.x, position.y - 4.0, position.y + 1200.0)
+	_shadow.visible_ground = sy != INF
+	if sy != INF:
+		_ground_gap = maxf(sy - position.y, 0.0)
+		_shadow.gap = _ground_gap
+	_shadow.queue_redraw()
+
+
+## Teinte ambiante (lumière du ciel de la zone) : le personnage appartient à la scène au lieu d'être collé dessus.
+func set_ambient(c: Color) -> void:
+	_ambient = _ambient.lerp(c, 0.06)
+	_visual.modulate = _ambient
 
 
 func _update_target() -> void:

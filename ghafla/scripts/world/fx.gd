@@ -2,6 +2,7 @@ extends Node2D
 ## Particules d'ambiance : poussières de lumière qui flottent autour de la caméra.
 
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
+const Gfx := preload("res://scripts/core/gfx.gd")
 
 var world: Node2D
 var _motes: Array = []
@@ -22,7 +23,10 @@ func _process(delta: float) -> void:
 	var vp := get_viewport_rect().size
 	var cam: Vector2 = world.player.camera.get_screen_center_position()
 	var rect := Rect2(cam - vp * 0.5 - Vector2(120, 120), vp + Vector2(240, 240))
-	while _motes.size() < 70:
+	var wanted: int = Gfx.pick(22, 45, 70)
+	if _motes.size() > wanted:
+		_motes.resize(wanted)
+	while _motes.size() < wanted:
 		_motes.append(_spawn(rect, true))
 	for i in range(_motes.size()):
 		var m: Dictionary = _motes[i]

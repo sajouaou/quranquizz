@@ -1,12 +1,14 @@
 extends Control
 ## Sous-titres et scènes de dialogue. Deux styles :
-##  - scène : le joueur est immobilisé, on lit « sens approximatif » puis les pensées du personnage (E / clic pour avancer) ;
+##  - scène : le joueur est immobilisé, on lit le verset cité (traduction publiée) puis les pensées du personnage (E / clic pour avancer) ;
 ##  - murmure : une ligne discrète qui s'efface toute seule, sans bloquer.
-## Un « sens approximatif » est une traduction de sens, jamais le texte du Coran.
+## Le verset cité vient de locales/<langue>/verses.json (Hamidullah, The Clear Quran) : il n'est jamais écrit à la main.
 
 const P := preload("res://scripts/core/palette.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Assets := preload("res://scripts/core/assets.gd")
+const MushafData := preload("res://scripts/core/mushaf_data.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal scene_started
 signal scene_finished
@@ -21,6 +23,7 @@ var _whisper: Label
 var _items: Array = []  # [{kind: "meaning"|"line", text, ref}]
 var _index: int = 0
 var _typing: Tween
+var _whisper_tween: Tween
 var _done: Callable
 var _whisper_queue: Array = []
 var _whisper_busy: bool = false
@@ -60,7 +63,7 @@ func _ready() -> void:
 	_text.add_theme_font_size_override("font_size", 27)
 	box.add_child(_text)
 	_hint = Label.new()
-	_hint.text = "E · Entrée · toucher : continuer"
+	_hint.text = I18n.t("dialogue.hint")
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_hint.add_theme_font_size_override("font_size", 15)
 	_hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
@@ -92,7 +95,7 @@ func _ready() -> void:
 func show_scene(lines: Array, meaning: Dictionary, on_done: Callable) -> void:
 	_items.clear()
 	if not meaning.is_empty():
-		_items.append({"kind": "meaning", "text": str(meaning.get("text", "")), "ref": str(meaning.get("ref", ""))})
+		_items.append({"kind": "meaning", "text": str(meaning.get("text", "")), "ref": str(meaning.get("ref", "")), "translator": str(meaning.get("translator", ""))})
 	for l in lines:
 		_items.append({"kind": "line", "text": str(l)})
 	if _items.is_empty():
@@ -110,19 +113,29 @@ func show_scene(lines: Array, meaning: Dictionary, on_done: Callable) -> void:
 func _show_item() -> void:
 	var it: Dictionary = _items[_index]
 	if it["kind"] == "meaning":
-		_kicker.text = "Sens approximatif de %s" % it["ref"]
-		_text.text = "« %s »" % it["text"]
+		# Verset cité dans une traduction publiée : on nomme la sourate, la référence et le traducteur
+		var mushaf: RefCounted = MushafData.get_instance()
+		var sid := int(str(it["ref"]).get_slice(":", 0))
+		_kicker.text = I18n.t("dialogue.verse_ref", {"surah": mushaf.surah_name(mushaf.surah(sid)), "ref": it["ref"], "translator": it["translator"]})
+		_text.text = I18n.t("dialogue.quote", {"text": it["text"]})
 		_text.add_theme_color_override("font_color", Color(1.0, 0.93, 0.72))
 	else:
 		_kicker.text = ""
 		_text.text = it["text"]
 		_text.add_theme_color_override("font_color", P.PARCHMENT)
+	# Un long verset s'écrit plus petit ; la fenêtre grandit vers le haut pour le contenir en entier
+	var length := _text.text.length()
+	var font_size := 27 if length < 200 else (23 if length < 360 else 21)
+	_text.add_theme_font_size_override("font_size", font_size)
+	var inner_w: float = _panel.offset_right - _panel.offset_left - 44.0
+	var text_h: float = Assets.font_book().get_multiline_string_size(_text.text, HORIZONTAL_ALIGNMENT_LEFT, inner_w, font_size).y
+	_panel.offset_top = _panel.offset_bottom - maxf(198.0, text_h + 104.0)
 	_text.visible_ratio = 0.0
 	if _typing != null and _typing.is_valid():
 		_typing.kill()
 	var chars := maxi(1, _text.text.length())
 	_typing = create_tween()
-	_typing.tween_property(_text, "visible_ratio", 1.0, minf(2.2, 0.018 * float(chars)))
+	_typing.tween_property(_text, "visible_ratio", 1.0, minf(3.2, 0.018 * float(chars)))
 
 
 func advance() -> void:
@@ -138,6 +151,28 @@ func advance() -> void:
 		_close()
 	else:
 		_show_item()
+
+
+## Remet tout à zéro (retour au menu, changement de chapitre) : plus de scène en cours, plus de fenêtre, plus de murmure.
+func reset() -> void:
+	active = false
+	_done = Callable()
+	_items.clear()
+	_index = 0
+	if _typing != null and _typing.is_valid():
+		_typing.kill()
+	_whisper_queue.clear()
+	_whisper_busy = false
+	if _whisper_tween != null and _whisper_tween.is_valid():
+		_whisper_tween.kill()
+	if _panel != null:
+		_panel.visible = false
+		_text.text = ""
+		_kicker.text = ""
+	if _whisper != null:
+		_whisper.visible = true
+		_whisper.text = ""
+		_whisper.modulate.a = 0.0
 
 
 func _close() -> void:
@@ -183,7 +218,8 @@ func _next_whisper() -> void:
 	_whisper_busy = true
 	_whisper.text = _whisper_queue.pop_front()
 	var hold := clampf(1.8 + 0.045 * float(_whisper.text.length()), 2.5, 6.0)
-	var tw := create_tween()
+	_whisper_tween = create_tween()
+	var tw := _whisper_tween
 	tw.tween_property(_whisper, "modulate:a", 1.0, 0.6)
 	tw.tween_interval(hold)
 	tw.tween_property(_whisper, "modulate:a", 0.0, 0.9)

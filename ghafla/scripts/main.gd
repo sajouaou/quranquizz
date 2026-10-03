@@ -19,8 +19,11 @@ const TitleMenu := preload("res://scripts/ui/title_menu.gd")
 const NotePanel := preload("res://scripts/ui/note_panel.gd")
 const EndCard := preload("res://scripts/ui/end_card.gd")
 const TouchControls := preload("res://scripts/ui/touch_controls.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
+const LanguagePanel := preload("res://scripts/ui/language_panel.gd")
+const Gfx := preload("res://scripts/core/gfx.gd")
 
-enum State { TITLE, NOTE, CINEMATIC, PLAY, END }
+enum State { TITLE, NOTE, CINEMATIC, PLAY, END, LANGUAGE }
 
 const AUTOSAVE_EVERY := 4.0
 
@@ -73,11 +76,16 @@ func _ready() -> void:
 	add_child(qt)
 	save = SaveData.get_instance()
 	mushaf = MushafData.get_instance()
+	I18n.set_language(save.lang)
+	Gfx.apply(save.quality)
 	Sfx.set_master(save.volume)
 	chapter = save.chapter
 	_load_data(chapter)
 	_build_ui()
-	show_title()
+	if save.lang == "" and I18n.languages().size() > 1:
+		_show_language_choice()  # tout premier démarrage : on demande la langue avant le menu
+	else:
+		show_title()
 
 
 func _load_data(chap: int = 1) -> void:
@@ -87,11 +95,10 @@ func _load_data(chap: int = 1) -> void:
 	first_page = 0
 	final_page = 0
 	final_reaction = "final"
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue%s.json" % suffix))
-	if typeof(parsed) == TYPE_DICTIONARY:
-		reactions = parsed.get("reactions", {})
-		for t in parsed.get("triggers", []):
-			triggers[str(t["id"])] = t
+	var parsed: Dictionary = I18n.dialogue(chap)  # structure (data/) + textes (locales/<langue>/)
+	reactions = parsed.get("reactions", {})
+	for t in parsed.get("triggers", []):
+		triggers[str(t["id"])] = t
 	var pages: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_pages%s.json" % suffix))
 	if typeof(pages) == TYPE_DICTIONARY:
 		for d in pages.get("pages", []):
@@ -102,12 +109,80 @@ func _load_data(chap: int = 1) -> void:
 				final_reaction = str(d.get("reaction", "final"))
 
 
+## Premier démarrage : choix de la langue (elle reste modifiable dans les Réglages).
+func _show_language_choice() -> void:
+	state = State.LANGUAGE
+	var panel := LanguagePanel.new()
+	panel.name = "LanguageChoice"
+	panel.chosen.connect(func(code: String) -> void:
+		save.lang = code
+		save.save_file()
+		I18n.set_language(code)
+		_on_language_changed())
+	ui_root.add_child(panel)
+
+
+## Changement de langue : on reconstruit l'interface dans la nouvelle langue. Depuis le menu principal, le menu est refait ;
+## depuis la pause, la partie continue là où elle en était et la pause se rouvre sur les réglages.
+func _on_language_changed() -> void:
+	var in_game: bool = state == State.PLAY and world != null
+	_load_data(chapter)
+	ui_layer.queue_free()
+	_build_ui_layer()
+	if in_game:
+		_scene_queue.clear()
+		book.setup(save, mushaf, world.placed_pages)
+		_set_play_ui(true)
+		hud.set_touch(_touch_wanted())
+		hud.set_count(save.count())
+		hud.set_key(save.has_item("key_chest"))
+		hud.set_objective(_objective_for_progress())
+		world.player.frozen = false
+		paused_menu = true
+		get_tree().paused = true
+		pause_menu.open()
+		pause_menu.show_options()
+		return
+	_set_play_ui(false)
+	if title != null:
+		title.queue_free()
+		title = null
+	show_title()
+
+
 func _set_chapter(n: int) -> void:
 	chapter = n
 	_load_data(n)
 
 
 func _build_ui() -> void:
+	_build_ui_layer()
+	# Fondu plein écran, au-dessus de tout (transitions entre les états)
+	var fade_layer := CanvasLayer.new()
+	fade_layer.layer = 60
+	fade_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(fade_layer)
+	fade = ColorRect.new()
+	fade.color = Color(0, 0, 0, 0)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade_layer.add_child(fade)
+	_dl_label = Label.new()
+	_dl_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_dl_label.offset_left = 20
+	_dl_label.offset_top = -40
+	_dl_label.offset_right = 520
+	_dl_label.add_theme_font_size_override("font_size", 15)
+	_dl_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+	_dl_label.visible = false
+	fade_layer.add_child(_dl_label)
+	if QuranText.inst != null:
+		QuranText.inst.progress.connect(_on_dl_progress)
+	_set_play_ui(false)
+
+
+## Interface (HUD, dialogues, Mushaf, pause) : reconstruite quand la langue change.
+func _build_ui_layer() -> void:
 	ui_layer = CanvasLayer.new()
 	ui_layer.layer = 10
 	ui_layer.name = "UI"
@@ -144,30 +219,8 @@ func _build_ui() -> void:
 	pause_menu.open_note.connect(_open_note_from_pause)
 	pause_menu.to_title.connect(_back_to_title)
 	pause_menu.touch_changed.connect(_apply_touch_setting)
+	pause_menu.language_changed.connect(_on_language_changed)
 	ui_root.add_child(pause_menu)
-
-	# Fondu plein écran, au-dessus de tout (transitions entre les états)
-	var fade_layer := CanvasLayer.new()
-	fade_layer.layer = 60
-	fade_layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	add_child(fade_layer)
-	fade = ColorRect.new()
-	fade.color = Color(0, 0, 0, 0)
-	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	fade_layer.add_child(fade)
-	_dl_label = Label.new()
-	_dl_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_dl_label.offset_left = 20
-	_dl_label.offset_top = -40
-	_dl_label.offset_right = 520
-	_dl_label.add_theme_font_size_override("font_size", 15)
-	_dl_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
-	_dl_label.visible = false
-	fade_layer.add_child(_dl_label)
-	if QuranText.inst != null:
-		QuranText.inst.progress.connect(_on_dl_progress)
-	_set_play_ui(false)
 
 
 func _set_play_ui(on: bool) -> void:
@@ -211,6 +264,7 @@ func show_title() -> void:
 	title.chapter2.connect(_on_chapter2)
 	title.quit_game.connect(func() -> void: get_tree().quit())
 	title.touch_changed.connect(_apply_touch_setting)
+	title.language_changed.connect(_on_language_changed)
 	add_child(title)
 	fade.color = Color(0, 0, 0, 1)
 	_fade_to(Color(0, 0, 0, 0), 1.0)
@@ -232,6 +286,9 @@ func _clear_run() -> void:
 	pause_menu.close()
 	if book.is_open():
 		book.visible = false
+	# Plus rien de la partie quittée ne doit rester à l'écran : scène de dialogue, murmure, invite, objectif, pages en vol
+	dialogue.reset()
+	hud.reset()
 
 
 func _on_new_game() -> void:
@@ -313,9 +370,9 @@ func _start_text_download() -> void:
 func _on_dl_progress(done: int, total: int) -> void:
 	var busy := total > 0 and done < total
 	_dl_label.visible = busy and state != State.PLAY and state != State.END
-	_dl_label.text = "Téléchargement du texte du Mushaf : %d / %d" % [done, total]
+	_dl_label.text = I18n.t("download.progress", {"done": done, "total": total})
 	if total > 0 and done >= total and state == State.PLAY:
-		hud.toast("Le texte du Mushaf est téléchargé.")
+		hud.toast(I18n.t("download.done"))
 
 
 # ------------------------------------------------------------------------------------------- cinématique
@@ -387,13 +444,13 @@ func _start_world(from_save: bool) -> void:
 func _objective_for_progress() -> String:
 	if chapter == 2:
 		if final_page > 0 and save.has_page(final_page):
-			return "Tu peux continuer à explorer le rêve."
-		return "Suis la lumière et retrouve les pages, encore."
+			return I18n.t("objective.explore")
+		return I18n.t("objective.c2_follow")
 	if first_page > 0 and not save.has_page(first_page):
-		return "Une page t'attend devant la porte."
+		return I18n.t("objective.c1_first_page")
 	if final_page > 0 and save.has_page(final_page):
-		return "Tu peux continuer à explorer le rêve."
-	return "Retrouve les pages du Mushaf. Certaines se cachent."
+		return I18n.t("objective.explore")
+	return I18n.t("objective.c1_find")
 
 
 func _process(delta: float) -> void:
@@ -417,13 +474,24 @@ func _save_position() -> void:
 
 
 func _on_zone_entered(zone_id: String) -> void:
-	# Ambiances : de l'air dehors, des gouttes dans la grotte. Aucune musique.
+	# Ambiances : de l'air dehors (étouffé dans la maison tant que la porte est fermée), des gouttes dans la grotte,
+	# des grillons la nuit. Chaque zone a sa réverbération. Aucune musique.
+	Sfx.set_environment(zone_id)
+	var night: bool = zone_id in ["street", "love", "spirits", "graves"]
+	if night:
+		Sfx.loop("crickets", -22.0)
+	else:
+		Sfx.fade_loop("crickets", -60.0, 2.0)
 	match zone_id:
 		"house", "home":
-			Sfx.stop_all_loops()
+			var open: bool = world != null and save.flag(world.ckey("door_open"))
+			Sfx.fade_loop("drip", -60.0, 1.0)
+			Sfx.loop("air", -16.0 if open else -26.0)
+			if open:
+				Sfx.open_outside(1.0, 0.2)
 		"cave":
 			Sfx.fade_loop("air", -60.0, 2.0)
-			Sfx.loop("drip", -12.0)
+			Sfx.loop("drip", -20.0)
 		_:
 			Sfx.fade_loop("drip", -60.0, 1.5)
 			Sfx.loop("air", -18.0 if zone_id != "peak" else -12.0)
@@ -514,7 +582,12 @@ func _show_end_card() -> void:
 	_fade_to(Color(1.0, 0.94, 0.78, 1.0), 1.6).finished.connect(func() -> void:
 		end_card = EndCard.new()
 		end_card.name = "EndCard"
-		end_card.setup(save.count(), mushaf.total_pages, world.placed_pages.size(), chapter)
+		var stats: Dictionary = world.page_stats()  # nombres réels : pages que ce chapitre complète, celles déjà retrouvées
+		var found := 0
+		for pg in stats["complete"]:
+			if save.has_page(int(pg)):
+				found += 1
+		end_card.setup(save.count(), mushaf.total_pages, stats["complete"].size(), chapter, found, stats["touched"].size() - stats["complete"].size())
 		end_card.keep_exploring.connect(_end_keep_exploring)
 		end_card.next_chapter.connect(_end_next_chapter)
 		end_card.to_title.connect(_back_to_title)
@@ -527,6 +600,8 @@ func _end_next_chapter() -> void:
 		end_card.queue_free()
 		end_card = null
 	_scene_queue.clear()
+	dialogue.reset()
+	hud.reset()
 	if world != null:
 		world.queue_free()
 		world = null
@@ -545,7 +620,7 @@ func _end_keep_exploring() -> void:
 		end_card = null
 	state = State.PLAY
 	world.player.frozen = false
-	hud.set_objective("Tu peux continuer à explorer le rêve.")
+	hud.set_objective(I18n.t("objective.explore"))
 
 
 # --------------------------------------------------------------------------------------- entrées / pause

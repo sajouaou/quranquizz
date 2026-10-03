@@ -4,6 +4,8 @@ extends Control
 const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
+const Gfx := preload("res://scripts/core/gfx.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal mushaf_pressed
 signal pause_pressed
@@ -23,6 +25,8 @@ var _toast_tween: Tween
 var _obj_tween: Tween
 var _touch: bool = false
 var _pulse: float = 0.0
+var _flying: Array = []
+var _vignette: ColorRect
 
 
 class MushafIcon:
@@ -58,13 +62,41 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# En haut à gauche : petit Mushaf et compteur
+	# Vignette douce : assombrit les bords de l'écran, concentre le regard sur le personnage
+	var vignette := ColorRect.new()
+	vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vmat := ShaderMaterial.new()
+	var vshader := Shader.new()
+	vshader.code = """
+shader_type canvas_item;
+void fragment() {
+	vec2 d = (UV - vec2(0.5)) * vec2(1.0, 0.9);
+	float v = smoothstep(0.30, 0.80, length(d));
+	COLOR = vec4(0.02, 0.01, 0.07, v * 0.55);
+}
+"""
+	vmat.shader = vshader
+	vignette.material = vmat
+	add_child(vignette)
+	_vignette = vignette
+
+	# En haut à gauche : petit Mushaf et compteur, sur une carte translucide
+	var card := PanelContainer.new()
+	card.position = Vector2(18, 14)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var card_style := UiTheme.panel_style(Color(0.03, 0.03, 0.1, 0.55), Color(0.91, 0.77, 0.42, 0.35), 16, 1)
+	card_style.content_margin_top = 8
+	card_style.content_margin_bottom = 8
+	card_style.content_margin_left = 12
+	card_style.content_margin_right = 18
+	card.add_theme_stylebox_override("panel", card_style)
+	add_child(card)
 	var top_left := HBoxContainer.new()
-	top_left.position = Vector2(26, 20)
 	top_left.add_theme_constant_override("separation", 12)
-	add_child(top_left)
+	card.add_child(top_left)
 	_icon = MushafIcon.new()
-	_icon.custom_minimum_size = Vector2(56, 64)
+	_icon.custom_minimum_size = Vector2(52, 60)
 	top_left.add_child(_icon)
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -88,7 +120,7 @@ func _ready() -> void:
 	_bar.add_theme_stylebox_override("fill", fg)
 	col.add_child(_bar)
 	_key_badge = Label.new()
-	_key_badge.text = "Clé du coffre"
+	_key_badge.text = I18n.t("hud.key")
 	_key_badge.add_theme_font_size_override("font_size", 16)
 	_key_badge.add_theme_color_override("font_color", P.GOLD)
 	_key_badge.visible = false
@@ -105,12 +137,12 @@ func _ready() -> void:
 	top_right.add_theme_constant_override("separation", 10)
 	add_child(top_right)
 	var b1 := Button.new()
-	b1.text = "Mushaf"
+	b1.text = I18n.t("hud.mushaf")
 	b1.focus_mode = Control.FOCUS_NONE
 	b1.pressed.connect(func() -> void: mushaf_pressed.emit())
 	top_right.add_child(b1)
 	var b2 := Button.new()
-	b2.text = "Pause"
+	b2.text = I18n.t("hud.pause")
 	b2.focus_mode = Control.FOCUS_NONE
 	b2.pressed.connect(func() -> void: pause_pressed.emit())
 	top_right.add_child(b2)
@@ -165,7 +197,7 @@ func _ready() -> void:
 	_prompt_panel.add_child(_prompt)
 
 	_controls = Label.new()
-	_controls.text = "Flèches ou Q / D : marcher   ·   Espace : sauter   ·   E : agir   ·   M : Mushaf   ·   Échap : pause"
+	_controls.text = I18n.t("hud.controls")
 	_controls.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_controls.anchor_top = 1.0
 	_controls.anchor_bottom = 1.0
@@ -178,6 +210,28 @@ func _ready() -> void:
 	_controls.add_theme_constant_override("outline_size", 5)
 	_controls.modulate.a = 0.0
 	add_child(_controls)
+	set_count(0)
+
+
+func _process(_delta: float) -> void:
+	_vignette.visible = not Gfx.low()  # la vignette est un calcul plein écran : coupée en qualité basse
+
+
+## Remet l'interface à l'état neutre (retour au menu) : plus d'invite, de message, d'objectif ni de page en vol.
+func reset() -> void:
+	for tw in [_toast_tween, _obj_tween]:
+		if tw != null and tw.is_valid():
+			tw.kill()
+	_toast.modulate.a = 0.0
+	_objective.modulate.a = 0.0
+	_objective.text = ""
+	_controls.modulate.a = 0.0
+	_prompt_panel.visible = false
+	_key_badge.visible = false
+	for p in _flying:
+		if is_instance_valid(p):
+			p.queue_free()
+	_flying.clear()
 	set_count(0)
 
 
@@ -196,7 +250,7 @@ func set_total(n: int) -> void:
 
 func set_count(n: int) -> void:
 	_count = n
-	_count_label.text = "%d / %d" % [n, total]
+	_count_label.text = I18n.t("hud.counter", {"have": n, "total": total})
 	_bar.value = float(n)
 	(_icon as MushafIcon).fill = float(n) / float(maxi(1, total))
 	_icon.queue_redraw()
@@ -210,8 +264,8 @@ func set_prompt(text: String) -> void:
 	if text == "":
 		_prompt_panel.visible = false
 		return
-	var key := "Toucher" if _touch else "E"
-	_prompt.text = "[%s]  %s" % [key, text]
+	var key := I18n.t("hud.key_touch" if _touch else "hud.key_interact")
+	_prompt.text = I18n.t("hud.prompt", {"key": key, "text": text})
 	_prompt_panel.visible = true
 
 
@@ -252,6 +306,8 @@ func fly_page(from_screen: Vector2) -> void:
 	page.position = from_screen
 	page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(page)
+	_flying = _flying.filter(func(n: Variant) -> bool: return is_instance_valid(n))
+	_flying.append(page)
 	var target := _icon.global_position + _icon.size * 0.5
 	var tw := create_tween().set_parallel(true)
 	tw.tween_property(page, "position", target, 1.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)

@@ -4,6 +4,7 @@ extends Control
 const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Assets := preload("res://scripts/core/assets.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal keep_exploring
 signal to_title
@@ -13,16 +14,22 @@ var count: int = 0
 var total: int = 604
 var placed: int = 0
 var chapter: int = 1
+var found: int = 0
+var partial: int = 0
 var _t: float = 0.0
 var _box: VBoxContainer
 var _buttons: HBoxContainer
 
 
-func setup(collected: int, total_pages: int, placed_pages: int, chapter_number: int = 1) -> void:
+## collected : pages complètes du Mushaf (tous chapitres) ; placed_pages : pages que ce chapitre permet de compléter ;
+## found_here : celles déjà retrouvées ; partial_pages : pages dont ce chapitre ne donne qu'une partie.
+func setup(collected: int, total_pages: int, placed_pages: int, chapter_number: int = 1, found_here: int = -1, partial_pages: int = 0) -> void:
 	count = collected
 	total = total_pages
 	placed = placed_pages
 	chapter = chapter_number
+	found = found_here if found_here >= 0 else placed_pages
+	partial = partial_pages
 
 
 func _ready() -> void:
@@ -45,12 +52,12 @@ func _ready() -> void:
 	ar.add_theme_color_override("font_color", Color("6b4a10"))
 	_box.add_child(ar)
 	if chapter == 1:
-		_line("Le jour se lève. Cette fois, tu es déjà debout.", 34, Color("3a2a10"))
-		_line("%d pages sur %d ont été retrouvées. Dans ce prototype, %d pages seulement sont cachées dans le rêve ; le reste du chemin est à construire." % [count, total, placed], 21, Color("4a3a20"))
+		_line(I18n.t("end.1.title"), 34, Color("3a2a10"))
+		_line(_body("end.1.body"), 21, Color("4a3a20"))
 	else:
-		_line("Ces leçons, il n'est jamais trop tard pour les suivre.", 34, Color("3a2a10"))
-		_line("Chapitre 2 terminé : %d pages sur %d sont dans le Mushaf. Le rêve n'est pas fini : il reste tout le reste à retrouver." % [count, total], 21, Color("4a3a20"))
-	_line("Ghafla est une histoire imaginée. Elle ne remplace ni la lecture du Coran, ni l'enseignement de gens de science.", 18, Color("6a5a40"))
+		_line(I18n.t("end.2.title"), 34, Color("3a2a10"))
+		_line(_body("end.2.body"), 21, Color("4a3a20"))
+	_line(I18n.t("end.disclaimer"), 18, Color("6a5a40"))
 
 	_buttons = HBoxContainer.new()
 	_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -58,15 +65,15 @@ func _ready() -> void:
 	_box.add_child(_buttons)
 	if chapter == 1:
 		var bn := Button.new()
-		bn.text = "Chapitre 2 : les leçons oubliées"
+		bn.text = I18n.t("end.next_chapter")
 		bn.pressed.connect(func() -> void: next_chapter.emit())
 		_buttons.add_child(bn)
 	var b1 := Button.new()
-	b1.text = "Continuer à explorer"
+	b1.text = I18n.t("end.keep_exploring")
 	b1.pressed.connect(func() -> void: keep_exploring.emit())
 	_buttons.add_child(b1)
 	var b2 := Button.new()
-	b2.text = "Menu principal"
+	b2.text = I18n.t("end.menu")
 	b2.pressed.connect(func() -> void: to_title.emit())
 	_buttons.add_child(b2)
 	_buttons.modulate.a = 0.0
@@ -75,6 +82,14 @@ func _ready() -> void:
 	tw.tween_property(_box, "modulate:a", 1.0, 2.2)
 	tw.tween_property(_buttons, "modulate:a", 1.0, 0.8)
 	tw.tween_callback(func() -> void: b1.grab_focus())
+
+
+## Bilan chiffré : tous les nombres viennent des données du chapitre et de la sauvegarde.
+func _body(key: String) -> String:
+	var text := I18n.t(key, {"count": count, "total": total, "placed": placed, "found": found})
+	if partial > 0:
+		text += " " + I18n.t("end.partial", {"partial": partial})
+	return text
 
 
 func _line(text: String, size: int, color: Color) -> void:

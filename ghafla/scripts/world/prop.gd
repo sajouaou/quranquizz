@@ -5,6 +5,8 @@ extends Node2D
 
 const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
+const Sfx := preload("res://scripts/core/sfx.gd")
+const Gfx := preload("res://scripts/core/gfx.gd")
 
 var kind: String = ""
 var params: Dictionary = {}
@@ -13,6 +15,9 @@ var t: float = 0.0
 var _animated: bool = false
 var _rng: RandomNumberGenerator
 var _phase: float = 0.0
+var _last_cam_x: float = -1.0e9
+
+const EXTRUDED := ["facade", "mosque", "shop_hall"]  # bâtiments dessinés en volume
 
 
 func _ready() -> void:
@@ -20,14 +25,18 @@ func _ready() -> void:
 	_rng.seed = int(params.get("seed", int(position.x) * 31 + 7))
 	_phase = _rng.randf() * TAU
 	_animated = kind in ["cloud_sea", "garment_line", "coin", "awning_flags", "tree", "grass_tufts", "number_tag", "heart_garland", "heart_balloon", "candle_table", "bench_pair", "neon_tube", "mist", "bar_table"]
-	set_process(_animated)
+	set_process(_animated or kind in EXTRUDED)
 	match kind:
 		"lamp_post":
 			var h: float = params.get("h", 190.0)
 			world.add_glow(global_position + Vector2(0, -h), 140.0, Color(1.0, 0.8, 0.5, 0.42), 0.06)
+			Sfx.emitter(self, "hum", Vector2(0, -h), -33.0, 360.0, randf_range(0.95, 1.05))  # la flamme, très discrète
+		"garment_line", "awning_flags":
+			Sfx.emitter(self, "cloth", Vector2(0, -150.0), -27.0, 480.0, randf_range(0.9, 1.1))
 		"candle_table":
 			world.add_glow(global_position + Vector2(0, -74), 120.0, Color(1.0, 0.75, 0.4, 0.34), 0.1)
 		"neon_tube":
+			Sfx.emitter(self, "hum", Vector2(float(params.get("w", 200.0)) * 0.5, -float(params.get("y", 200.0))), -28.0, 420.0, 1.25)  # le tube qui bourdonne
 			world.add_glow(global_position + Vector2(float(params.get("w", 200.0)) * 0.5, -float(params.get("y", 200.0))), 200.0, params.get("color", Color(1.0, 0.3, 0.7, 0.25)), 0.08)
 		"crystal":
 			add_to_group("cave_light")
@@ -37,10 +46,77 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	t += delta
+	# Rien n'est redessiné hors de l'écran : c'est la principale économie du jeu (le monde est long, l'écran est étroit)
+	var cx := _camera_x()
+	var reach: float = 900.0 + float(params.get("w", 300.0))
+	if absf(global_position.x - cx) > reach:
+		return
+	if kind in EXTRUDED:
+		# Un bâtiment n'est redessiné que si la caméra a bougé : son mur de côté dépend de l'endroit d'où on le regarde
+		if Gfx.low() or absf(cx - _last_cam_x) < 2.0:
+			return
+		_last_cam_x = cx
 	queue_redraw()
 
 
+func _camera_x() -> float:
+	if world == null or world.player == null:
+		return global_position.x
+	return world.player.camera.get_screen_center_position().x
+
+
+## Volume d'un bâtiment (perspective à un point de fuite, au centre de l'écran) : on voit le mur de côté qui regarde
+## vers le centre, d'autant plus large que le bâtiment est loin sur le côté. En marchant, les façades « tournent ».
+## À appeler avant de dessiner la façade ; top est la hauteur du toit, depth la profondeur du bâtiment.
+func _side_wall(w: float, top: float, tint: Color, depth: float = 70.0) -> void:
+	if Gfx.low():
+		return  # qualité basse : façades plates, jamais redessinées
+	var dx := global_position.x - _camera_x()
+	var k := clampf(dx / 620.0, -1.0, 1.0)
+	if absf(k) < 0.03:
+		return
+	var d := depth * absf(k)
+	var s := -signf(k)  # le mur visible est du côté du centre de l'écran
+	var x0 := s * w * 0.5
+	var x1 := x0 + s * d
+	var rise := d * 0.30  # le fond du bâtiment remonte un peu vers la ligne d'horizon, le toit descend
+	var wall := tint.darkened(0.34)
+	var quad := PackedVector2Array([Vector2(x0, 0.0), Vector2(x0, -top), Vector2(x1, -top + rise), Vector2(x1, -rise * 0.25)])
+	draw_polygon(quad, PackedColorArray([wall, wall, wall.darkened(0.25), wall.darkened(0.25)]))
+	# une rangée de fenêtres étroites sur le mur de côté, écrasées par la perspective
+	if d > 26.0:
+		var rows := maxi(1, int((top - 100.0) / 90.0))
+		for j in range(rows):
+			var wy := -top + 56.0 + float(j) * 90.0
+			var a := Vector2(lerpf(x0, x1, 0.35), wy + rise * 0.35)
+			var b := Vector2(lerpf(x0, x1, 0.65), wy + rise * 0.65)
+			draw_colored_polygon(PackedVector2Array([a, b, b + Vector2(0, 40), a + Vector2(0, 44)]), Color(0.12, 0.09, 0.2, 0.75))
+	draw_line(Vector2(x0, 0.0), Vector2(x0, -top), tint.darkened(0.5), 2.0, true)
+	# ombre du bâtiment sur le sol, du côté opposé à la lumière
+	draw_set_transform(Vector2(0.0, 3.0), 0.0, Vector2(1.0, 0.1))
+	DrawUtil.glow(self, Vector2.ZERO, w * 0.72, Color(0, 0, 0, 0.32))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## Largeur de l'ombre portée au sol, par sorte de décor posé sur le sol (les bâtiments et le fond n'en ont pas).
+const SHADOW_WIDTH := {
+	"lamp_post": 46.0, "tree": 130.0, "bench": 150.0, "stall": 230.0, "shelf_tower": 130.0, "crates": 110.0,
+	"post": 36.0, "rose_bush": 90.0, "bench_pair": 250.0, "bar_table": 130.0, "bottle_shelf": 150.0, "grave_stone": 70.0,
+	"dead_tree": 100.0, "candle_table": 80.0, "rock": 120.0, "mounds": 180.0, "crystal": 60.0, "stalagmite": 70.0,
+}
+
+
+func _contact_shadow() -> void:
+	if not SHADOW_WIDTH.has(kind):
+		return
+	var w: float = float(params.get("w", SHADOW_WIDTH[kind])) if kind in ["stall", "rock", "mounds"] else float(SHADOW_WIDTH[kind])
+	draw_set_transform(Vector2(0.0, 2.0), 0.0, Vector2(1.0, 0.16))
+	DrawUtil.glow(self, Vector2.ZERO, w * 0.62, Color(0, 0, 0, 0.30))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
 func _draw() -> void:
+	_contact_shadow()
 	match kind:
 		"lamp_post":
 			_lamp_post()
@@ -169,7 +245,9 @@ func _facade() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(params.get("seed", 1))
 	var dark := tint.darkened(0.35)
+	_side_wall(w, h, tint)
 	draw_rect(Rect2(-w / 2.0, -h, w, h), tint)
+	DrawUtil.vgrad(self, Rect2(-w / 2.0, -h * 0.45, w, h * 0.45), Color(0, 0, 0, 0.0), Color(0.08, 0.04, 0.16, 0.22))  # le bas de la façade est dans l'ombre de la rue
 	draw_rect(Rect2(-w / 2.0, -h, w, 12), tint.lightened(0.12))
 	draw_rect(Rect2(-w / 2.0 - 6, -h - 10, w + 12, 12), tint.lightened(0.2))
 	draw_rect(Rect2(-w / 2.0, -14, w, 14), dark)
@@ -208,7 +286,9 @@ func _mosque() -> void:
 	var h: float = params.get("h", 190.0)
 	var tint: Color = params.get("tint", Color("d7c4d6"))
 	var dark := tint.darkened(0.35)
+	_side_wall(w, h, tint, 90.0)
 	draw_rect(Rect2(-w / 2.0, -h, w, h), tint)
+	DrawUtil.vgrad(self, Rect2(-w / 2.0, -h * 0.45, w, h * 0.45), Color(0, 0, 0, 0.0), Color(0.08, 0.04, 0.16, 0.2))
 	draw_rect(Rect2(-w / 2.0 - 5, -h - 8, w + 10, 10), tint.lightened(0.18))
 	draw_rect(Rect2(-w / 2.0, -12, w, 12), dark)
 	# grande coupole et deux petites
@@ -351,6 +431,7 @@ func _shop_hall() -> void:
 	var w: float = params.get("w", 620.0)
 	var h: float = params.get("h", 300.0)
 	var tint := Color("8f5a7a")
+	_side_wall(w, h, tint.darkened(0.4), 90.0)
 	draw_rect(Rect2(-w / 2.0, -h, w, h), tint.darkened(0.55))
 	DrawUtil.vgrad(self, Rect2(-w / 2.0 + 14, -h + 40, w - 28, h - 40), tint.darkened(0.35), tint.darkened(0.5))
 	draw_rect(Rect2(-w / 2.0 - 8, -h - 14, w + 16, 34), tint)

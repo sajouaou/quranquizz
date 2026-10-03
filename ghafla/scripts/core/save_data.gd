@@ -23,6 +23,8 @@ var player_x: float = -1.0
 var player_y: float = -1.0
 var volume: float = 0.8
 var touch_controls: int = -1  # -1 automatique, 0 non, 1 oui
+var quality: int = -1  # qualité graphique : -1 automatique, 0 basse, 1 moyenne, 2 haute
+var lang: String = ""  # code de langue ; vide : celle de l'appareil
 
 
 static func get_instance() -> RefCounted:
@@ -118,6 +120,8 @@ func to_dict() -> Dictionary:
 		"player": [player_x, player_y],
 		"volume": volume,
 		"touch": touch_controls,
+		"lang": lang,
+		"quality": quality,
 	}
 
 
@@ -151,6 +155,8 @@ func from_dict(d: Dictionary) -> void:
 	player_y = float(pos[1]) if pos.size() > 1 else -1.0
 	volume = clampf(float(d.get("volume", 0.8)), 0.0, 1.0)
 	touch_controls = int(d.get("touch", -1))
+	lang = str(d.get("lang", ""))
+	quality = int(d.get("quality", -1))
 
 
 func save_file() -> bool:

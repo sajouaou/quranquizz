@@ -7,6 +7,7 @@ const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Rig := preload("res://scripts/cinematic/person_rig.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 const TRIGGER_X := 7950.0  # le joueur s'approche : le cortège se met en marche
 const FORM_X := 8400.0  # centre du cortège au départ
@@ -207,7 +208,7 @@ func process(w: Node2D, delta: float) -> void:
 				phase = "march"
 				_t = 0.0
 				w.player.frozen = true  # il regarde passer le cortège
-				w.toast_text("Un cortège… tout l'or du monde semble le suivre.")
+				w.toast_text(I18n.t("parade.cortege"))
 		"march":
 			var k := clampf(_t / MARCH_SECONDS, 0.0, 1.0)
 			var nx := smoothstep(0.0, 1.0, k) * MARCH_PX
@@ -217,7 +218,7 @@ func process(w: Node2D, delta: float) -> void:
 			if _t >= MARCH_SECONDS:
 				phase = "crack"
 				_t = 0.0
-				Sfx.play("wind", -4.0, 0.6)
+				Sfx.play_world("wind", -4.0, 0.6)
 		"crack":
 			_crack = clampf(_t / CRACK_SECONDS, 0.0, 1.0)
 			if _t >= CRACK_SECONDS + 0.4:
@@ -229,7 +230,7 @@ func process(w: Node2D, delta: float) -> void:
 				phase = "close"
 				_t = 0.0
 				_parade.visible = false
-				w.toast_text("La terre l'a englouti, lui et sa demeure.")
+				w.toast_text(I18n.t("parade.qarun_fell"))
 				w.trigger_event("qarun_fell")
 				w.player.frozen = false
 		"close":

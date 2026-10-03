@@ -4,17 +4,11 @@ extends Control
 
 const P := preload("res://scripts/core/palette.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal accepted
 
-const TITLE := "Une histoire imaginée"
-const PARAGRAPHS := [
-	"Ghafla est une fiction. Le personnage, son rêve, le monde qu'il traverse et les lieux où il retrouve les pages sont inventés, pour illustrer une idée : la négligence (ghafla) peut nous gagner sans bruit, et il n'est jamais trop tard pour revenir.",
-	"Ce n'est ni un enseignement religieux, ni un avis sur la façon dont d'autres personnes pratiquent. Le jeu ne juge personne et ne se moque de rien : pour apprendre la religion, on s'adresse à des gens de science et on lit le Coran lui-même.",
-	"Le texte du Coran n'est jamais écrit à la main dans le jeu : les pages sont affichées à partir d'une source de texte reconnue, ou seulement suggérées par des traits si le texte n'est pas disponible. Les citations en français sont marquées « sens approximatif » : ce sont des résumés, pas une traduction du Coran.",
-	"Volontairement, il n'y a ni visage, ni statue, ni image de personne, et pas de musique.",
-]
-const DOWNLOAD_TEXT := "Téléchargement : pendant la cinématique d'ouverture, le jeu peut télécharger le texte de tout le Mushaf (604 pages, environ 2 Mo, une seule fois, connexion Internet nécessaire). Il est gardé sur l'appareil ; sans lui, les pages du livre affichent seulement des traits."
+const PARAGRAPH_KEYS := ["note.p1", "note.p2", "note.p3", "note.p4"]
 
 var offer_download: bool = false  # première partie : on prévient du téléchargement du texte du Mushaf et on demande
 var download: bool = true
@@ -39,20 +33,20 @@ func _ready() -> void:
 	panel.add_child(box)
 
 	var title := Label.new()
-	title.text = TITLE
+	title.text = I18n.t("note.title")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 40)
 	title.add_theme_color_override("font_color", P.GOLD)
 	box.add_child(title)
-	for text in PARAGRAPHS:
+	for key in PARAGRAPH_KEYS:
 		var l := Label.new()
-		l.text = text
+		l.text = I18n.t(key)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.add_theme_font_size_override("font_size", 19 if offer_download else 21)
 		box.add_child(l)
 	if offer_download:
 		var d := Label.new()
-		d.text = DOWNLOAD_TEXT
+		d.text = I18n.t("note.download")
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		d.add_theme_font_size_override("font_size", 19)
 		d.add_theme_color_override("font_color", Color(1.0, 0.93, 0.72))
@@ -61,11 +55,11 @@ func _ready() -> void:
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 16)
 		box.add_child(row)
-		_button = _choice(row, "Télécharger (recommandé)", true)
-		_choice(row, "Plus tard, je joue hors ligne", false)
+		_button = _choice(row, I18n.t("note.download_yes"), true)
+		_choice(row, I18n.t("note.download_no"), false)
 	else:
 		_button = Button.new()
-		_button.text = "J'ai compris"
+		_button.text = I18n.t("note.ok")
 		_button.custom_minimum_size = Vector2(260, 0)
 		_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		_button.pressed.connect(func() -> void: accepted.emit())

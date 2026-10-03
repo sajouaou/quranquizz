@@ -2,10 +2,12 @@ extends Node2D
 ## Objet avec lequel on peut interagir (touche E / bouton tactile) : fouiller un vêtement, toucher une veine de lumière…
 ## La détection se fait par distance (voir player.gd), sans moteur physique.
 
+const I18n := preload("res://scripts/core/i18n.gd")
+
 signal used(id: String)
 
 var id: String = ""
-var prompt: String = "Interagir"
+var prompt_key: String = "world.interact"  # clé de texte (locales/<langue>/world.json) : traduite au moment de l'affichage
 var enabled: bool = true
 var used_once: bool = true
 var draw_kind: String = ""  # "vein" | ""
@@ -31,7 +33,7 @@ func can_interact() -> bool:
 
 
 func prompt_text() -> String:
-	return prompt
+	return I18n.t(prompt_key)
 
 
 func interact(_player: Node) -> void:

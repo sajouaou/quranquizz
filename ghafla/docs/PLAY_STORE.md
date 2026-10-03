@@ -119,5 +119,5 @@ Puis Play Console > Créer une version > importer le nouveau `.aab`. Le `version
 
 - Écris clairement que l'histoire est **fictive** et ne remplace pas l'enseignement ; ne présente jamais le jeu comme un moyen de « valider » une pratique.
 - N'utilise pas d'images de personnes ni de captures montrant des lettres arabes mal formées.
-- Fais relire les textes « sens approximatif » (`data/dialogue.json`) par une personne compétente avant la mise en ligne.
+- Les versets cités viennent de traductions publiées (`locales/*/verses.json`, voir `docs/TRANSLATING.md`) : vérifie les droits (The Clear Quran) et fais relire les pensées du personnage par une personne compétente avant la mise en ligne.
 - Le texte coranique vient de quran.com : cite la source dans la description si tu l'embarques, et lis leurs conditions d'utilisation.

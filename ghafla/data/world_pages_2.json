@@ -29,8 +29,7 @@
     "seconds": 2.4,
     "radius": 120
    },
-   "reaction": "nur",
-   "hint": "Une table pour deux, une bougie… Reste immobile un instant."
+   "reaction": "nur"
   },
   {
    "page": 394,
@@ -68,8 +67,7 @@
     ],
     "visual": "seal"
    },
-   "reaction": "khamr2",
-   "hint": "Un sceau : la première parole doit d'abord être lue."
+   "reaction": "khamr2"
   },
   {
    "page": 123,
@@ -84,8 +82,7 @@
     ],
     "visual": "seal"
    },
-   "reaction": "khamr3",
-   "hint": "Un sceau : les deux premières étapes doivent d'abord être lues."
+   "reaction": "khamr3"
   },
   {
    "page": 267,
@@ -106,8 +103,7 @@
     "seconds": 2.4,
     "radius": 120
    },
-   "reaction": "muddathir",
-   "hint": "Un tertre, une dalle nue… Reste immobile près d'eux."
+   "reaction": "muddathir"
   },
   {
    "page": 577,
@@ -128,8 +124,7 @@
     "visual": "seal"
    },
    "reaction": "naba",
-   "final": true,
-   "hint": "Le sceau de l'aube ne s'ouvrira que lorsque toutes les autres pages seront revenues."
+   "final": true
   }
  ]
 }

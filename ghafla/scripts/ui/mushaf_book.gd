@@ -8,6 +8,7 @@ const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Assets := preload("res://scripts/core/assets.gd")
 const QuranText := preload("res://scripts/core/quran_text.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal closed
 
@@ -88,7 +89,7 @@ func _ready() -> void:
 	_title.add_theme_color_override("font_color", P.GOLD)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(_title)
-	for entry in [["book", "Livre"], ["index", "Vue d'ensemble"], ["surahs", "Sourates"]]:
+	for entry in [["book", I18n.t("book.tab_book")], ["index", I18n.t("book.tab_index")], ["surahs", I18n.t("book.tab_surahs")]]:
 		var b := Button.new()
 		b.text = entry[1]
 		b.toggle_mode = true
@@ -97,7 +98,7 @@ func _ready() -> void:
 		header.add_child(b)
 		_tabs[entry[0]] = b
 	var close := Button.new()
-	close.text = "Fermer"
+	close.text = I18n.t("book.close")
 	close.focus_mode = Control.FOCUS_NONE
 	close.pressed.connect(close_book)
 	header.add_child(close)
@@ -130,7 +131,7 @@ func _ready() -> void:
 	_nav.add_theme_constant_override("separation", 16)
 	root.add_child(_nav)
 	var next := Button.new()
-	next.text = "<  Pages suivantes"
+	next.text = I18n.t("book.next")
 	next.focus_mode = Control.FOCUS_NONE
 	next.pressed.connect(turn.bind(1))
 	_nav.add_child(next)
@@ -139,7 +140,7 @@ func _ready() -> void:
 	_nav_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_nav.add_child(_nav_label)
 	var prev := Button.new()
-	prev.text = "Pages précédentes  >"
+	prev.text = I18n.t("book.prev")
 	prev.focus_mode = Control.FOCUS_NONE
 	prev.pressed.connect(turn.bind(-1))
 	_nav.add_child(prev)
@@ -213,8 +214,8 @@ func turn(direction: int) -> void:
 func _refresh() -> void:
 	if not visible and not is_inside_tree():
 		return
-	_title.text = "Mon Mushaf  ·  %d / %d pages retrouvées" % [save.count(), mushaf.total_pages]
-	_nav_label.text = "Pages %d – %d" % [right_page, right_page + 1]
+	_title.text = I18n.t("book.title", {"have": save.count(), "total": mushaf.total_pages})
+	_nav_label.text = I18n.t("book.nav", {"a": right_page, "b": right_page + 1})
 	for k in ["book", "index"]:
 		(_views[k] as Control).queue_redraw()
 
@@ -271,7 +272,7 @@ func _draw_page(c: Control, r: Rect2, p: int) -> void:
 		c.draw_rect(r, Color(0, 0, 0, 0.07), false, 1.0)
 		c.draw_string(font, Vector2(r.position.x, r.end.y - 20.0), "%d" % p, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 20, Color(0.6, 0.6, 0.62, 0.9))
 		if p in placed_pages:
-			c.draw_string(font, Vector2(r.position.x, r.get_center().y), "cette page attend quelque part dans le rêve", HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 17, Color(0.7, 0.7, 0.72, 0.8))
+			c.draw_string(font, Vector2(r.position.x, r.get_center().y), I18n.t("book.page_waits"), HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 17, Color(0.7, 0.7, 0.72, 0.8))
 		return
 	# Page (au moins en partie) retrouvée
 	c.draw_rect(r, P.PARCHMENT)
@@ -282,9 +283,9 @@ func _draw_page(c: Control, r: Rect2, p: int) -> void:
 	_draw_parts(c, font, body, p)
 	# Pied de page : numéro, juz, sourate
 	c.draw_string(font, Vector2(inner.position.x, inner.end.y - 30.0), DrawUtil.arabic_digits(p), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, 26, Color("6b4a12"))
-	c.draw_string(font, Vector2(inner.position.x + 14.0, inner.end.y - 12.0), "Juz' %d" % mushaf.juz_of_page(p), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(0.4, 0.3, 0.15, 0.8))
+	c.draw_string(font, Vector2(inner.position.x + 14.0, inner.end.y - 12.0), I18n.t("book.juz", {"n": mushaf.juz_of_page(p)}), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(0.4, 0.3, 0.15, 0.8))
 	if prog.x < prog.y:
-		c.draw_string(font, Vector2(inner.position.x, inner.end.y - 12.0), "%d / %d parties" % [prog.x, prog.y], HORIZONTAL_ALIGNMENT_RIGHT, inner.size.x - 14.0, 15, Color(0.55, 0.3, 0.1, 0.9))
+		c.draw_string(font, Vector2(inner.position.x, inner.end.y - 12.0), I18n.t("book.parts", {"have": prog.x, "total": prog.y}), HORIZONTAL_ALIGNMENT_RIGHT, inner.size.x - 14.0, 15, Color(0.55, 0.3, 0.1, 0.9))
 	else:
 		c.draw_string(font, Vector2(inner.position.x, inner.end.y - 12.0), mushaf.page_title(p), HORIZONTAL_ALIGNMENT_RIGHT, inner.size.x - 14.0, 15, Color(0.4, 0.3, 0.15, 0.8))
 
@@ -343,13 +344,13 @@ func _draw_parts(c: Control, font: Font, body: Rect2, p: int) -> void:
 		if not have:
 			c.draw_rect(text_rect, Color("fbfaf6"))
 			c.draw_rect(text_rect, Color(0, 0, 0, 0.08), false, 1.0)
-			c.draw_string(font, Vector2(text_rect.position.x, text_rect.get_center().y + 6.0), "%s : à retrouver" % str(mushaf.surah(sid).get("name_fr", "")), HORIZONTAL_ALIGNMENT_CENTER, text_rect.size.x, 17, Color(0.62, 0.6, 0.6, 0.9))
+			c.draw_string(font, Vector2(text_rect.position.x, text_rect.get_center().y + 6.0), I18n.t("book.surah_missing", {"name": mushaf.surah_name(mushaf.surah(sid))}), HORIZONTAL_ALIGNMENT_CENTER, text_rect.size.x, 17, Color(0.62, 0.6, 0.6, 0.9))
 		elif all_text and text_of.has(sid):
 			_draw_text_fit(c, font, str(text_of[sid]), text_rect, size_cap)
 		else:
 			_draw_script_lines(c, text_rect, p * 31 + sid)
 	if segs.is_empty() and prog_any(p):
-		c.draw_string(font, Vector2(body.position.x, body.end.y + 22.0), "Texte disponible en ligne", HORIZONTAL_ALIGNMENT_CENTER, body.size.x, 14, Color(0.4, 0.3, 0.15, 0.75))
+		c.draw_string(font, Vector2(body.position.x, body.end.y + 22.0), I18n.t("book.text_online"), HORIZONTAL_ALIGNMENT_CENTER, body.size.x, 14, Color(0.4, 0.3, 0.15, 0.75))
 
 
 func prog_any(p: int) -> bool:
@@ -421,13 +422,13 @@ func _cell_rect(lay: Dictionary, page: int) -> Rect2:
 func _draw_index(c: Control) -> void:
 	var lay := _grid_layout(c.size)
 	var font := Assets.font_book()
-	c.draw_string(font, Vector2(0, 22), "Or : page retrouvée   ·   Rayures : page à moitié   ·   Blanc : page manquante   ·   Clique une case pour ouvrir la page", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
+	c.draw_string(font, Vector2(0, 22), I18n.t("book.legend"), HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
 	for juz in range(1, 31):
 		var col := 0 if juz <= 15 else 1
 		var row := (juz - 1) % 15
 		var lx: float = float(col) * (lay["col_w"] + 30.0)
 		var ly: float = lay["top"] + float(row) * lay["row_h"] + (lay["row_h"] - 8.0) * 0.72
-		c.draw_string(font, Vector2(lx, ly), "Juz' %d" % juz, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.75))
+		c.draw_string(font, Vector2(lx, ly), I18n.t("book.juz", {"n": juz}), HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.75))
 	for p in range(1, mushaf.total_pages + 1):
 		var r := _cell_rect(lay, p)
 		var got: bool = save.has_page(p)
@@ -457,7 +458,7 @@ func view_input(v: Control, kind: String, event: InputEvent) -> void:
 			hover_page = p
 			v.queue_redraw()
 			if p > 0:
-				_tooltip.text = "Page %d — %s%s" % [p, mushaf.page_title(p), "" if save.has_page(p) else "  (manquante)"]
+				_tooltip.text = I18n.t("book.tooltip", {"page": p, "title": mushaf.page_title(p), "missing": "" if save.has_page(p) else I18n.t("book.tooltip_missing")})
 				_tooltip.visible = true
 			else:
 				_tooltip.visible = false
@@ -495,7 +496,7 @@ func _rebuild_surahs() -> void:
 		var b := Button.new()
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
-		b.text = "%3d.  %s  ·  %s        %d / %d" % [id, s["name_fr"], s["name_ar"], have, total]
+		b.text = I18n.t("book.surah_row", {"id": "%3d" % id, "name": mushaf.surah_name(s), "name_ar": s["name_ar"], "have": have, "total": total})
 		if have == total:
 			b.add_theme_color_override("font_color", P.GOLD)
 		b.pressed.connect(func() -> void:

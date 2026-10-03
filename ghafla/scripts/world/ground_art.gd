@@ -36,4 +36,22 @@ func _draw() -> void:
 	var edge := PackedColorArray()
 	for p in points:
 		edge.append(_stop_at(p.x)[3])
+	# Profondeur : le sol est un plan qui s'éloigne du regard. Des filets parallèles, de plus en plus sombres et fins,
+	# lui donnent une épaisseur (comme une scène de théâtre vue légèrement d'en haut), et une arête claire accroche la lumière.
+	var depth_lines := [[16.0, 0.20, 3.0], [40.0, 0.14, 2.0], [76.0, 0.09, 2.0], [128.0, 0.05, 1.5]]
+	for d in depth_lines:
+		var shifted := PackedVector2Array()
+		var dcol := PackedColorArray()
+		for p in points:
+			shifted.append(p + Vector2(0.0, d[0]))
+			var c: Color = (_stop_at(p.x)[3] as Color).darkened(0.45)
+			dcol.append(Color(c.r, c.g, c.b, d[1]))
+		draw_polyline_colors(shifted, dcol, d[2], true)
 	draw_polyline_colors(points, edge, 4.0, true)
+	var rim := PackedColorArray()
+	var rim_pts := PackedVector2Array()
+	for p in points:
+		var c: Color = (_stop_at(p.x)[3] as Color).lightened(0.35)
+		rim.append(Color(c.r, c.g, c.b, 0.55))
+		rim_pts.append(p + Vector2(0.0, -1.5))
+	draw_polyline_colors(rim_pts, rim, 1.6, true)

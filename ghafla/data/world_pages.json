@@ -19,7 +19,6 @@
     "seconds": 2.4,
     "radius": 120
    },
-   "hint": "Un léger scintillement près du banc… Reste immobile un instant.",
    "reaction": "fatiha"
   },
   {
@@ -33,7 +32,6 @@
     "visual": "chest",
     "auto": false
    },
-   "hint": "Un coffre scellé. La clé doit se trouver parmi ces étoffes…",
    "reaction": "humazah",
    "part": 104
   },
@@ -105,7 +103,6 @@
     "seconds": 2.2,
     "radius": 120
    },
-   "hint": "Quelque chose luit dans l'ombre. Sois patient.",
    "reaction": "kahf_mid"
   },
   {
@@ -201,7 +198,6 @@
     ],
     "visual": "seal"
    },
-   "hint": "Un sceau de lumière. Les autres pages de la caverne doivent d'abord le rejoindre.",
    "reaction": "kahf_last"
   },
   {
@@ -234,7 +230,6 @@
     "type": "others",
     "visual": "seal"
    },
-   "hint": "Le sceau de l'aube ne s'ouvrira que lorsque toutes les autres pages seront revenues.",
    "reaction": "final",
    "final": true
   }

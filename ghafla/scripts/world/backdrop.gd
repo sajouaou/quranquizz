@@ -5,6 +5,7 @@ extends Node2D
 
 const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
+const Gfx := preload("res://scripts/core/gfx.gd")
 
 const WORLD_W := 15600.0
 
@@ -16,6 +17,8 @@ var _stars: Array = []
 var _far: PackedVector2Array
 var _near: PackedVector2Array
 var _city: Array = []  # {x, w, h, kind}
+var _city_mid: Array = []  # deuxième rangée de bâtiments, plus proche et plus haute (profondeur)
+var _mid: PackedVector2Array
 var _rock_far: PackedVector2Array
 var _rock_near: PackedVector2Array
 var _drips: Array = []
@@ -42,16 +45,51 @@ func _ready() -> void:
 		elif r > 0.6:
 			kind = "dome"
 		_city.append({"x": x, "w": w, "h": rng.randf_range(50.0, 190.0), "kind": kind, "seed": rng.randi()})
+		_city[_city.size() - 1]["lit"] = _lit_windows(_city[_city.size() - 1])
 		x += w + rng.randf_range(-10.0, 40.0)
 	for i in range(28):
 		_drips.append(Vector3(rng.randf(), rng.randf(), rng.randf() * 3.0))
 	_glow_add = CanvasItemMaterial.new()
 	_glow_add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	# Plans intermédiaires (tirés après les autres : la disposition existante ne change pas)
+	_mid = DrawUtil.hills(rng, -200.0, world_w + 400.0, 0.0, 60.0, 40.0)
+	x = -100.0
+	while x < world_w + 300.0:
+		var w2 := rng.randf_range(130.0, 260.0)
+		var kind2 := "dome" if rng.randf() > 0.72 else "block"
+		_city_mid.append({"x": x, "w": w2, "h": rng.randf_range(110.0, 290.0), "kind": kind2, "seed": rng.randi()})
+		_city_mid[_city_mid.size() - 1]["lit"] = _lit_windows(_city_mid[_city_mid.size() - 1])
+		x += w2 + rng.randf_range(-20.0, 60.0)
 
 
+var _last_cam: Vector2 = Vector2(-1.0e9, 0.0)
+var _since_draw: float = 0.0
+
+
+## Le fond est le dessin le plus coûteux du jeu : il n'est refait que si la caméra a bougé, sinon quelques fois par seconde
+## seulement (scintillement des étoiles, aiguilles des horloges). En qualité basse, un peu moins souvent encore.
 func _process(delta: float) -> void:
 	t += delta
-	queue_redraw()
+	_since_draw += delta
+	var cam := camera.get_screen_center_position() if camera != null else Vector2(640, 420)
+	var moved := cam.distance_to(_last_cam) > 0.4
+	var idle_period: float = Gfx.pick(0.2, 0.1, 0.066)
+	if (moved and (not Gfx.low() or _since_draw >= 0.033)) or _since_draw >= idle_period:
+		_last_cam = cam
+		_since_draw = 0.0
+		queue_redraw()
+
+
+## Fenêtres allumées d'un bâtiment, tirées une fois pour toutes (positions relatives au coin haut-gauche).
+static func _lit_windows(b: Dictionary) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var rs := RandomNumberGenerator.new()
+	rs.seed = b["seed"]
+	for i in range(int(float(b["w"]) / 26.0)):
+		for j in range(int(float(b["h"]) / 40.0)):
+			if rs.randf() > 0.82:
+				out.append(Vector2(10.0 + float(i) * 26.0, 14.0 + float(j) * 40.0))
+	return out
 
 
 func _weights(x: float) -> Dictionary:
@@ -93,8 +131,14 @@ func _draw() -> void:
 		_draw_hills(_far, cam, 0.12, vp, horizon + 6.0, DrawUtil.with_alpha(far_col, 1.0 - w["cave"]))
 	if w["city"] > 0.01 and not skip.has("city"):
 		_draw_city(cam, vp, horizon + 46.0, (sky["bottom"] as Color).lerp(P.NIGHT, 0.5), w["city"])
+	# Deuxième rangée de bâtiments, plus proche et voilée de brume : le ciel, la ville lointaine, la ville proche, les collines, le monde
+	if w["city"] > 0.01 and not skip.has("mid") and not Gfx.low():
+		var mid_col := ((sky["bottom"] as Color).lerp(P.NIGHT, 0.62)).lerp(sky["mid"], 0.12)
+		_draw_city(cam, vp, horizon + 120.0, mid_col, w["city"] * 0.95, 0.4, _city_mid)
 	if (w["peak"] > 0.01 or w["city"] > 0.01 or w["hills"] > 0.01) and not skip.has("near"):
 		_draw_hills(_near, cam, 0.5, vp, horizon + 150.0, DrawUtil.with_alpha(near_col, 1.0 - w["cave"]))
+	if (w["peak"] > 0.01 or w["hills"] > 0.01) and not skip.has("mid"):
+		_draw_hills(_mid, cam, 0.7, vp, horizon + 214.0, DrawUtil.with_alpha(near_col.darkened(0.18), 1.0 - w["cave"]))
 	if w["cave"] > 0.01:
 		_draw_cave(vp, cam, w["cave"])
 	# Brume au sol
@@ -105,12 +149,15 @@ func _draw() -> void:
 func _draw_stars(vp: Vector2, cam: Vector2, amount: float) -> void:
 	if amount < 0.02:
 		return
-	for s in _stars:
+	var count: int = mini(_stars.size(), int(Gfx.pick(70, 140, 220)))
+	for k in range(count):
+		var s: Vector3 = _stars[k]
 		var px: float = fposmod(s.x * vp.x - cam.x * 0.02, vp.x)
 		var py: float = s.y * vp.y * 0.9
 		var tw := 0.55 + 0.45 * sin(t * (0.6 + fmod(s.z, 1.7)) + s.z)
 		var size := 1.0 + fmod(s.z, 1.3)
-		draw_circle(Vector2(px, py), size, Color(1.0, 0.96, 0.85, amount * tw))
+		# un petit carré coûte bien moins qu'un disque (un seul quadrilatère), et à cette taille on ne voit pas la différence
+		draw_rect(Rect2(px - size, py - size, size * 2.0, size * 2.0), Color(1.0, 0.96, 0.85, amount * tw * 0.85))
 
 
 func _draw_moon_sun(vp: Vector2, cam: Vector2, sky: Dictionary, horizon: float) -> void:
@@ -185,12 +232,12 @@ func _draw_hills(line: PackedVector2Array, cam: Vector2, f: float, vp: Vector2, 
 	DrawUtil.fill_to(self, pts, lowest, color)
 
 
-func _draw_city(cam: Vector2, vp: Vector2, base_y: float, color: Color, amount: float) -> void:
-	var f := 0.28
+func _draw_city(cam: Vector2, vp: Vector2, base_y: float, color: Color, amount: float, f: float = 0.28, rows: Array = []) -> void:
+	var list: Array = rows if not rows.is_empty() else _city
 	var left := cam.x * f - vp.x * 0.62
 	var right := cam.x * f + vp.x * 0.62
 	var col := DrawUtil.with_alpha(color, amount)
-	for b in _city:
+	for b in list:
 		if b["x"] + b["w"] < left or b["x"] > right:
 			continue
 		var x: float = b["x"] - cam.x * f + vp.x * 0.5
@@ -208,14 +255,9 @@ func _draw_city(cam: Vector2, vp: Vector2, base_y: float, color: Color, amount: 
 				draw_rect(Rect2(mx - 11.0, top - 96.0, 22.0, 6.0), col)
 				draw_colored_polygon(PackedVector2Array([Vector2(mx - 9.0, top - 120.0), Vector2(mx + 9.0, top - 120.0), Vector2(mx, top - 148.0)]), col)
 		# fenêtres allumées, comme des veilleuses : presque toutes éteintes
-		var rs := RandomNumberGenerator.new()
-		rs.seed = b["seed"]
-		for i in range(int(w / 26.0)):
-			for j in range(int(h / 40.0)):
-				if rs.randf() > 0.82:
-					var wx := x + 10.0 + float(i) * 26.0
-					var wy := top + 14.0 + float(j) * 40.0
-					draw_rect(Rect2(wx, wy, 8.0, 12.0), Color(1.0, 0.84, 0.5, 0.55 * amount))
+		var lit_col := Color(1.0, 0.84, 0.5, 0.55 * amount)
+		for o in b["lit"]:
+			draw_rect(Rect2(x + o.x, top + o.y, 8.0, 12.0), lit_col)
 
 
 func _draw_cave(vp: Vector2, cam: Vector2, amount: float) -> void:

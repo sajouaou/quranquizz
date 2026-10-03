@@ -6,6 +6,8 @@ extends RefCounted
 const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Interactable := preload("res://scripts/world/interactable.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
+const Sfx := preload("res://scripts/core/sfx.gd")
 
 const CRYSTALS := [9300.0, 9820.0, 10130.0, 10560.0, 11000.0, 11420.0, 11700.0, 12000.0]
 const COLORS := [Color(0.5, 0.85, 1.0, 0.5), Color(0.8, 0.6, 1.0, 0.5), Color(1.0, 0.8, 0.5, 0.5)]
@@ -37,11 +39,11 @@ func build(w: Node2D) -> void:
 	# La veine de lumière : toucher la roche révèle une page
 	var vein := Interactable.new()
 	vein.id = "vein_300"
-	vein.prompt = "Toucher la veine de lumière"
+	vein.prompt_key = "cave.vein"
 	vein.draw_kind = "vein"
 	vein.position = Vector2(10900.0, 620.0 - 90.0)
 	vein.used.connect(func(_id: String) -> void:
-		w.toast_text("La roche s'illumine.")
+		w.toast_text(I18n.t("cave.lit"))
 		w.reveal_page(300))
 	vein.remember_in(w.save)
 	w.pages_root.add_child(vein)

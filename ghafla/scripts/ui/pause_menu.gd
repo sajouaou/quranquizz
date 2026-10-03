@@ -3,12 +3,14 @@ extends Control
 
 const P := preload("res://scripts/core/palette.gd")
 const OptionsPanel := preload("res://scripts/ui/options_panel.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal resume
 signal open_mushaf
 signal open_note
 signal to_title
 signal touch_changed
+signal language_changed
 
 var save: RefCounted
 var _menu: PanelContainer
@@ -39,22 +41,24 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 12)
 	_menu.add_child(box)
 	var title := Label.new()
-	title.text = "Pause"
+	title.text = I18n.t("pause.title")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 38)
 	title.add_theme_color_override("font_color", P.GOLD)
 	box.add_child(title)
-	_first = _button(box, "Reprendre", func() -> void: resume.emit())
-	_button(box, "Ouvrir le Mushaf", func() -> void: open_mushaf.emit())
-	_button(box, "Réglages", _show_options)
-	_button(box, "Note sur l'histoire", func() -> void: open_note.emit())
-	_button(box, "Menu principal", func() -> void: to_title.emit())
+	_first = _button(box, I18n.t("pause.resume"), func() -> void: resume.emit())
+	_button(box, I18n.t("pause.mushaf"), func() -> void: open_mushaf.emit())
+	_button(box, I18n.t("pause.settings"), _show_options)
+	_button(box, I18n.t("pause.note"), func() -> void: open_note.emit())
+	_button(box, I18n.t("pause.menu"), func() -> void: to_title.emit())
 
 	_options = OptionsPanel.new()
 	_options.setup(save)
+	_options.show_language = true
 	_options.visible = false
 	_options.closed.connect(_hide_options)
 	_options.touch_changed.connect(func() -> void: touch_changed.emit())
+	_options.language_changed.connect(func() -> void: language_changed.emit())
 	center.add_child(_options)
 
 
@@ -73,6 +77,10 @@ func open() -> void:
 
 func close() -> void:
 	visible = false
+
+
+func show_options() -> void:
+	_show_options()
 
 
 func _show_options() -> void:

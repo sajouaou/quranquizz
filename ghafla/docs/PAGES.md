@@ -1,6 +1,6 @@
 # Carte des pages
 
-Le prototype place **23 objets à prendre**, qui touchent **23 pages sur 604, en partie ou en entier** (Al-Mulk et As-Sajdah sont offertes en entier, d'un seul geste). Chaque page est liée à un lieu par son thème, et le personnage réagit
+Le prototype place **23 objets à prendre**, qui complètent **22 pages sur 604** et en touchent 24 (Al-Mulk et As-Sajdah sont offertes en entier, d'un seul geste). Chaque page est liée à un lieu par son thème, et le personnage réagit
 à sa manière (les textes sont dans `data/dialogue.json`, les positions dans `data/world_pages.json`).
 
 | Page | Ce qu'on prend | Zone | Type | Comment l'obtenir | Réaction |
@@ -62,7 +62,7 @@ Le prototype place **23 objets à prendre**, qui touchent **23 pages sur 604, en
      ou `{"type": "others", "visual": "seal"}` (réservé à la page finale).
    - `ledge` : hauteur d'une corniche à atteindre par des marches de pierre (70 px au plus entre deux marches).
 2. Ajouter (ou réutiliser) une réaction dans `data/dialogue.json` : `lines` (pensées), `meaning` facultatif
-   (`text` en français et `ref` sourate:verset, affiché comme « sens approximatif »), ou `style: "whisper"` avec un `pool`.
+   (`ref` sourate:verset ; le texte vient de la traduction publiée de `locales/<langue>/verses.json`), ou `style: "whisper"` avec un `pool`.
 3. Lancer `tools/test.sh` : les données sont validées (références de versets, pages dans la bonne sourate, verrous)
    et un bot vérifie que la page est atteignable avec les sauts du personnage.
 
@@ -71,7 +71,7 @@ Aucun texte coranique n'est écrit dans ces fichiers ; un test le vérifie.
 # Chapitre 2 : les leçons oubliées
 
 Un second rêve, dans le même monde d'images : la maison, une ville de fête, l'avenue d'un homme riche, la rue de l'ivresse, les tombes.
-Il compte **11 objets à prendre** (`data/world_pages_2.json`, textes dans `data/dialogue_2.json`) qui touchent près de 40 pages, la plupart par sourate entière
+Il compte **11 objets à prendre** (`data/world_pages_2.json`, textes dans `data/dialogue_2.json`) qui complètent 32 pages et en touchent 39, la plupart par sourate entière
 (`grant_surah`) puisque ces sourates sont courtes ou se lisent d'un trait.
 
 | Page(s) | Ce qu'on prend | Zone | Type | Comment l'obtenir | Réaction |

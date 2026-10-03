@@ -18,8 +18,15 @@ class Toys:
 	extends Node2D
 	const P := preload("res://scripts/core/palette.gd")
 	const DrawUtil := preload("res://scripts/core/draw_util.gd")
-	## Cubes de bois, une balle, et la page de Luqman qui apparaît à la fin.
-	var blocks: float = 1.0
+	## Les jouets de l'enfant : des cubes de bois empilés en pyramide et une balle, posés sur le plancher, et la page
+	## de Luqman qui apparaît à la fin. Chaque cube a une face, un dessus et un côté (volume), et repose sur un autre
+	## ou sur le sol : rien ne flotte. Les cubes apparaissent un à un, de bas en haut, à mesure que l'enfant les pose.
+	const SIZE := 28.0
+	const FLOOR := 560.0
+	# [colonne (en demi-cubes), étage, couleur] : trois cubes au sol, deux dessus, un au sommet
+	const CUBES := [[0, 0, "d95a4a"], [2, 0, "e8b84a"], [4, 0, "4a8fd9"], [1, 1, "5aa86a"], [3, 1, "b866c8"], [2, 2, "e8804a"]]
+	const ORIGIN_X := 418.0
+	var blocks: float = 1.0  # 0 : aucun cube ; 1 : la pyramide entière
 	var page: float = 0.0
 	var page_pos: Vector2 = Vector2(860, 430)
 	var t: float = 0.0
@@ -28,17 +35,37 @@ class Toys:
 		t += delta
 		queue_redraw()
 
+	func _cube(x: float, y: float, col: Color, a: float) -> void:
+		var d := 9.0  # profondeur visible du dessus et du côté
+		draw_rect(Rect2(x, y - SIZE, SIZE, SIZE), Color(col, a))
+		draw_colored_polygon(PackedVector2Array([Vector2(x, y - SIZE), Vector2(x + SIZE, y - SIZE), Vector2(x + SIZE + d, y - SIZE - d * 0.6), Vector2(x + d, y - SIZE - d * 0.6)]), Color(col.lightened(0.28), a))
+		draw_colored_polygon(PackedVector2Array([Vector2(x + SIZE, y - SIZE), Vector2(x + SIZE + d, y - SIZE - d * 0.6), Vector2(x + SIZE + d, y - d * 0.6), Vector2(x + SIZE, y)]), Color(col.darkened(0.3), a))
+		draw_rect(Rect2(x, y - SIZE, SIZE, SIZE), Color(col.darkened(0.35), a * 0.6), false, 1.5)
+
 	func _draw() -> void:
-		var cols := [Color("d95a4a"), Color("e8b84a"), Color("4a8fd9"), Color("5aa86a"), Color("b866c8")]
-		for i in range(6):
-			var x := 420.0 + float(i) * 34.0 + float(i % 2) * 6.0
-			var y := 560.0 - (float(i % 3) * 28.0 if i > 2 else 0.0)
-			var a := clampf(blocks * 2.0 - float(i) * 0.15, 0.0, 1.0)
+		if blocks > 0.01:
+			# ombre de la pile sur le plancher
+			draw_set_transform(Vector2(ORIGIN_X + SIZE * 1.6, FLOOR + 3.0), 0.0, Vector2(1.0, 0.14))
+			DrawUtil.glow(self, Vector2.ZERO, 86.0, Color(0, 0, 0, 0.36 * minf(1.0, blocks * 2.0)))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		for i in range(CUBES.size()):
+			var a := clampf(blocks * float(CUBES.size()) - float(i), 0.0, 1.0)
 			if a <= 0.0:
 				continue
-			draw_rect(Rect2(x, y - 28.0, 28, 28), Color(cols[i % 5], a))
-			draw_rect(Rect2(x, y - 28.0, 28, 6), Color(1, 1, 1, 0.18 * a))
-		draw_circle(Vector2(560, 548), 12.0, Color(0.95, 0.4, 0.3, blocks))
+			var c: Array = CUBES[i]
+			var x := ORIGIN_X + float(c[0]) * (SIZE + 2.0) * 0.5
+			var y := FLOOR - float(c[1]) * SIZE
+			_cube(x, y - (1.0 - a) * 10.0, Color(str(c[2])), a)  # le cube descend se poser
+		# la balle, à côté de la pile
+		if blocks > 0.01:
+			var b := Vector2(ORIGIN_X + 122.0, FLOOR - 12.0)
+			var ba := minf(1.0, blocks * 3.0)
+			draw_set_transform(b + Vector2(0, 14.0), 0.0, Vector2(1.0, 0.25))
+			DrawUtil.glow(self, Vector2.ZERO, 22.0, Color(0, 0, 0, 0.4 * ba))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			draw_circle(b, 12.0, Color(0.86, 0.34, 0.27, ba))
+			draw_arc(b, 12.0, 0.6, 2.4, 14, Color(0.55, 0.16, 0.14, ba), 2.5, true)
+			draw_circle(b + Vector2(-4.0, -4.5), 3.5, Color(1.0, 0.8, 0.72, 0.8 * ba))
 		if page > 0.01:
 			var bob := sin(t * 2.0) * 6.0
 			var c := page_pos + Vector2(0, bob)
@@ -64,8 +91,9 @@ func _setup_extra() -> void:
 	stage.add_child(rig_g)
 	toys = Toys.new()
 	toys.blocks = 0.0
-	toys.z_index = 1
 	stage.add_child(toys)
+	stage.move_child(toys, shadows.get_index() + 1)  # derrière les personnages : l'enfant est assis devant ses cubes
+	shadows.rigs = [rig_a, rig_b, rig_m, rig_g]
 
 
 func run() -> void:
@@ -92,13 +120,14 @@ func run() -> void:
 	rig_b.facing = 1
 	rig_b.pose(KID_SIT, 0.01)
 	rig_g.shade = 0.10
+	toys.blocks = 0.5  # trois cubes déjà posés au sol quand la scène s'ouvre
 	_fade.color = Color(0, 0, 0, 1)
 	await _run_steps()
 	_finish()
 
 
 func _run_steps() -> void:
-	_say("Un autre soir.", 2.2)
+	_say(I18n.t("c2.another_evening"), 2.2)
 	if not await _wait(3.0):
 		return
 	_tw(_fade, "color:a", 0.0, 1.6)
@@ -106,7 +135,7 @@ func _run_steps() -> void:
 	if not await _wait(1.8):
 		return
 	# L'enfant joue : des cubes qu'il empile, avec application
-	_tw(toys, "blocks", 1.0, 1.2)
+	_tw(toys, "blocks", 1.0, 4.6)  # un cube de plus à chaque geste de l'enfant
 	for i in range(3):
 		rig_b.pose(KID_REACH, 0.7)
 		if not await _wait(0.8):
@@ -114,7 +143,7 @@ func _run_steps() -> void:
 		rig_b.pose(KID_STACK, 0.7)
 		if not await _wait(0.8):
 			return
-	_say("Il y a très longtemps…", 2.4)
+	_say(I18n.t("c2.long_ago"), 2.4)
 	if not await _wait(2.4):
 		return
 
@@ -126,12 +155,12 @@ func _run_steps() -> void:
 	if not await _wait(2.0):
 		return
 	rig_g.pose({"hand_f": Vector2(20, 26), "head_tilt": 0.12}, 1.0)
-	_say("Je me souviens de ce soir.", 2.6)
+	_say(I18n.t("c2.remember"), 2.6)
 	if not await _wait(2.8):
 		return
 
 	# Le père entre et l'appelle : c'est l'heure de la prière
-	_say("« Mon fils, viens. C'est l'heure de la prière. »", 3.2)
+	_say(I18n.t("c2.father"), 3.2)
 	if not await _walk(rig_a, 640.0, 2.6, -1):
 		return
 	rig_b.pose({"head_tilt": 0.5, "body_rot": 0.32}, 0.6)
@@ -143,7 +172,7 @@ func _run_steps() -> void:
 	rig_b.pose(KID_STACK, 0.5)
 	if not await _wait(1.6):
 		return
-	_say("« Encore un peu… »", 2.2)
+	_say(I18n.t("c2.child_more"), 2.2)
 	if not await _wait(2.4):
 		return
 	rig_a.pose({"body_rot": 0.05, "head_tilt": 0.18, "hand_f": Vector2(14, 44)}, 1.0)
@@ -151,7 +180,7 @@ func _run_steps() -> void:
 		return
 
 	# La mère arrive à son tour : un petit service
-	_say("« Mon fils, aide-moi un instant. »", 3.0)
+	_say(I18n.t("c2.mother"), 3.0)
 	if not await _walk(rig_m, 560.0, 2.8, -1):
 		return
 	rig_b.pose(KID_REACH, 0.5)
@@ -172,7 +201,7 @@ func _run_steps() -> void:
 
 	# L'adulte a vu la scène ; le rêve se défait
 	rig_g.pose({"head_tilt": 0.32, "hand_f": Vector2(18, 20), "hand_b": Vector2(14, 22)}, 1.2)
-	_say("C'était moi.", 2.6)
+	_say(I18n.t("c2.it_was_me"), 2.6)
 	if not await _wait(3.2):
 		return
 	_tw(toys, "blocks", 0.0, 2.0)
@@ -186,10 +215,10 @@ func _run_steps() -> void:
 	toys.page_pos = Vector2(860.0, 430.0)
 	_tw(toys, "page", 1.0, 2.4)
 	Sfx.play("page", -8.0, 0.9)
-	_say("Une page… ces conseils que j'avais entendus.", 3.0)
+	_say(I18n.t("c2.page"), 3.0)
 	if not await _wait(3.6):
 		return
-	_say("Il reste encore beaucoup à retrouver.", 2.6)
+	_say(I18n.t("c2.much_left"), 2.6)
 	if not await _wait(2.6):
 		return
 	_tw(_fade, "color", Color(1.0, 0.94, 0.78, 1.0), 1.6)

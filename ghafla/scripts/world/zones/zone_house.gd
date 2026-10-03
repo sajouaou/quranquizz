@@ -6,6 +6,7 @@ const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Interactable := preload("res://scripts/world/interactable.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 const LEFT := 80.0
 const RIGHT := 1930.0
@@ -59,7 +60,7 @@ func build(w: Node2D) -> void:
 
 	var door := Interactable.new()
 	door.id = "door" if w.chapter == 1 else "door2"
-	door.prompt = "Ouvrir la porte"
+	door.prompt_key = "house.door"
 	door.position = Vector2(DOOR_X - 60.0, GROUND - 80.0)
 	door.used.connect(func(_id: String) -> void: open_door())
 	door.remember_in(w.save)
@@ -76,7 +77,9 @@ func open_door() -> void:
 	if door_open > 0.0:
 		return
 	_world.save.set_flag(_world.ckey("door_open"))
-	Sfx.play("door", -2.0, 1.0)
+	Sfx.play_world("door", -2.0, 1.0)
+	Sfx.open_outside(1.0, 2.2)  # l'air du dehors entre
+	Sfx.fade_loop("air", -16.0, 2.2)
 	door_block["on"] = false
 	var tw := _world.create_tween()
 	tw.tween_property(self, "door_open", 1.0, 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -84,8 +87,10 @@ func open_door() -> void:
 
 func process(_w: Node2D, delta: float) -> void:
 	_t += delta
-	_art.queue_redraw()
-	_beam.queue_redraw()
+	# la maison n'est redessinée que si on peut la voir
+	if _w.player.camera.get_screen_center_position().x < RIGHT + 900.0:
+		_art.queue_redraw()
+		_beam.queue_redraw()
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -104,6 +109,11 @@ func draw_house(c: Node2D) -> void:
 	DrawUtil.vgrad(c, Rect2(STAIR_BOT_X, CEIL, DOOR_X - STAIR_BOT_X, UP_Y - CEIL), Color("3b3155"), Color("2e2645"))
 	DrawUtil.vgrad(c, Rect2(STAIR_BOT_X, UP_Y + 24.0, DOOR_X - STAIR_BOT_X, GROUND - UP_Y - 24.0), Color("b58a62"), Color("8f6a48"))
 	DrawUtil.vgrad(c, Rect2(LEFT, UP_Y + 24.0, STAIR_TOP_X - LEFT, GROUND - UP_Y - 24.0), Color("2b2342"), Color("201a34"))
+
+	# Profondeur des pièces : plafond et angles dans l'ombre, plancher vu légèrement d'en haut
+	_room_depth(c, Rect2(LEFT, CEIL, STAIR_TOP_X - LEFT, UP_Y - CEIL), Color("6e4b33"))
+	_room_depth(c, Rect2(STAIR_BOT_X, UP_Y + 24.0, DOOR_X - STAIR_BOT_X, GROUND - UP_Y - 24.0), Color("6e4b33"))
+	_room_depth(c, Rect2(STAIR_TOP_X, CEIL, STAIR_BOT_X - STAIR_TOP_X, GROUND - CEIL), Color(0, 0, 0, 0))
 
 	_draw_bedroom(c, sky)
 	_draw_kitchen_shadow(c)
@@ -127,6 +137,27 @@ func draw_house(c: Node2D) -> void:
 	c.draw_rect(Rect2(LEFT - 24.0, GROUND, DOOR_X - LEFT + 58.0, 900.0), Color("2e2447"))
 	c.draw_rect(Rect2(DOOR_X, CEIL - 24.0, 34.0, 440.0 - CEIL + 24.0), Color("d9cdb5"))
 	_draw_door(c)
+
+
+## Donne du volume à une pièce vue en coupe : ombre sous le plafond et dans les angles, et une bande de plancher
+## en perspective au pied du mur du fond (ses lames fuient vers le centre de la pièce). floor_col transparent : pas de plancher.
+func _room_depth(c: Node2D, room: Rect2, floor_col: Color) -> void:
+	DrawUtil.vgrad(c, Rect2(room.position, Vector2(room.size.x, 54.0)), Color(0.02, 0.01, 0.06, 0.34), Color(0.02, 0.01, 0.06, 0.0))
+	DrawUtil.hgrad(c, Rect2(room.position, Vector2(46.0, room.size.y)), Color(0.02, 0.01, 0.06, 0.26), Color(0.02, 0.01, 0.06, 0.0))
+	DrawUtil.hgrad(c, Rect2(room.end.x - 46.0, room.position.y, 46.0, room.size.y), Color(0.02, 0.01, 0.06, 0.0), Color(0.02, 0.01, 0.06, 0.26))
+	if floor_col.a <= 0.0:
+		return
+	var depth := 26.0
+	var y1 := room.end.y
+	var y0 := y1 - depth
+	DrawUtil.vgrad(c, Rect2(room.position.x, y0, room.size.x, depth), floor_col.darkened(0.35), floor_col.lightened(0.06))
+	var cx := room.get_center().x
+	var x := room.position.x + 20.0
+	while x < room.end.x:
+		c.draw_line(Vector2(lerpf(x, cx, 0.16), y0), Vector2(x, y1), Color(0, 0, 0, 0.22), 1.5, true)
+		x += 44.0
+	c.draw_line(Vector2(room.position.x, y0), Vector2(room.end.x, y0), Color(0, 0, 0, 0.3), 2.0)
+	DrawUtil.vgrad(c, Rect2(room.position.x, y0 - 30.0, room.size.x, 30.0), Color(0.02, 0.01, 0.06, 0.0), Color(0.02, 0.01, 0.06, 0.22))
 
 
 func _draw_bedroom(c: Node2D, sky: Dictionary) -> void:

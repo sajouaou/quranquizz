@@ -8,6 +8,7 @@ extends RefCounted
 
 const PATH := "res://data/surahs.json"
 const PARTS_PATH := "res://data/page_parts.json"
+const I18n := preload("res://scripts/core/i18n.gd")
 
 static var _inst: RefCounted
 
@@ -16,6 +17,7 @@ var juz_starts: Array = []
 var surahs: Array = []
 var loaded: bool = false
 var page_parts: Dictionary = {}  # page -> [[sourate, premier verset, dernier verset], ...] (numéros seulement)
+var _surah_pages_cache: Dictionary = {}  # sourate -> pages (calcul coûteux, demandé très souvent)
 
 
 static func get_instance() -> RefCounted:
@@ -44,6 +46,11 @@ func load_data(path: String = PATH) -> bool:
 
 func surah(id: int) -> Dictionary:
 	return surahs[id - 1] if id >= 1 and id <= surahs.size() else {}
+
+
+## Nom d'une sourate dans la langue courante (locales/<langue>/surahs.json), sinon celui des données.
+func surah_name(s: Dictionary) -> String:
+	return I18n.surah_name(int(s.get("id", 0)), str(s.get("name_fr", "")))
 
 
 func surahs_starting_on(page: int) -> Array:
@@ -95,7 +102,7 @@ func page_title(page: int, arabic: bool = false) -> String:
 	var list: Array = starting if not starting.is_empty() else [surah_of_page(page)]
 	var names: PackedStringArray = []
 	for s in list:
-		names.append(s["name_ar"] if arabic else s["name_fr"])
+		names.append(s["name_ar"] if arabic else surah_name(s))
 	return (" · " if not arabic else " ، ").join(names)
 
 
@@ -122,11 +129,50 @@ func surah_ids_on_page(page: int) -> Array:
 
 ## Pages qui portent au moins un verset de la sourate.
 func surah_pages(surah_id: int) -> Array:
+	if _surah_pages_cache.has(surah_id):
+		return _surah_pages_cache[surah_id]
 	var out := []
 	for p in range(1, total_pages + 1):
 		if surah_ids_on_page(p).has(surah_id):
 			out.append(p)
+	_surah_pages_cache[surah_id] = out
 	return out
+
+
+## Pages concernées par une liste d'objets à prendre (les entrées de data/world_pages*.json) :
+##  - "touched"  : toutes les pages dont au moins une partie est donnée ;
+##  - "complete" : celles que ces objets suffisent à compléter (toutes leurs parties sont données).
+## Sert à annoncer des nombres de pages exacts (menu des chapitres, carte de fin, indices des sceaux).
+func pages_of_defs(defs: Array) -> Dictionary:
+	var given := {}  # « page:sourate » -> true
+	var touched := {}
+	for d in defs:
+		if d.has("grant_surah"):
+			var sid := int(d["grant_surah"])
+			for pg in surah_pages(sid):
+				given["%d:%d" % [pg, sid]] = true
+				touched[int(pg)] = true
+		elif d.has("part"):
+			for pg in d.get("pages", [int(d["page"])]):
+				given["%d:%d" % [int(pg), int(d["part"])]] = true
+				touched[int(pg)] = true
+		else:
+			var page := int(d["page"])
+			for s in surah_ids_on_page(page):
+				given["%d:%d" % [page, s]] = true
+			touched[page] = true
+	var complete := []
+	for page in touched.keys():
+		var full := true
+		for s in surah_ids_on_page(page):
+			if not given.has("%d:%d" % [page, s]):
+				full = false
+		if full:
+			complete.append(page)
+	var all: Array = touched.keys()
+	all.sort()
+	complete.sort()
+	return {"touched": all, "complete": complete}
 
 
 ## La sourate commence-t-elle sur cette page (verset 1 présent) ?

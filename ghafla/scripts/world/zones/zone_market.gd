@@ -8,6 +8,7 @@ const P := preload("res://scripts/core/palette.gd")
 const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Interactable := preload("res://scripts/world/interactable.gd")
 const Sfx := preload("res://scripts/core/sfx.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 const COIN_START := 5250.0
 const COIN_COUNT := 14
@@ -50,7 +51,7 @@ func build(w: Node2D) -> void:
 	# Un portant où fouiller : la clé est dans une poche
 	var rack := Interactable.new()
 	rack.id = "rack"
-	rack.prompt = "Fouiller les vêtements"
+	rack.prompt_key = "market.rack"
 	rack.position = Vector2(RACK_X, 620.0 - 80.0)
 	rack.used.connect(_on_rack)
 	rack.remember_in(w.save)
@@ -79,7 +80,7 @@ func _on_rack(_id: String) -> void:
 		_rack_glow.queue_free()
 		_rack_glow = null
 	_world.give_item("key_chest")
-	_world.toast_text("Au fond d'une poche : une petite clé de métal.")
+	_world.toast_text(I18n.t("market.key_found"))
 
 
 func process(w: Node2D, delta: float) -> void:
@@ -103,7 +104,7 @@ func process(w: Node2D, delta: float) -> void:
 			if not c["gone"]:
 				c["gone"] = true
 				_dissolve(c["node"])
-		Sfx.play("wind", -6.0, 0.9)
+		Sfx.play_world("wind", -6.0, 0.9)
 		w.trigger_event("coins_gone")
 
 

@@ -9,6 +9,8 @@ const Sfx := preload("res://scripts/core/sfx.gd")
 const PlayerScript := preload("res://scripts/world/player.gd")
 const CollisionScript := preload("res://scripts/world/collision.gd")
 const Backdrop := preload("res://scripts/world/backdrop.gd")
+const Foreground := preload("res://scripts/world/foreground.gd")
+const GroundDepth := preload("res://scripts/world/ground_depth.gd")
 const GroundArt := preload("res://scripts/world/ground_art.gd")
 const PagePickup := preload("res://scripts/world/page_pickup.gd")
 const Interactable := preload("res://scripts/world/interactable.gd")
@@ -20,6 +22,7 @@ const ZoneStreet := preload("res://scripts/world/zones/zone_street.gd")
 const ZoneMarket := preload("res://scripts/world/zones/zone_market.gd")
 const ZoneCave := preload("res://scripts/world/zones/zone_cave.gd")
 const ZonePeak := preload("res://scripts/world/zones/zone_peak.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 signal page_collected(page: int, screen_pos: Vector2, data: Dictionary)
 signal story_trigger(id: String)
@@ -60,6 +63,7 @@ var mushaf: RefCounted
 var player: Node2D
 var collision: RefCounted = CollisionScript.new()
 var backdrop: Node2D
+var foreground: Node2D
 var story: Array = []
 var zone: String = ""
 var placed_pages: Array = []  # numéros des pages placées dans ce prototype
@@ -179,10 +183,31 @@ func _build() -> void:
 	player.camera.limit_right = int(world_w)
 	player.camera.limit_top = -900
 	player.camera.limit_bottom = 900
-	player.footstep.connect(func() -> void: Sfx.play("step", -12.0, randf_range(0.9, 1.1)))
-	player.jumped.connect(func() -> void: Sfx.play("step", -8.0, 1.25))
-	player.landed.connect(func(hard: bool) -> void: Sfx.play("step", -6.0 if hard else -14.0, 0.8))
+	player.footstep.connect(func() -> void: Sfx.footstep(zone, player.rig.running))
+	player.jumped.connect(func() -> void: Sfx.play_world("step", -8.0, 1.25))
+	player.landed.connect(func(hard: bool) -> void:
+		if hard:
+			Sfx.play_world("step", -6.0, 0.8)
+		else:
+			Sfx.footstep(zone))
 	player.interact_target_changed.connect(_on_target_changed)
+
+	# Joints du sol en perspective, juste au-dessus du terrain
+	var ground_depth := GroundDepth.new()
+	ground_depth.world = self
+	ground_depth.z_index = -2
+	ground_depth.name = "GroundDepth"
+	add_child(ground_depth)
+
+	# Premier plan en parallaxe (herbes, roches, fanions, lueurs floues), devant le personnage
+	var fg_layer := CanvasLayer.new()
+	fg_layer.layer = 2
+	fg_layer.name = "ForegroundLayer"
+	foreground = Foreground.new()
+	foreground.world = self
+	foreground.camera = player.camera
+	fg_layer.add_child(foreground)
+	add_child(fg_layer)
 
 	fx = Fx.new()
 	fx.world = self
@@ -289,9 +314,12 @@ func add_glow(pos: Vector2, radius: float, color: Color, pulse: float = 0.0) -> 
 		DrawUtil.glow(g, Vector2.ZERO, radius * k, color))
 	if pulse > 0.0:
 		var timer := Timer.new()
-		timer.wait_time = 0.05
+		timer.wait_time = 0.066
 		timer.autostart = true
-		timer.timeout.connect(g.queue_redraw)
+		# la lueur ne palpite que si elle est à l'écran
+		timer.timeout.connect(func() -> void:
+			if player != null and absf(g.global_position.x - player.camera.get_screen_center_position().x) < 1100.0 + radius:
+				g.queue_redraw())
 		g.add_child(timer)
 	glow_layer.add_child(g)
 	return g
@@ -356,16 +384,23 @@ func others_collected(id: String) -> bool:
 	return true
 
 
+## Pages déjà revenues parmi celles que les AUTRES objets du chapitre complètent : ce qu'annonce l'indice d'un sceau « toutes les autres pages ».
 func others_progress(id: String) -> Vector2i:
-	var have := 0
-	var total := 0
+	var others := []
 	for d in _defs:
-		if def_id(d) == id:
-			continue
-		total += 1
-		if owned(d):
+		if def_id(d) != id:
+			others.append(d)
+	var pages: Array = mushaf.pages_of_defs(others)["complete"]
+	var have := 0
+	for pg in pages:
+		if save.has_page(int(pg)):
 			have += 1
-	return Vector2i(have, total)
+	return Vector2i(have, pages.size())
+
+
+## Pages que ce chapitre complète, et celles qu'il ne fait que commencer.
+func page_stats() -> Dictionary:
+	return mushaf.pages_of_defs(_defs)
 
 
 func reveal_page(page: int) -> void:
@@ -422,9 +457,11 @@ func _physics_process(_delta: float) -> void:
 	if z != zone:
 		zone = z
 		zone_entered.emit(z)
+	var sky := P.sky_at(x, chapter)
+	player.set_ambient(Color.WHITE.lerp((sky["bottom"] as Color).lightened(0.3), 0.32))
 	if player.global_position.y > 1300.0:
 		player.respawn()
-		toast.emit("Le rêve te ramène doucement en arrière.")
+		toast.emit(I18n.t("world.respawn"))
 	for s in story:
 		var sid := str(s["id"])
 		if save.flag(sid):
@@ -512,11 +549,12 @@ func _update_overlay() -> void:
 	rad.resize(24)
 	var n := 0
 	var sources: Array = [[player.global_position + Vector2(0, -80), 300.0]]
-	# les pages éclairent la grotte, sauf celles qui sont encore cachées
+	# les pages éclairent la grotte ; une page encore cachée ne donne qu'une petite lueur, assez pour voir son signe
 	for node in get_tree().get_nodes_in_group("light_source"):
-		if node is Node2D and node.visible and not bool(node.get("hidden_state")):
+		if node is Node2D and node.visible:
 			var radius: Variant = node.get("light_radius")
-			sources.append([node.global_position, float(radius) if radius != null else 120.0])
+			var r: float = float(radius) if radius != null else 120.0
+			sources.append([node.global_position, 130.0 if bool(node.get("hidden_state")) else r])
 	for c in get_tree().get_nodes_in_group("cave_light"):
 		sources.append([c.global_position, float(c.get_meta("radius", 90.0))])
 	for src in sources:

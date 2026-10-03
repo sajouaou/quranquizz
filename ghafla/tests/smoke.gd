@@ -4,6 +4,7 @@ extends Node
 ## Lancer : godot --headless --fixed-fps 60 --path ghafla res://tests/smoke_runner.tscn
 
 const SaveData := preload("res://scripts/core/save_data.gd")
+const I18n := preload("res://scripts/core/i18n.gd")
 
 var main: Node
 var failed: int = 0
@@ -16,6 +17,7 @@ func _ready() -> void:
 	save.path = "user://ghafla_smoke_save.json"
 	save.reset_progress()
 	save.note_seen = false
+	save.lang = ""
 	var scene: PackedScene = load("res://scenes/main.tscn")
 	main = scene.instantiate()
 	add_child(main)
@@ -63,8 +65,26 @@ func _flush_dialogue() -> void:
 
 
 func _run() -> void:
+	await _wait(1.0)
+	# tout premier démarrage : aucune langue choisie, le jeu la demande avant le menu
+	ok(_state() == "LANGUAGE" and main.ui_root.has_node("LanguageChoice") and main.title == null, "premier démarrage : le choix de la langue s'affiche avant le menu")
+	main.ui_root.get_node("LanguageChoice").chosen.emit("fr")
 	await _wait(1.5)
-	ok(_state() == "TITLE", "le jeu démarre sur le menu")
+	ok(main.save.lang == "fr" and I18n.lang == "fr", "la langue choisie est enregistrée")
+	ok(_state() == "TITLE", "puis le menu principal")
+
+	# changer de langue reconstruit l'interface et recharge les scènes dans la nouvelle langue, puis retour au français
+	main.save.lang = "en"
+	I18n.set_language("en")
+	main._on_language_changed()
+	await _wait(1.2)
+	ok(_state() == "TITLE" and main.title != null and main.reactions["fatiha"]["lines"][0].begins_with("Al-Fatiha… Seventeen"), "langue anglaise : menu reconstruit et scènes traduites")
+	ok(main.hud._count_label != null and main.pause_menu != null, "l'interface en jeu est reconstruite")
+	main.save.lang = "fr"
+	I18n.set_language("fr")
+	main._on_language_changed()
+	await _wait(1.2)
+	ok(_state() == "TITLE" and main.title != null and main.reactions["fatiha"]["lines"][0].begins_with("Al-Fatiha… Dix-sept"), "retour au français")
 
 	# nouvelle partie -> note -> cinématique
 	main._on_new_game()
@@ -106,7 +126,29 @@ func _run() -> void:
 	await _wait(0.2)
 	ok(not main.paused_menu and not get_tree().paused, "la reprise fonctionne")
 
-	# retour au menu et « Continuer »
+	# changer de langue depuis la pause : l'interface est refaite, la partie continue au même endroit
+	var before: Vector2 = main.world.player.global_position
+	main._toggle_pause()
+	await _wait(0.2)
+	main.save.lang = "en"
+	I18n.set_language("en")
+	main._on_language_changed()
+	await _wait(0.3)
+	ok(_state() == "PLAY" and main.paused_menu and main.pause_menu.visible and main.world != null, "langue changée en jeu : retour sur la pause, la partie est conservée")
+	ok(main.world.pickups.values()[0].prompt_text() == "Take the page" and main.reactions["fatiha"]["meaning"]["translator"].contains("Khattab"), "invites et versets passent en anglais (The Clear Quran)")
+	main.save.lang = "fr"
+	I18n.set_language("fr")
+	main._on_language_changed()
+	await _wait(0.3)
+	main._toggle_pause()
+	await _wait(0.2)
+	ok(not get_tree().paused and main.world.player.global_position.distance_to(before) < 40.0 and main.reactions["fatiha"]["meaning"]["translator"].contains("Hamidullah"), "retour au français (Hamidullah), le personnage n'a pas bougé")
+
+	# retour au menu et « Continuer », en pleine scène de dialogue : rien ne doit rester à l'écran au retour
+	main.dialogue.show_scene(["Une pensée qui ne doit pas survivre au retour au menu."], {}, func() -> void: pass)
+	main.dialogue.whisper("Un murmure en attente.")
+	main.world.player.frozen = true
+	ok(main.dialogue.active and main.dialogue._panel.visible, "une scène de dialogue est affichée avant de quitter")
 	main._toggle_pause()
 	await _wait(0.2)
 	main._back_to_title()
@@ -114,8 +156,10 @@ func _run() -> void:
 	ok(not main.pause_menu.visible and not get_tree().paused, "« Menu principal » ferme la pause immédiatement")
 	ok(await _until(func() -> bool: return _state() == "TITLE" and main.title != null, 5.0), "retour au menu principal")
 	await _wait(0.5)
+	ok(not main.dialogue.active and not main.dialogue._panel.visible and main.dialogue._whisper_queue.is_empty(), "le dialogue est remis à zéro au retour au menu")
 	main._on_continue()
 	ok(await _until(func() -> bool: return _state() == "PLAY" and main.world != null, 8.0), "« Continuer » relance le monde sans cinématique")
+	ok(not main.dialogue.active and not main.dialogue._panel.visible and not main.world.player.frozen, "après « Continuer » : pas de fenêtre de dialogue fantôme, le personnage est libre")
 	ok(main.save.has_page(322) and main.hud._count == main.save.count(), "la progression et le compteur sont conservés")
 
 	# fin : les autres pages, puis la dernière
