@@ -8,6 +8,7 @@ const DrawUtil := preload("res://scripts/core/draw_util.gd")
 const Gfx := preload("res://scripts/core/gfx.gd")
 
 const WORLD_W := 15600.0
+const GRAVES_F := 0.12  # les tombes sont sur les collines du fond : elles défilent très lentement
 
 var camera: Camera2D
 var chapter: int = 1
@@ -19,6 +20,7 @@ var _near: PackedVector2Array
 var _city: Array = []  # {x, w, h, kind}
 var _city_mid: Array = []  # deuxième rangée de bâtiments, plus proche et plus haute (profondeur)
 var _mid: PackedVector2Array
+var _graves: Array = []  # tombes lointaines, sur la colline : [x (repère du plan), décalage vers le bas, largeur, hauteur, hauteur de la colline en x]
 var _rock_far: PackedVector2Array
 var _rock_near: PackedVector2Array
 var _drips: Array = []
@@ -60,6 +62,15 @@ func _ready() -> void:
 		_city_mid.append({"x": x, "w": w2, "h": rng.randf_range(110.0, 290.0), "kind": kind2, "seed": rng.randi()})
 		_city_mid[_city_mid.size() - 1]["lit"] = _lit_windows(_city_mid[_city_mid.size() - 1])
 		x += w2 + rng.randf_range(-20.0, 60.0)
+	# Cimetière lointain : de petites dalles nues semées sur le versant des collines du fond. On ne fait que l'apercevoir, de très loin.
+	var gx := 0.0
+	while gx < world_w * GRAVES_F + 900.0:
+		if rng.randf() > 0.25:
+			var down := rng.randf_range(5.0, 52.0)
+			var near_k := down / 52.0  # plus bas sur le versant = plus près = un peu plus grand
+			var lx := gx + rng.randf_range(-5.0, 5.0)
+			_graves.append([lx, down, lerpf(3.0, 6.5, near_k), lerpf(6.0, 12.0, near_k) * rng.randf_range(0.8, 1.2), DrawUtil.lerp_y(_far, lx)])
+		gx += 13.0
 
 
 var _last_cam: Vector2 = Vector2(-1.0e9, 0.0)
@@ -129,6 +140,9 @@ func _draw() -> void:
 	var near_col := (sky["bottom"] as Color).lerp(P.NIGHT, 0.55)
 	if (w["peak"] > 0.01 or w["city"] > 0.01 or w["hills"] > 0.01) and not skip.has("far"):
 		_draw_hills(_far, cam, 0.12, vp, horizon + 6.0, DrawUtil.with_alpha(far_col, 1.0 - w["cave"]))
+		var graves_amount := _graves_amount(cam.x)
+		if graves_amount > 0.01:
+			_draw_far_graves(cam, vp, horizon + 6.0, sky, graves_amount)
 	if w["city"] > 0.01 and not skip.has("city"):
 		_draw_city(cam, vp, horizon + 46.0, (sky["bottom"] as Color).lerp(P.NIGHT, 0.5), w["city"])
 	# Deuxième rangée de bâtiments, plus proche et voilée de brume : le ciel, la ville lointaine, la ville proche, les collines, le monde
@@ -144,6 +158,36 @@ func _draw() -> void:
 	# Brume au sol
 	var fog := DrawUtil.with_alpha(sky["bottom"], 0.22 * (1.0 - w["cave"]))
 	DrawUtil.vgrad(self, Rect2(0, horizon + 60.0, vp.x, vp.y - horizon), Color(fog.r, fog.g, fog.b, 0.0), fog)
+
+
+## Où l'on aperçoit le cimetière : le long du dernier chemin du chapitre 2.
+func _graves_amount(x: float) -> float:
+	if chapter != 2:
+		return 0.0
+	return smoothstep(12300.0, 12900.0, x) * (1.0 - smoothstep(16700.0, 17300.0, x))
+
+
+## Les tombes, vues de loin sur la colline : de simples dalles nues et leurs tertres, sans inscription ni ornement,
+## pâles sous la lune. Le chemin du joueur passe à l'écart : on ne marche jamais parmi elles.
+func _draw_far_graves(cam: Vector2, vp: Vector2, base_y: float, sky: Dictionary, amount: float) -> void:
+	var f := GRAVES_F
+	var left := cam.x * f - vp.x * 0.55
+	var right := cam.x * f + vp.x * 0.55
+	var stone: Color = (sky["mid"] as Color).lerp(Color(0.78, 0.8, 0.95), 0.6)
+	var earth: Color = (sky["bottom"] as Color).lerp(P.NIGHT, 0.75)
+	for g in _graves:
+		var lx: float = g[0]
+		if lx < left or lx > right:
+			continue
+		var x := lx - cam.x * f + vp.x * 0.5
+		var y: float = float(g[4]) + base_y + float(g[1])
+		var gw: float = g[2]
+		var gh: float = g[3]
+		var a := amount * (0.42 + 0.4 * float(g[1]) / 52.0)
+		draw_rect(Rect2(x - gw * 1.6, y - 1.5, gw * 3.2, 3.0), Color(earth, a))
+		draw_rect(Rect2(x - gw * 0.5, y - gh, gw, gh), Color(stone, a))
+	# un voile de brume sur le versant
+	DrawUtil.vgrad(self, Rect2(0, base_y - 90.0, vp.x, 150.0), Color(0.7, 0.75, 1.0, 0.0), Color(0.7, 0.75, 1.0, 0.07 * amount))
 
 
 func _draw_stars(vp: Vector2, cam: Vector2, amount: float) -> void:

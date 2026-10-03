@@ -73,6 +73,10 @@ Prérequis : JDK 21 (celui d'Android Studio convient : `export JAVA_HOME=~/andro
 Android (installé par Android Studio, ou `ANDROID_HOME`). La clé (`android/upload-keystore.jks`) et
 `android/keystore.properties` ne sont jamais commités : **garde-en une sauvegarde**.
 
+Les visuels et les textes de la fiche (icône, bannière, captures d'écran, descriptions) sont dans [store/](store/README.md) ;
+`node scripts/store-assets.cjs` les régénère. Le logo est `resources/logo.svg` : `./scripts/app-icons.sh` en tire les icônes
+et les écrans de démarrage Android, iOS et web.
+
 ### Clé perdue
 
 Si l'application utilise **Play App Signing** (activé par défaut depuis 2021), seule la clé d'importation

@@ -114,6 +114,7 @@ func run() -> void:
 	rig_a.position = Vector2(1500.0, FLOOR_Y)
 	rig_m.shade = 0.30
 	rig_b.scale = Vector2(0.62, 0.62)  # l'enfant
+	rig_b.head_scale = 1.22
 	rig_b.shade = 0.15
 	rig_b.thobe_color = Color("5a8fd0")
 	rig_b.position = Vector2(360.0, FLOOR_Y)

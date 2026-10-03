@@ -83,10 +83,10 @@ Il compte **11 objets à prendre** (`data/world_pages_2.json`, textes dans `data
 | 34 | Al-Baqarah | rue de l'ivresse | visible | visible | `khamr1` |
 | 85 | An-Nisa | rue de l'ivresse | locked | sceau : il faut d'abord lire la ou les paroles précédentes | `khamr2` |
 | 123 | Al-Ma'idah | rue de l'ivresse | locked | sceau : il faut d'abord lire la ou les paroles précédentes | `khamr3` |
-| 267 | Al-Hijr (partie des pages) | tombes | visible | visible | `hijr` |
-| 575–577 | Al-Muddaththir en entier | tombes | hidden | reste immobile 2.4 s : elle apparaît | `muddathir` |
-| 577–578 | Al-Qiyamah en entier | tombes | visible | visible | `qiyamah` |
-| 582–583 | An-Naba en entier | tombes | locked | sceau de l'aube : tout le reste doit être revenu | `naba` |
+| 267 | Al-Hijr (partie des pages) | chemin des tombes | visible | visible | `hijr` |
+| 575–577 | Al-Muddaththir en entier | chemin des tombes | hidden | reste immobile 2.4 s : elle apparaît | `muddathir` |
+| 577–578 | Al-Qiyamah en entier | chemin des tombes | visible | visible | `qiyamah` |
+| 582–583 | An-Naba en entier | chemin des tombes | locked | sceau de l'aube : tout le reste doit être revenu | `naba` |
 
 ## Les lieux et leur lien avec les pages
 
@@ -94,4 +94,4 @@ Il compte **11 objets à prendre** (`data/world_pages_2.json`, textes dans `data
 - **La ville en fête (Al-Isra 17:32, An-Nur)** : guirlandes de cœurs, roses, tables pour deux, bougies allumées, **et personne** : le rêve montre le décor de l'amour sans lendemain. Les paroles sur « ne vous approchez pas de la fornication » (Al-Isra) et sur le regard baissé et la chasteté (An-Nur) sont présentées avec douceur, en insistant sur ce qui protège avant la chute, sans jugement sur qui que ce soit.
 - **L'avenue d'or (fin d'Al-Qasas, pages 394 à 396)** : un cortège somptueux (bannières, chariots de coffres, un char doré où se tient une silhouette sans visage) avance, puis la terre s'ouvre et l'engloutit (Al-Qasas 28:76-82). La page se révèle alors. Le joueur est immobilisé quelques secondes pour regarder.
 - **La rue de l'ivresse (2:219, 4:43, 5:91)** : trois tables, trois étapes, **dans l'ordre de la révélation**. Chaque page scellée s'ouvre quand la précédente est lue. Décor : bouteilles et néons, aucune personne.
-- **Les tombes (Al-Hijr 15:99, Al-Muddaththir, Al-Qiyamah, An-Naba')** : des tertres de terre et de simples dalles nues, sans inscription ni ornement. Regret, certitude de la mort, résurrection comme réalité ; la dernière page (An-Naba') est scellée jusqu'à ce que tout le reste soit revenu, et le chapitre se termine sur « tant que je respire, il est encore temps ».
+- **Le chemin qui longe les tombes (Al-Hijr 15:99, Al-Muddaththir, Al-Qiyamah, An-Naba')** : une route de nuit bordée d'un muret ; le cimetière ne se voit que de loin, sur la colline (tertres et dalles nues, sans inscription ni ornement). Les pages sont sur le chemin, jamais parmi les tombes. Regret, certitude de la mort, résurrection comme réalité ; la dernière page (An-Naba') est scellée jusqu'à ce que tout le reste soit revenu, et le chapitre se termine sur « tant que je respire, il est encore temps ».

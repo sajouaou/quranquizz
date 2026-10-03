@@ -38,10 +38,10 @@
   },
   "c2_graves_enter": {
    "lines": [
-    "Le silence. Des tertres de terre, des dalles nues.",
-    "Ici, tout le monde arrive, un jour. Moi aussi."
+    "Le silence. Un chemin, un muret… et au loin, sur la colline, des tertres de terre et des dalles nues.",
+    "Là-bas, tout le monde arrive, un jour. Moi aussi."
    ],
-   "objective": "Avance parmi les tombes."
+   "objective": "Suis le chemin qui longe le cimetière."
   },
   "c2_end": {
    "lines": [

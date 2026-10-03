@@ -36,3 +36,7 @@ resources/android/**/*
 /release
 *.jks
 keystore.properties
+
+# Local scratch files (pasted screenshots, local credentials)
+/image-*.png
+.ghafla-apple.env

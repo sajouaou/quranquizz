@@ -38,10 +38,10 @@
   },
   "c2_graves_enter": {
    "lines": [
-    "Silence. Mounds of earth, bare slabs.",
-    "Everyone ends up here, one day. Me too."
+    "Silence. A path, a low wall… and far off, on the hillside, mounds of earth and bare slabs.",
+    "Everyone ends up over there, one day. Me too."
    ],
-   "objective": "Walk on among the graves."
+   "objective": "Follow the path that runs alongside the cemetery."
   },
   "c2_end": {
    "lines": [

@@ -8,8 +8,8 @@ const I18n := preload("res://scripts/core/i18n.gd")
 var main: Node
 
 const SPOTS := {
-	1: [["house", 500.0], ["living", 1600.0], ["street", 3000.0], ["hidden", 3560.0], ["market", 6500.0], ["cave", 10000.0], ["cave_hidden", 10380.0], ["peak", 14000.0]],
-	2: [["love", 4000.0], ["parade", 8000.0], ["spirits", 11000.0], ["graves", 15000.0]],
+	1: [["house", 500.0], ["living", 1600.0], ["street", 3000.0], ["hidden", 3560.0], ["market", 6500.0], ["market_end", 8050.0], ["cave", 10000.0], ["cave_hidden", 10380.0], ["peak", 14000.0]],
+	2: [["love", 4000.0], ["parade", 8000.0], ["spirits", 11000.0], ["graves", 13300.0], ["graves_hidden", 14330.0], ["graves_mid", 15500.0]],
 }
 
 func _ready() -> void:

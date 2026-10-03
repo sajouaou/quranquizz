@@ -1,7 +1,7 @@
 // Offline support for the web version: once visited, the app opens without
 // network (useful for local peer-to-peer games). Recitations have their own
 // cache (qq-audio-v1), managed by the app, which this worker never touches.
-const SHELL = 'qq-shell-v1';
+const SHELL = 'qq-shell-v2'; // v2: new logo (the icons have no content hash in their names)
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(['/', '/manifest.json', '/favicon.png', '/icon-512.png'])).catch(() => {}));

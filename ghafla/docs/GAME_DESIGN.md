@@ -84,7 +84,7 @@ tombes (Al-Hijr, Al-Muddaththir, Al-Qiyamah, An-Naba'). Détails : [PAGES.md](PA
 Règles de respect propres à ce chapitre :
 - **Des sujets délicats, traités sans moquerie ni jugement** : le personnage se regarde lui-même ; on ne montre aucune scène intime, aucune personne dans la ville des amoureux (seulement des décors vides), aucun buveur (seulement des verres et des bouteilles).
 - **Silhouettes sans visage** seulement quand l'histoire l'exige : la famille dans la cinématique, l'homme riche sur son char. Aucune statue, aucune idole, aucune image d'un prophète.
-- **Les tombes** sont de simples tertres et de petites dalles nues : sans ornement, sans inscription.
+- **Les tombes** ne se voient que de loin, sur la colline : de simples tertres et de petites dalles nues, sans ornement ni inscription. Le chemin du joueur longe le cimetière derrière un muret sans y entrer, et aucune page du Mushaf n'est placée parmi les tombes (les avis des savants divergent sur la lecture du Coran au cimetière ; le jeu choisit la prudence).
 - Les versets cités viennent de traductions publiées (Hamidullah, The Clear Quran) ; les pensées du personnage (`locales/*/dialogue_2.json`) doivent être relues par une personne compétente avant publication.
 
 ## 6 ter. Profondeur « 2.5D »
@@ -127,7 +127,7 @@ Réglages > « Qualité graphique » (`scripts/core/gfx.gd`) : automatique (moye
 (pages d'une sourate, fenêtres allumées de la ville) sont faits une seule fois. `tests/dev/bench.tscn` mesure le temps d'une image dans chaque zone, personnage en marche
 (`godot --path ghafla res://tests/dev/bench.tscn -- low|medium|high`).
 
-Pages cachées : leur signe ne ressemble à aucune autre particule (étoiles nettes à quatre branches, vert d'eau, en spirale au-dessus d'un anneau au sol),
+Pages cachées : leur signe ne ressemble à aucune autre particule (étoiles nettes à quatre branches, vert d'eau, qui montent en spirale ; elles se resserrent et s'éclairent quand la page va apparaître),
 alors que les poussières d'ambiance sont des points ronds, flous et dorés. Il se voit de loin, même dans la grotte.
 
 ## 7. Pistes pour la suite

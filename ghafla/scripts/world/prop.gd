@@ -101,15 +101,15 @@ func _side_wall(w: float, top: float, tint: Color, depth: float = 70.0) -> void:
 ## Largeur de l'ombre portée au sol, par sorte de décor posé sur le sol (les bâtiments et le fond n'en ont pas).
 const SHADOW_WIDTH := {
 	"lamp_post": 46.0, "tree": 130.0, "bench": 150.0, "stall": 230.0, "shelf_tower": 130.0, "crates": 110.0,
-	"post": 36.0, "rose_bush": 90.0, "bench_pair": 250.0, "bar_table": 130.0, "bottle_shelf": 150.0, "grave_stone": 70.0,
-	"dead_tree": 100.0, "candle_table": 80.0, "rock": 120.0, "mounds": 180.0, "crystal": 60.0, "stalagmite": 70.0,
+	"post": 36.0, "rose_bush": 90.0, "bench_pair": 250.0, "bar_table": 130.0, "bottle_shelf": 150.0,
+	"dead_tree": 100.0, "candle_table": 80.0, "rock": 120.0, "crystal": 60.0, "stalagmite": 70.0,
 }
 
 
 func _contact_shadow() -> void:
 	if not SHADOW_WIDTH.has(kind):
 		return
-	var w: float = float(params.get("w", SHADOW_WIDTH[kind])) if kind in ["stall", "rock", "mounds"] else float(SHADOW_WIDTH[kind])
+	var w: float = float(params.get("w", SHADOW_WIDTH[kind])) if kind in ["stall", "rock"] else float(SHADOW_WIDTH[kind])
 	draw_set_transform(Vector2(0.0, 2.0), 0.0, Vector2(1.0, 0.16))
 	DrawUtil.glow(self, Vector2.ZERO, w * 0.62, Color(0, 0, 0, 0.30))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -142,8 +142,6 @@ func _draw() -> void:
 			_crates()
 		"coin":
 			_coin()
-		"mounds":
-			_mounds()
 		"number_tag":
 			_number_tag()
 		"rock_arch":
@@ -182,8 +180,8 @@ func _draw() -> void:
 			_bottle_shelf()
 		"neon_tube":
 			_neon_tube()
-		"grave_stone":
-			_grave_stone()
+		"low_wall":
+			_low_wall()
 		"mist":
 			_mist()
 		"dead_tree":
@@ -477,17 +475,6 @@ func _coin() -> void:
 	draw_circle(Vector2(-r * squash * 0.3, -r * 0.35), 2.0, Color(1.0, 0.97, 0.8, a))
 
 
-func _mounds() -> void:
-	# Un coin calme où le bruit du souk s'arrête : de simples tertres de terre, sans monument
-	var n: int = params.get("n", 3)
-	var x := 0.0
-	for i in range(n):
-		var w := 150.0 + float(i % 2) * 40.0
-		draw_colored_polygon(DrawUtil.ellipse(Vector2(x, 2.0), w * 0.5, 16.0, 22), Color("6a4a52"))
-		draw_colored_polygon(DrawUtil.ellipse(Vector2(x, -2.0), w * 0.46, 12.0, 22), Color("866068"))
-		x += w + 60.0
-
-
 func _number_tag() -> void:
 	# Chiffres qui s'élèvent lentement : la course à l'accumulation
 	var s: String = params.get("text", "×2")
@@ -744,16 +731,29 @@ func _neon_tube() -> void:
 # ---------------------------------------------------------------------------------- second rêve : les tombes
 # Des tertres de terre et de simples dalles, sans inscription ni ornement.
 
-func _grave_stone() -> void:
-	var w: float = params.get("w", 34.0)
+func _low_wall() -> void:
+	# Muret de pierres sèches, coiffé de dalles : il borde le chemin et laisse le cimetière de l'autre côté
+	var w: float = params.get("w", 400.0)
 	var h: float = params.get("h", 60.0)
-	var lean: float = params.get("lean", 0.0)
-	var col: Color = params.get("color", Color("4a4f72"))
-	draw_set_transform(Vector2.ZERO, lean, Vector2.ONE)
-	draw_rect(Rect2(-w / 2.0, -h, w, h), col)
-	draw_rect(Rect2(-w / 2.0, -h, w, 5.0), col.lightened(0.18))
+	var col := Color("4a4f78")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(params.get("seed", 4))
+	draw_set_transform(Vector2(0.0, 3.0), 0.0, Vector2(1.0, 0.06))
+	DrawUtil.glow(self, Vector2.ZERO, w * 0.56, Color(0, 0, 0, 0.34))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	draw_colored_polygon(DrawUtil.ellipse(Vector2(0, 2), w * 1.8, 9.0, 18), Color("2b2a45"))
+	DrawUtil.vgrad(self, Rect2(-w / 2.0, -h, w, h), col, col.darkened(0.3))
+	# assises de pierres : joints décalés d'un rang à l'autre
+	var rows := 3
+	for r in range(rows):
+		var y := -h + 10.0 + float(r) * (h - 10.0) / float(rows)
+		draw_line(Vector2(-w / 2.0, y), Vector2(w / 2.0, y), Color(0, 0, 0, 0.22), 1.5)
+		var sx := -w / 2.0 + rng.randf_range(20.0, 60.0)
+		while sx < w / 2.0 - 10.0:
+			draw_line(Vector2(sx, y), Vector2(sx, y + (h - 10.0) / float(rows)), Color(0, 0, 0, 0.2), 1.5)
+			sx += rng.randf_range(44.0, 86.0)
+	# couronnement : le dessus des dalles (vu légèrement d'en haut) et leur tranche
+	draw_colored_polygon(PackedVector2Array([Vector2(-w / 2.0 - 5.0, -h), Vector2(w / 2.0 + 5.0, -h), Vector2(w / 2.0 - 3.0, -h - 9.0), Vector2(-w / 2.0 + 3.0, -h - 9.0)]), col.lightened(0.22))
+	draw_rect(Rect2(-w / 2.0 - 5.0, -h, w + 10.0, 7.0), col.lightened(0.08))
 
 
 func _mist() -> void:

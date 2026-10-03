@@ -67,8 +67,8 @@ func build(w: Node2D) -> void:
 		var coin: Node2D = w.add_prop("coin", Vector2(x, y), {"r": 13.0, "seed": 500 + i, "alpha": 1.0}, true)
 		coins.append({"node": coin, "limit": 7500.0 + float(i) * 16.0, "gone": false})
 
-	# Le coin calme où le bruit s'arrête : de simples tertres, sans monument
-	w.add_prop("mounds", Vector2(7930, 620), {"n": 3})
+	# Le coin calme où le bruit du souk s'arrête : un muret, un arbre, le silence
+	w.add_prop("low_wall", Vector2(8080, 620), {"w": 460.0, "h": 58.0, "seed": 8})
 	w.add_prop("tree", Vector2(8300, 620), {"h": 190.0, "hue": 0.6, "seed": 77})
 	# Transition vers la montagne
 	for rx in [8420.0, 8560.0, 8700.0]:

@@ -32,6 +32,7 @@ var _wait: float = 0.0
 var _glow: Node2D
 var _lines: Array = []
 var _seed: int = 0
+var _spin: float = 0.0  # avance de la spirale du signe « page cachée »
 var _shimmer: AudioStreamPlayer2D  # frisselis positionnel : on entend la page avant de la voir
 
 
@@ -183,35 +184,31 @@ func _process(delta: float) -> void:
 
 ## Signe d'une page cachée. Il ne doit ressembler à aucune autre particule du jeu : les poussières d'ambiance sont
 ## des points ronds, flous et dorés ; ici ce sont des étoiles nettes à quatre branches, d'un vert d'eau presque blanc,
-## qui montent en spirale au-dessus d'un anneau posé sur le sol. On les voit de loin, et de mieux en mieux en s'approchant.
+## qui montent en spirale. On les voit de loin, et de mieux en mieux en s'approchant.
 const HIDDEN_TINT := Color(0.45, 1.0, 0.86)
 
 func _draw_hidden_sign() -> void:
 	var d: float = absf(world.player.global_position.x - global_position.x)
 	var g := lerpf(0.55, 1.0, clampf(1.0 - d / 700.0, 0.0, 1.0))
-	var foot := Vector2(0.0, ground_dy)
-	# anneau au sol, qui respire
-	var pulse := 0.5 + 0.5 * sin(_t * 2.2)
-	draw_set_transform(foot, 0.0, Vector2(1.0, 0.28))
-	draw_arc(Vector2.ZERO, 30.0 + 8.0 * pulse, 0.0, TAU, 40, Color(HIDDEN_TINT, g * (0.75 - 0.35 * pulse)), 3.0, true)
-	draw_arc(Vector2.ZERO, 16.0 + 4.0 * pulse, 0.0, TAU, 28, Color(1, 1, 1, g * 0.5), 2.0, true)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# Quand le joueur reste immobile tout près, les étoiles se resserrent, accélèrent et s'éclairent : c'est le seul
+	# signe que la page arrive (aucun cercle, ni au sol ni autour).
+	var need := float(data.get("reveal", {}).get("seconds", 2.5))
+	var prog := clampf(_wait / need, 0.0, 1.0)
+	_spin += get_process_delta_time() * (0.2 + 1.1 * prog)
+	if prog > 0.01:
+		DrawUtil.glow(self, Vector2.ZERO, 40.0 + 70.0 * prog, Color(HIDDEN_TINT, 0.30 * prog))
 	# étoiles à quatre branches qui montent en spirale, du sol jusqu'au-dessus de la page
 	var count := 10
 	var height := ground_dy + 90.0
 	for i in range(count):
-		var ph := fposmod(_t * 0.2 + float(i) / float(count), 1.0)
+		var ph := fposmod(_spin + float(i) / float(count), 1.0)
 		var swirl := ph * TAU * 1.5 + float(i) * 0.9
-		var pos := Vector2(sin(swirl) * 30.0 * (1.0 - ph * 0.45), ground_dy - ph * height)
-		var a := g * sin(PI * ph)
-		var r := 5.0 + 5.0 * sin(PI * ph) + (2.0 if i % 3 == 0 else 0.0)
+		var pos := Vector2(sin(swirl) * 30.0 * (1.0 - ph * 0.45) * (1.0 - 0.6 * prog), ground_dy - ph * height)
+		var a := minf(1.0, g * sin(PI * ph) * (1.0 + prog))
+		var r := 5.0 + 5.0 * sin(PI * ph) + (2.0 if i % 3 == 0 else 0.0) + 3.0 * prog
 		var rot := _t * 0.9 + float(i)
 		draw_colored_polygon(DrawUtil.star(pos, r * 1.7, r * 0.45, 4, rot), Color(HIDDEN_TINT, a * 0.55))
 		draw_colored_polygon(DrawUtil.star(pos, r, r * 0.24, 4, rot), Color(1, 1, 1, a))
-	if _wait > 0.0:
-		var need := float(data.get("reveal", {}).get("seconds", 2.5))
-		draw_arc(Vector2.ZERO, 34.0, -PI / 2.0, -PI / 2.0 + TAU * clampf(_wait / need, 0.0, 1.0), 40, Color(1, 1, 1, 0.95), 4.0, true)
-		draw_arc(Vector2.ZERO, 34.0, 0.0, TAU, 40, Color(HIDDEN_TINT, 0.3), 1.5, true)
 
 
 func _bob() -> float:

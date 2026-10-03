@@ -1,5 +1,5 @@
 extends RefCounted
-## Second rêve : la maison (la même, un autre soir), une ville de fête, l'avenue d'un homme riche, la rue de l'ivresse, puis les tombes.
+## Second rêve : la maison (la même, un autre soir), une ville de fête, l'avenue d'un homme riche, la rue de l'ivresse, puis le chemin qui longe un cimetière (vu de loin).
 ## Les constantes du monde du chapitre 2 et la liste de ses zones.
 
 const ZoneHouse := preload("res://scripts/world/zones/zone_house.gd")
